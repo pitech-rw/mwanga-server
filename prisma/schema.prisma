@@ -59,10 +59,10 @@ model Rider {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  owner       Owner?           @relation(fields: [ownerId], references: [id])
-  wallet      Wallet?
-  cards       NfcCard[]
-  bikes       Bike[]
+  owner        Owner?           @relation(fields: [ownerId], references: [id])
+  wallet       Wallet?
+  cards        NfcCard[]
+  bikes        Bike[]
   transactions SwapTransaction[]
 }
 
@@ -159,10 +159,36 @@ model SwapTransaction {
   updatedAt         DateTime      @updatedAt
   completedAt       DateTime?
 
-  rider      Rider      @relation(fields: [riderId], references: [id])
-  bike       Bike       @relation(fields: [bikeId], references: [id])
-  station    Station    @relation(fields: [stationId], references: [id])
-  card       NfcCard    @relation(fields: [cardId], references: [id])
-  oldBattery Battery?   @relation("OldBattery", fields: [oldBatteryId], references: [id])
-  newBattery Battery?   @relation("NewBattery", fields: [newBatteryId], references: [id])
+  rider        Rider         @relation(fields: [riderId], references: [id])
+  bike         Bike          @relation(fields: [bikeId], references: [id])
+  station      Station       @relation(fields: [stationId], references: [id])
+  card         NfcCard       @relation(fields: [cardId], references: [id])
+  oldBattery   Battery?      @relation("OldBattery", fields: [oldBatteryId], references: [id])
+  newBattery   Battery?      @relation("NewBattery", fields: [newBatteryId], references: [id])
+  ledgerEntries LedgerEntry[]
+  auditLogs    AuditLog[]
+}
+
+model LedgerEntry {
+  id              Int      @id @default(autoincrement())
+  swapTransactionId Int
+  eventType       String
+  amount          Decimal? @db.Decimal(12, 2)
+  description     String?
+  createdAt       DateTime @default(now())
+
+  swapTransaction SwapTransaction @relation(fields: [swapTransactionId], references: [id])
+}
+
+model AuditLog {
+  id              Int      @id @default(autoincrement())
+  swapTransactionId Int?
+  entityType      String
+  entityId        Int?
+  actor           String   @default("system")
+  action          String
+  details         String?
+  createdAt       DateTime @default(now())
+
+  swapTransaction SwapTransaction? @relation(fields: [swapTransactionId], references: [id])
 }

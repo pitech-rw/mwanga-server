@@ -16,3 +16,153 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum SwapStatus {
+  initiated
+  assigned
+  collected
+  installed
+  completed
+  failed
+  cancelled
+  reversed
+}
+
+enum PaymentStatus {
+  pending
+  captured
+  failed
+  reversed
+}
+
+model Owner {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?  @unique
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  riders Rider[]
+  bikes  Bike[]
+}
+
+model Rider {
+  id         Int      @id @default(autoincrement())
+  fullName   String
+  phone      String   @unique
+  idNumber   String?  @unique
+  kycStatus  String   @default("pending")
+  status     String   @default("active")
+  ownerId    Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner       Owner?           @relation(fields: [ownerId], references: [id])
+  wallet      Wallet?
+  cards       NfcCard[]
+  bikes       Bike[]
+  transactions SwapTransaction[]
+}
+
+model Bike {
+  id               Int      @id @default(autoincrement())
+  plateNumber      String   @unique
+  vin              String?  @unique
+  model            String
+  status           String   @default("active")
+  ownerId          Int?
+  riderId          Int?
+  currentBatteryId Int?     @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  owner         Owner?           @relation(fields: [ownerId], references: [id])
+  rider         Rider?           @relation(fields: [riderId], references: [id])
+  currentBattery Battery?         @relation("CurrentBattery", fields: [currentBatteryId], references: [id])
+  transactions  SwapTransaction[]
+}
+
+model Station {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  latitude  Float?
+  longitude Float?
+  status    String   @default("active")
+  capacity  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  batteries   Battery[]
+  transactions SwapTransaction[]
+}
+
+model Battery {
+  id              Int      @id @default(autoincrement())
+  serialNumber    String   @unique
+  manufacturer    String?
+  model           String
+  batteryType     String   @default("lithium")
+  status          String   @default("available")
+  soc             Int      @default(100)
+  soh             Int      @default(100)
+  stationId       Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  station             Station?          @relation(fields: [stationId], references: [id])
+  bike                Bike?             @relation("CurrentBattery")
+  oldSwapTransactions SwapTransaction[] @relation("OldBattery")
+  newSwapTransactions SwapTransaction[] @relation("NewBattery")
+}
+
+model NfcCard {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  status    String   @default("active")
+  riderId   Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rider       Rider?           @relation(fields: [riderId], references: [id])
+  transactions SwapTransaction[]
+}
+
+model Wallet {
+  id        Int      @id @default(autoincrement())
+  riderId   Int      @unique
+  balance   Decimal  @db.Decimal(12, 2) @default(0)
+  currency  String   @default("KES")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rider Rider @relation(fields: [riderId], references: [id])
+}
+
+model SwapTransaction {
+  id                Int           @id @default(autoincrement())
+  riderId           Int
+  bikeId            Int
+  stationId         Int
+  cardId            Int
+  oldBatteryId      Int?
+  newBatteryId      Int?
+  status            SwapStatus    @default(initiated)
+  paymentStatus     PaymentStatus @default(pending)
+  fee               Decimal       @db.Decimal(12, 2) @default(0)
+  walletBalanceAfter Decimal       @db.Decimal(12, 2) @default(0)
+  paymentReference  String?
+  notes             String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  completedAt       DateTime?
+
+  rider      Rider      @relation(fields: [riderId], references: [id])
+  bike       Bike       @relation(fields: [bikeId], references: [id])
+  station    Station    @relation(fields: [stationId], references: [id])
+  card       NfcCard    @relation(fields: [cardId], references: [id])
+  oldBattery Battery?   @relation("OldBattery", fields: [oldBatteryId], references: [id])
+  newBattery Battery?   @relation("NewBattery", fields: [newBatteryId], references: [id])
+}

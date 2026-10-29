@@ -28,8 +28,13 @@ export class StationsService {
     const stationData: Prisma.StationCreateInput = {
       code: data.code,
       name: data.name,
+      type: data.type,
+      model: data.model,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
       latitude: data.latitude,
       longitude: data.longitude,
+      address: data.address,
       status: data.status ?? 'active',
       capacity: data.capacity ?? 0,
     };

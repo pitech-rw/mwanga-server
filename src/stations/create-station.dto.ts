@@ -11,6 +11,15 @@ export class CreateStationDto {
   @MaxLength(120)
   name: string;
 
+  createdAT: Date
+  updatedAt: Date
+ 
+  @IsString()
+  type: string
+ 
+  @IsString()
+  model: string
+  
   @IsOptional()
   @IsNumber()
   latitude?: number;
@@ -19,6 +28,10 @@ export class CreateStationDto {
   @IsNumber()
   longitude?: number;
 
+  @IsOptional()
+  @IsString()
+  address?: string
+  
   @IsOptional()
   @IsString()
   @MaxLength(20)

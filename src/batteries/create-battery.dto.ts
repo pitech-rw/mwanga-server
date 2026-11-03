@@ -1,4 +1,4 @@
-import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, isString, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CreateBatteryDto {
   @IsString()
@@ -41,4 +41,13 @@ export class CreateBatteryDto {
   @IsOptional()
   @IsNumber()
   stationId?: number;
+
+  @IsOptional()
+  @IsString()
+  Attached_to: string;
+
+  
+  @IsOptional()
+  @IsString()
+  Attached_by: string;
 }

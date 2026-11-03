@@ -18,7 +18,7 @@ export class BatteriesController {
   constructor(private readonly batteriesService: BatteriesService) {}
 
   @Get()
-  findAll(): Promise<Battery[]> {
+  findAll() {
     return this.batteriesService.findAll();
   }
 

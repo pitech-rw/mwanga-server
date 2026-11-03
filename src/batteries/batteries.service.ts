@@ -8,7 +8,7 @@ import { UpdateBatteryDto } from './update-battery.dto.js';
 export class BatteriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<Battery[]> {
+  async findAll() {
     return this.prisma.battery.findMany({
       orderBy: { createdAt: 'desc' },
       include: { station: true },

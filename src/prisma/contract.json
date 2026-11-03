@@ -4,12 +4,20 @@
   "target": "postgres",
   "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
   "roots": {
+    "AuditLog": {
+      "model": "AuditLog",
+      "namespace": "public"
+    },
     "Battery": {
       "model": "Battery",
       "namespace": "public"
     },
     "Bike": {
       "model": "Bike",
+      "namespace": "public"
+    },
+    "LedgerEntry": {
+      "model": "LedgerEntry",
       "namespace": "public"
     },
     "NfcCard": {
@@ -105,6 +113,117 @@
           }
         },
         "models": {
+          "AuditLog": {
+            "fields": {
+              "action": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "actor": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "details": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "entityId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "entityType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "swapTransactionId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "swapTransaction": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "swapTransactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "action": {
+                  "column": "action"
+                },
+                "actor": {
+                  "column": "actor"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "details": {
+                  "column": "details"
+                },
+                "entityId": {
+                  "column": "entityId"
+                },
+                "entityType": {
+                  "column": "entityType"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "swapTransactionId": {
+                  "column": "swapTransactionId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "AuditLog"
+            }
+          },
           "Battery": {
             "fields": {
               "batteryType": {
@@ -474,6 +593,101 @@
               },
               "namespaceId": "public",
               "table": "Bike"
+            }
+          },
+          "LedgerEntry": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "description": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "eventType": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "swapTransactionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "swapTransaction": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "swapTransactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "eventType": {
+                  "column": "eventType"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "swapTransactionId": {
+                  "column": "swapTransactionId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "LedgerEntry"
             }
           },
           "NfcCard": {
@@ -1171,6 +1385,21 @@
               }
             },
             "relations": {
+              "auditLogs": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "swapTransactionId"
+                  ]
+                },
+                "to": {
+                  "model": "AuditLog",
+                  "namespace": "public"
+                }
+              },
               "bike": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -1200,6 +1429,21 @@
                 },
                 "to": {
                   "model": "NfcCard",
+                  "namespace": "public"
+                }
+              },
+              "ledgerEntries": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "swapTransactionId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerEntry",
                   "namespace": "public"
                 }
               },
@@ -1517,6 +1761,102 @@
       "public": {
         "entries": {
           "table": {
+            "AuditLog": {
+              "columns": {
+                "action": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "actor": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "system"
+                  },
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "details": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "entityId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "entityType": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "swapTransactionId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "AuditLog_swapTransactionId_idx_64f4df5e"
+                  },
+                  "source": {
+                    "columns": [
+                      "swapTransactionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "AuditLog"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "SwapTransaction"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "swapTransactionId"
+                  ],
+                  "name": "AuditLog_swapTransactionId_idx_64f4df5e",
+                  "prefix": "AuditLog_swapTransactionId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "Battery": {
               "columns": {
                 "batteryType": {
@@ -1821,6 +2161,92 @@
                   ]
                 }
               ]
+            },
+            "LedgerEntry": {
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "eventType": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "swapTransactionId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "LedgerEntry_swapTransactionId_idx_64f4df5e"
+                  },
+                  "source": {
+                    "columns": [
+                      "swapTransactionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerEntry"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "SwapTransaction"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "swapTransactionId"
+                  ],
+                  "name": "LedgerEntry_swapTransactionId_idx_64f4df5e",
+                  "prefix": "LedgerEntry_swapTransactionId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "NfcCard": {
               "columns": {
@@ -2714,7 +3140,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "8320f3a513fbc03e7134f1a51c12821afe18476d580e34ebecaf361acf0e23b1"
+    "storageHash": "447378fdf65505d956c456304ad287dabbb2afa24d98e00df6b9579c771d4d5a"
   },
   "execution": {
     "executionHash": "3a6133852ef3b68a9e08f45272125c0ecf80eaeb157b18205e851d83e9cf8e54",

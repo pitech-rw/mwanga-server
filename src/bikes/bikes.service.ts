@@ -34,8 +34,11 @@ export class BikesService {
         .include('currentBattery')
         .create({
           plateNumber: data.plateNumber,
-          vin: data.vin,
+          chassisNumber: data.chassisNumber,
+          serialNumber: data.serialNumber,
           model: data.model,
+          image: data.image,
+          dualBattery: data.dualBattery ?? false,
           status: data.status ?? 'active',
           ownerId: data.ownerId,
           riderId: data.riderId,
@@ -43,7 +46,9 @@ export class BikesService {
         });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A bike with this plate number or VIN already exists');
+        throw new BadRequestException(
+          'A bike with this plate number, chassis number, or serial number already exists',
+        );
       }
 
       throw error;
@@ -61,8 +66,11 @@ export class BikesService {
         .update(
           withoutUndefined({
             plateNumber: data.plateNumber,
-            vin: data.vin,
+            chassisNumber: data.chassisNumber,
+            serialNumber: data.serialNumber,
             model: data.model,
+            image: data.image,
+            dualBattery: data.dualBattery,
             status: data.status,
             ownerId: data.ownerId,
             riderId: data.riderId,
@@ -77,7 +85,9 @@ export class BikesService {
       return bike;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A bike with this plate number or VIN already exists');
+        throw new BadRequestException(
+          'A bike with this plate number, chassis number, or serial number already exists',
+        );
       }
 
       throw error;

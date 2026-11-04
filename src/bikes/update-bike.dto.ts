@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateBikeDto {
   @IsOptional()
@@ -10,13 +10,28 @@ export class UpdateBikeDto {
   @IsOptional()
   @IsString()
   @MaxLength(80)
-  vin?: string;
+  chassisNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(120)
+  serialNumber?: string;
 
   @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(120)
   model?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  image?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  dualBattery?: boolean;
 
   @IsOptional()
   @IsString()

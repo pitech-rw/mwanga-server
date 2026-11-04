@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'30d2d2ca19d4cabbfb7472eea5e4669d756f3df47d663c8dc6571307d084f38e'>;
+  StorageHashBase<'ad17d172c5a1bdf28005c7d298ab83ff7bcb1eb7c956d1cd3f36237aac8dc708'>;
 export type ExecutionHash =
   ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
@@ -403,16 +403,19 @@ export namespace Models {
     readonly [RelationKeys]?: 'bike' | 'newSwapTransactions' | 'oldSwapTransactions' | 'station';
   };
   export type public_Bike = {
+    chassisNumber: FieldOutputTypes['public']['Bike']['chassisNumber'];
     createdAt: FieldOutputTypes['public']['Bike']['createdAt'];
     currentBatteryId: FieldOutputTypes['public']['Bike']['currentBatteryId'];
+    dualBattery: FieldOutputTypes['public']['Bike']['dualBattery'];
     id: FieldOutputTypes['public']['Bike']['id'];
+    image: FieldOutputTypes['public']['Bike']['image'];
     model: FieldOutputTypes['public']['Bike']['model'];
     ownerId: FieldOutputTypes['public']['Bike']['ownerId'];
     plateNumber: FieldOutputTypes['public']['Bike']['plateNumber'];
     riderId: FieldOutputTypes['public']['Bike']['riderId'];
+    serialNumber: FieldOutputTypes['public']['Bike']['serialNumber'];
     status: FieldOutputTypes['public']['Bike']['status'];
     updatedAt: FieldOutputTypes['public']['Bike']['updatedAt'];
-    vin: FieldOutputTypes['public']['Bike']['vin'];
     currentBattery: public_Battery | null;
     owner: public_Owner | null;
     rider: public_Rider | null;
@@ -803,6 +806,12 @@ type ContractBase = Omit<
             };
             readonly Bike: {
               columns: {
+                readonly chassisNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly createdAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -817,6 +826,16 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly dualBattery: {
+                  readonly dataType: 'pg/bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                  readonly many: false;
+                };
                 readonly id: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
@@ -825,6 +844,12 @@ type ContractBase = Omit<
                     readonly kind: 'function';
                     readonly expression: 'autoincrement()';
                   };
+                  readonly many: false;
+                };
+                readonly image: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly model: {
@@ -851,6 +876,12 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly serialNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
                 readonly status: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -868,17 +899,12 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
-                readonly vin: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [
                 { readonly columns: readonly ['plateNumber'] },
-                { readonly columns: readonly ['vin'] },
+                { readonly columns: readonly ['chassisNumber'] },
+                { readonly columns: readonly ['serialNumber'] },
                 { readonly columns: readonly ['currentBatteryId'] },
               ];
               indexes: readonly [
@@ -1966,6 +1992,10 @@ type ContractBase = Omit<
           };
           readonly Bike: {
             readonly fields: {
+              readonly chassisNumber: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -1978,9 +2008,17 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly dualBattery: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly image: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly model: {
                 readonly nullable: false;
@@ -1998,6 +2036,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly serialNumber: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -2009,10 +2051,6 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly typeParams: { readonly precision: 3 };
                 };
-              };
-              readonly vin: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
             };
             readonly relations: {
@@ -2068,16 +2106,19 @@ type ContractBase = Omit<
               readonly table: 'Bike';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly chassisNumber: { readonly column: 'chassisNumber' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly currentBatteryId: { readonly column: 'currentBatteryId' };
+                readonly dualBattery: { readonly column: 'dualBattery' };
                 readonly id: { readonly column: 'id' };
+                readonly image: { readonly column: 'image' };
                 readonly model: { readonly column: 'model' };
                 readonly ownerId: { readonly column: 'ownerId' };
                 readonly plateNumber: { readonly column: 'plateNumber' };
                 readonly riderId: { readonly column: 'riderId' };
+                readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
-                readonly vin: { readonly column: 'vin' };
               };
             };
           };

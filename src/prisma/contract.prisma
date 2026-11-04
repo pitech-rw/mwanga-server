@@ -62,8 +62,11 @@ model Rider {
 model Bike {
   id               Int      @id @default(autoincrement())
   plateNumber      String   @unique
-  vin              String?  @unique
+  chassisNumber    String?  @unique
+  serialNumber     String   @unique
   model            String
+  image            String?
+  dualBattery      Boolean  @default(false)
   status           String   @default("active")
   ownerId          Int?
   riderId          Int?

@@ -446,6 +446,13 @@
           },
           "Bike": {
             "fields": {
+              "chassisNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -463,10 +470,24 @@
                   "kind": "scalar"
                 }
               },
+              "dualBattery": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "image": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -498,6 +519,13 @@
                   "kind": "scalar"
                 }
               },
+              "serialNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -513,13 +541,6 @@
                   "typeParams": {
                     "precision": 3
                   }
-                }
-              },
-              "vin": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
                 }
               }
             },
@@ -590,14 +611,23 @@
             },
             "storage": {
               "fields": {
+                "chassisNumber": {
+                  "column": "chassisNumber"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
                 "currentBatteryId": {
                   "column": "currentBatteryId"
                 },
+                "dualBattery": {
+                  "column": "dualBattery"
+                },
                 "id": {
                   "column": "id"
+                },
+                "image": {
+                  "column": "image"
                 },
                 "model": {
                   "column": "model"
@@ -611,14 +641,14 @@
                 "riderId": {
                   "column": "riderId"
                 },
+                "serialNumber": {
+                  "column": "serialNumber"
+                },
                 "status": {
                   "column": "status"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
-                },
-                "vin": {
-                  "column": "vin"
                 }
               },
               "namespaceId": "public",
@@ -2060,6 +2090,11 @@
             },
             "Bike": {
               "columns": {
+                "chassisNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
@@ -2077,6 +2112,15 @@
                   "dataType": "pg/int4",
                   "nullable": true
                 },
+                "dualBattery": {
+                  "codecId": "pg/bool@1",
+                  "dataType": "pg/bool",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nullable": false
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
@@ -2085,6 +2129,11 @@
                     "kind": "function"
                   },
                   "nullable": false
+                },
+                "image": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
                 },
                 "model": {
                   "codecId": "pg/text@1",
@@ -2106,6 +2155,11 @@
                   "dataType": "pg/int4",
                   "nullable": true
                 },
+                "serialNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
                 "status": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -2122,11 +2176,6 @@
                   "typeParams": {
                     "precision": 3
                   }
-                },
-                "vin": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": true
                 }
               },
               "foreignKeys": [
@@ -2221,7 +2270,12 @@
                 },
                 {
                   "columns": [
-                    "vin"
+                    "chassisNumber"
+                  ]
+                },
+                {
+                  "columns": [
+                    "serialNumber"
                   ]
                 },
                 {
@@ -3224,7 +3278,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "30d2d2ca19d4cabbfb7472eea5e4669d756f3df47d663c8dc6571307d084f38e"
+    "storageHash": "ad17d172c5a1bdf28005c7d298ab83ff7bcb1eb7c956d1cd3f36237aac8dc708"
   },
   "execution": {
     "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",

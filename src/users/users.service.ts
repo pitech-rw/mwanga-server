@@ -9,12 +9,24 @@ import { UpdateUserDto } from './update-user.dto.js';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private userQuery() {
+    return this.prisma.db.orm.public.User.include('role');
+  }
+
+  private async requireRole(roleId: number) {
+    const role = await this.prisma.db.orm.public.Role.first({ id: roleId });
+
+    if (!role) {
+      throw new NotFoundException(`Role with id ${roleId} not found`);
+    }
+  }
+
   async findAll(): Promise<User[]> {
-    return this.prisma.db.orm.public.User.orderBy((user) => user.createdAt.desc()).all();
+    return this.userQuery().orderBy((user) => user.createdAt.desc()).all();
   }
 
   async findOne(id: number): Promise<User> {
-    const user = await this.prisma.db.orm.public.User.first({ id });
+    const user = await this.userQuery().first({ id });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -24,16 +36,27 @@ export class UsersService {
   }
 
   async create(data: CreateUserDto): Promise<User> {
+    await this.requireRole(data.roleId);
+
     try {
-      return await this.prisma.db.orm.public.User.create({
-        name: data.name,
+      return await this.prisma.db.orm.public.User.include('role').create({
+        username: data.username,
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email,
-        role: data.role,
+        phone: data.phone,
+        address: data.address,
+        image: data.image,
+        nationalId: data.nationalId,
+        type: data.type,
+        roleId: data.roleId,
         isActive: data.isActive ?? true,
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A user with this email already exists');
+        throw new BadRequestException(
+          'A user with this email, username, phone, or national ID already exists',
+        );
       }
 
       throw error;
@@ -43,15 +66,28 @@ export class UsersService {
   async update(id: number, data: UpdateUserDto): Promise<User> {
     await this.findOne(id);
 
+    if (data.roleId !== undefined) {
+      await this.requireRole(data.roleId);
+    }
+
     try {
-      const user = await this.prisma.db.orm.public.User.where({ id }).update(
-        withoutUndefined({
-          name: data.name,
-          email: data.email,
-          role: data.role,
-          isActive: data.isActive,
-        }),
-      );
+      const user = await this.userQuery()
+        .where({ id })
+        .update(
+          withoutUndefined({
+            username: data.username,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            image: data.image,
+            nationalId: data.nationalId,
+            type: data.type,
+            roleId: data.roleId,
+            isActive: data.isActive,
+          }),
+        );
 
       if (!user) {
         throw new NotFoundException(`User with id ${id} not found`);
@@ -60,7 +96,9 @@ export class UsersService {
       return user;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A user with this email already exists');
+        throw new BadRequestException(
+          'A user with this email, username, phone, or national ID already exists',
+        );
       }
 
       throw error;

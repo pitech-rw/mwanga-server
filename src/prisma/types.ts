@@ -2,6 +2,9 @@ import type { Scalars } from '@prisma/orm-postgres/family-contract/types';
 import type { Models } from './contract.js';
 
 export type User = Scalars<Models.public_User>;
+export type UserType = Models.public_User['type'];
+export type Role = Scalars<Models.public_Role>;
+export type Permission = Scalars<Models.public_Permission>;
 export type Owner = Scalars<Models.public_Owner>;
 export type Rider = Scalars<Models.public_Rider>;
 export type Bike = Scalars<Models.public_Bike>;

@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'4233901a6ce3f7c1649d7c502e5fd8aa2ae89c9d5850b2fd1794de1e3362fbf9'>;
+  StorageHashBase<'30d2d2ca19d4cabbfb7472eea5e4669d756f3df47d663c8dc6571307d084f38e'>;
 export type ExecutionHash =
   ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
@@ -433,8 +433,10 @@ export namespace Models {
     createdAt: FieldOutputTypes['public']['NfcCard']['createdAt'];
     id: FieldOutputTypes['public']['NfcCard']['id'];
     riderId: FieldOutputTypes['public']['NfcCard']['riderId'];
+    serialNumber: FieldOutputTypes['public']['NfcCard']['serialNumber'];
     status: FieldOutputTypes['public']['NfcCard']['status'];
     token: FieldOutputTypes['public']['NfcCard']['token'];
+    type: FieldOutputTypes['public']['NfcCard']['type'];
     updatedAt: FieldOutputTypes['public']['NfcCard']['updatedAt'];
     rider: public_Rider | null;
     transactions: public_SwapTransaction[];
@@ -1029,6 +1031,12 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly serialNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
                 readonly status: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1045,6 +1053,12 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly type: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
                 readonly updatedAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -1054,7 +1068,10 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['token'] }];
+              uniques: readonly [
+                { readonly columns: readonly ['token'] },
+                { readonly columns: readonly ['serialNumber'] },
+              ];
               indexes: readonly [
                 {
                   readonly name: 'NfcCard_riderId_idx_966752c5';
@@ -2144,11 +2161,19 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly serialNumber: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly token: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly type: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
@@ -2193,8 +2218,10 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly riderId: { readonly column: 'riderId' };
+                readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly status: { readonly column: 'status' };
                 readonly token: { readonly column: 'token' };
+                readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };

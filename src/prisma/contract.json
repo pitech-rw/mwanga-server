@@ -746,6 +746,13 @@
                   "kind": "scalar"
                 }
               },
+              "serialNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -754,6 +761,13 @@
                 }
               },
               "token": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "type": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -815,11 +829,17 @@
                 "riderId": {
                   "column": "riderId"
                 },
+                "serialNumber": {
+                  "column": "serialNumber"
+                },
                 "status": {
                   "column": "status"
                 },
                 "token": {
                   "column": "token"
+                },
+                "type": {
+                  "column": "type"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -2325,6 +2345,11 @@
                   "dataType": "pg/int4",
                   "nullable": true
                 },
+                "serialNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
                 "status": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -2335,6 +2360,11 @@
                   "nullable": false
                 },
                 "token": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "type": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
@@ -2388,6 +2418,11 @@
                 {
                   "columns": [
                     "token"
+                  ]
+                },
+                {
+                  "columns": [
+                    "serialNumber"
                   ]
                 }
               ]
@@ -3189,7 +3224,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4233901a6ce3f7c1649d7c502e5fd8aa2ae89c9d5850b2fd1794de1e3362fbf9"
+    "storageHash": "30d2d2ca19d4cabbfb7472eea5e4669d756f3df47d663c8dc6571307d084f38e"
   },
   "execution": {
     "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",

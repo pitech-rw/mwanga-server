@@ -115,12 +115,14 @@ model Battery {
 }
 
 model NfcCard {
-  id        Int      @id @default(autoincrement())
-  token     String   @unique
-  status    String   @default("active")
-  riderId   Int?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @onCreate(now()) @onUpdate(now())
+  id           Int      @id @default(autoincrement())
+  token        String   @unique
+  serialNumber String   @unique
+  type         String
+  status       String   @default("active")
+  riderId      Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @onCreate(now()) @onUpdate(now())
 
   rider       Rider?           @relation(fields: [riderId], references: [id])
   transactions SwapTransaction[]

@@ -31,12 +31,14 @@ export class CardsService {
     try {
       return await this.prisma.db.orm.public.NfcCard.include('rider').create({
         token: data.token,
+        serialNumber: data.serialNumber,
+        type: data.type,
         status: data.status ?? 'active',
         riderId: data.riderId,
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An NFC card with this token already exists');
+        throw new BadRequestException('An NFC card with this token or serial number already exists');
       }
 
       throw error;
@@ -52,6 +54,8 @@ export class CardsService {
         .update(
           withoutUndefined({
             token: data.token,
+            serialNumber: data.serialNumber,
+            type: data.type,
             status: data.status,
             riderId: data.riderId,
           }),
@@ -64,7 +68,7 @@ export class CardsService {
       return card;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An NFC card with this token already exists');
+        throw new BadRequestException('An NFC card with this token or serial number already exists');
       }
 
       throw error;

@@ -2,15 +2,12 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
-  IsInt,
   IsOptional,
   IsString,
   MaxLength,
-  Min,
   MinLength,
 } from 'class-validator';
-
-const userTypes = ['rider', 'office', 'swapper', 'agent', 'customer'] as const;
+import { USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 
 export class CreateUserDto {
   @IsString()
@@ -51,12 +48,14 @@ export class CreateUserDto {
   @MaxLength(40)
   nationalId?: string;
 
-  @IsIn(userTypes)
-  type: (typeof userTypes)[number];
+  /** Must match a seeded Role.name; roleId is derived from this value */
+  @IsIn(USER_TYPE_NAMES)
+  type: (typeof USER_TYPE_NAMES)[number];
 
-  @IsInt()
-  @Min(1)
-  roleId: number;
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password: string;
 
   @IsOptional()
   @IsBoolean()

@@ -11,6 +11,7 @@ export function configureApp(app: INestApplication) {
       whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
+      stopAtFirstError: true,
     }),
   );
   configureSwagger(app);

@@ -1,6 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { UserTypeName } from '../auth/permission-catalog.js';
+import { resolveRoleIdForType } from '../auth/user-type-alignment.js';
+import { hashPassword } from '../auth/password.js';
+import { sanitizeUser } from '../auth/sanitize-user.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
-import type { User } from '../prisma/types.js';
+import type { SafeUser, UserType } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateUserDto } from './create-user.dto.js';
 import { UpdateUserDto } from './update-user.dto.js';
@@ -13,45 +17,41 @@ export class UsersService {
     return this.prisma.db.orm.public.User.include('role');
   }
 
-  private async requireRole(roleId: number) {
-    const role = await this.prisma.db.orm.public.Role.first({ id: roleId });
-
-    if (!role) {
-      throw new NotFoundException(`Role with id ${roleId} not found`);
-    }
+  async findAll(): Promise<SafeUser[]> {
+    const users = await this.userQuery().orderBy((user) => user.createdAt.desc()).all();
+    return users.map((user) => sanitizeUser(user));
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userQuery().orderBy((user) => user.createdAt.desc()).all();
-  }
-
-  async findOne(id: number): Promise<User> {
+  async findOne(id: number): Promise<SafeUser> {
     const user = await this.userQuery().first({ id });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    return user;
+    return sanitizeUser(user);
   }
 
-  async create(data: CreateUserDto): Promise<User> {
-    await this.requireRole(data.roleId);
+  async create(data: CreateUserDto): Promise<SafeUser> {
+    const roleId = await resolveRoleIdForType(this.prisma, data.type as UserTypeName);
+    const passwordHash = await hashPassword(data.password);
 
     try {
-      return await this.prisma.db.orm.public.User.include('role').create({
+      const user = await this.prisma.db.orm.public.User.include('role').create({
         username: data.username,
         firstName: data.firstName,
         lastName: data.lastName,
-        email: data.email,
+        email: data.email.trim().toLowerCase(),
         phone: data.phone,
         address: data.address,
         image: data.image,
         nationalId: data.nationalId,
-        type: data.type,
-        roleId: data.roleId,
+        type: data.type as UserType,
+        roleId,
         isActive: data.isActive ?? true,
+        passwordHash,
       });
+      return sanitizeUser(user);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new BadRequestException(
@@ -63,11 +63,17 @@ export class UsersService {
     }
   }
 
-  async update(id: number, data: UpdateUserDto): Promise<User> {
+  async update(id: number, data: UpdateUserDto): Promise<SafeUser> {
     await this.findOne(id);
 
-    if (data.roleId !== undefined) {
-      await this.requireRole(data.roleId);
+    let roleId: number | undefined;
+    if (data.type !== undefined) {
+      roleId = await resolveRoleIdForType(this.prisma, data.type as UserTypeName);
+    }
+
+    let passwordHash: string | undefined;
+    if (data.password !== undefined) {
+      passwordHash = await hashPassword(data.password);
     }
 
     try {
@@ -78,14 +84,15 @@ export class UsersService {
             username: data.username,
             firstName: data.firstName,
             lastName: data.lastName,
-            email: data.email,
+            email: data.email?.trim().toLowerCase(),
             phone: data.phone,
             address: data.address,
             image: data.image,
             nationalId: data.nationalId,
-            type: data.type,
-            roleId: data.roleId,
+            type: data.type as UserType | undefined,
+            roleId,
             isActive: data.isActive,
+            passwordHash,
           }),
         );
 
@@ -93,7 +100,7 @@ export class UsersService {
         throw new NotFoundException(`User with id ${id} not found`);
       }
 
-      return user;
+      return sanitizeUser(user);
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new BadRequestException(
@@ -105,7 +112,7 @@ export class UsersService {
     }
   }
 
-  async remove(id: number): Promise<User> {
+  async remove(id: number): Promise<SafeUser> {
     await this.findOne(id);
 
     const user = await this.prisma.db.orm.public.User.where({ id }).delete();
@@ -114,6 +121,6 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    return user;
+    return sanitizeUser(user);
   }
 }

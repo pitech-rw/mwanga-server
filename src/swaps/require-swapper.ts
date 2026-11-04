@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { PrismaService } from '../prisma.service.js';
 
-const swapOperatorTypes = new Set(['swapper', 'office', 'agent']);
+const swapOperatorTypes = new Set(['swapper', 'office']);
 
 export async function requireSwapper(prisma: PrismaService, swapperId: number) {
   const user = await prisma.db.orm.public.User.first({ id: swapperId });

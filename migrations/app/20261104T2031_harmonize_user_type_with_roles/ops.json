@@ -1,0 +1,155 @@
+[
+  {
+    "id": "dropCheckConstraint.User.User_type_check_d69fdc33",
+    "label": "Drop check constraint \"User_type_check_d69fdc33\" on \"User\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "User_type_check_d69fdc33",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"User_type_check_d69fdc33\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "User_type_check_d69fdc33",
+          "public",
+          "\"public\".\"User\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"User_type_check_d69fdc33\" on \"User\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop check constraint \"User_type_check_d69fdc33\"",
+        "sql": "ALTER TABLE \"public\".\"User\" DROP CONSTRAINT \"User_type_check_d69fdc33\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"User_type_check_d69fdc33\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "User_type_check_d69fdc33",
+          "public",
+          "\"public\".\"User\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"User_type_check_d69fdc33\" on \"User\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "removeStoredValue.User.type.customer",
+    "label": "Remove value \"customer\" from column \"type\" of \"User\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "type",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"type\" of \"User\" takes NULL, or no row holds \"customer\" in it",
+        "sql": "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $2 AND column_name = $3 AND is_nullable = 'YES') OR NOT EXISTS (SELECT 1 FROM \"public\".\"User\" WHERE \"type\" = $1) AS result",
+        "params": [
+          "customer",
+          "User",
+          "type"
+        ],
+        "meta": {
+          "rowsHoldingValue": {
+            "enumValue": {
+              "namespaceId": "public",
+              "enum": "UserType",
+              "member": "customer"
+            },
+            "value": "customer",
+            "codecRef": {
+              "codecId": "pg/text@1"
+            }
+          }
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "remove value \"customer\" from column \"type\"",
+        "sql": "UPDATE \"public\".\"User\" SET \"type\" = NULL WHERE \"type\" = $1",
+        "params": [
+          "customer"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify no row of \"User\" holds value \"customer\" in column \"type\"",
+        "sql": "SELECT NOT EXISTS (SELECT 1 FROM \"public\".\"User\" WHERE \"type\" = $1) AS result",
+        "params": [
+          "customer"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.User.User_type_check_8eb0021c",
+    "label": "Add check constraint \"User_type_check_8eb0021c\" on \"User\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "User_type_check_8eb0021c",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"User_type_check_8eb0021c\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "User_type_check_8eb0021c",
+          "public",
+          "\"public\".\"User\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"User_type_check_8eb0021c\" on \"User\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"User_type_check_8eb0021c\"",
+        "sql": "ALTER TABLE \"public\".\"User\" ADD CONSTRAINT \"User_type_check_8eb0021c\" CHECK (\"type\" IN ('admin', 'office', 'office_manager', 'swapper', 'agent', 'rider', 'viewer'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify check constraint \"User_type_check_8eb0021c\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4)) AS \"result\"",
+        "params": [
+          "User_type_check_8eb0021c",
+          "public",
+          "\"public\".\"User\"",
+          "c"
+        ]
+      }
+    ]
+  }
+]

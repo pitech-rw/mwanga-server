@@ -8,7 +8,9 @@ import { configureApp } from './../src/configure-app.js';
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
+    process.env.JWT_SECRET ??= 'e2e-test-jwt-secret-minimum-length';
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -18,14 +20,15 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  it('/ (GET) requires authentication', () => {
+    return request(app.getHttpServer()).get('/').expect(401);
   });
 
-  afterEach(async () => {
+  it('/health (GET) is public', () => {
+    return request(app.getHttpServer()).get('/health').expect(200);
+  });
+
+  afterAll(async () => {
     await app.close();
   });
 });

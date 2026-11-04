@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { AuthModule } from './auth/auth.module.js';
+import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
+import { PermissionsGuard } from './auth/permissions.guard.js';
 import { BatteriesModule } from './batteries/batteries.module.js';
 import { BikesModule } from './bikes/bikes.module.js';
 import { CardsModule } from './cards/cards.module.js';
@@ -20,6 +24,7 @@ import { WalletsModule } from './wallets/wallets.module.js';
       isGlobal: true,
     }),
     PrismaModule,
+    AuthModule,
     UsersModule,
     RolesModule,
     OwnersModule,
@@ -32,6 +37,17 @@ import { WalletsModule } from './wallets/wallets.module.js';
     SwapsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    PermissionsGuard,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
+    },
+  ],
 })
 export class AppModule {}

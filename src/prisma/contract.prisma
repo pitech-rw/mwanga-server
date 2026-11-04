@@ -1,29 +1,33 @@
 // use prisma-8
 
 enum UserType {
-  rider
+  admin
   office
+  office_manager
   swapper
   agent
-  customer
+  rider
+  viewer
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  username   String   @unique
-  firstName  String
-  lastName   String
-  email      String   @unique
-  phone      String?  @unique
-  address    String?
-  image      String?
-  nationalId String?  @unique
-  type       UserType
-  roleId     Int
-  role       Role     @relation(fields: [roleId], references: [id])
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @onCreate(now()) @onUpdate(now())
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  firstName    String
+  lastName     String
+  email        String    @unique
+  phone        String?   @unique
+  address      String?
+  image        String?
+  nationalId   String?   @unique
+  passwordHash String?
+  lastLoginAt  DateTime?
+  type         UserType
+  roleId       Int
+  role         Role      @relation(fields: [roleId], references: [id])
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @onCreate(now()) @onUpdate(now())
 
   swapsAsSwapper SwapTransaction[]
 }

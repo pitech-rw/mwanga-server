@@ -6,7 +6,17 @@ export function configureSwagger(app: INestApplication) {
     .setTitle('Mwanga API')
     .setDescription('Battery swap and fleet management REST API')
     .setVersion('0.0.1')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Obtain a token from POST /auth/login',
+      },
+      'JWT-auth',
+    )
     .addTag('App', 'Root and health checks')
+    .addTag('Auth', 'Sign in and session')
     .addTag('Batteries')
     .addTag('Bikes')
     .addTag('Cards', 'NFC cards')

@@ -3,6 +3,7 @@ import { asNumeric } from '../prisma/errors.js';
 import type { SwapStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
+import { recordBatteryReading } from './record-battery-reading.js';
 
 @Injectable()
 export class AssignmentService {
@@ -14,7 +15,8 @@ export class AssignmentService {
       .include('station')
       .include('card')
       .include('oldBattery')
-      .include('newBattery');
+      .include('newBattery')
+      .include('readings');
   }
 
   async assignBattery(dto: AssignBatteryDto) {
@@ -75,14 +77,15 @@ export class AssignmentService {
           cardId: activeCard.id,
           oldBatteryId: bike.currentBatteryId,
           newBatteryId: availableBattery.id,
-          oldBatterySoc: bike.currentBattery?.soc,
-          newBatterySoc: availableBattery.soc,
           status: 'assigned',
           paymentStatus: 'pending',
           fee: asNumeric(dto.fee ?? 0),
           walletBalanceAfter: asNumeric(rider.wallet?.balance ?? 0),
           notes: dto.notes ?? 'Battery assigned by system',
         });
+
+      await recordBatteryReading(tx, created.id, bike.currentBatteryId, 'in');
+      await recordBatteryReading(tx, created.id, availableBattery.id, 'out');
 
       await tx.orm.public.Battery.where({ id: availableBattery.id }).update({
         status: 'assigned',
@@ -98,7 +101,20 @@ export class AssignmentService {
         details: `Battery ${availableBattery.serialNumber} assigned to rider ${rider.id} at station ${station.code}`,
       });
 
-      return created;
+      const recorded = await tx.orm.public.SwapTransaction.include('rider')
+        .include('bike')
+        .include('station')
+        .include('card')
+        .include('oldBattery')
+        .include('newBattery')
+        .include('readings')
+        .first({ id: created.id });
+
+      if (!recorded) {
+        throw new NotFoundException(`Swap transaction with id ${created.id} not found`);
+      }
+
+      return recorded;
     });
 
     return {
@@ -173,6 +189,7 @@ export class AssignmentService {
         .include('card')
         .include('oldBattery')
         .include('newBattery')
+        .include('readings')
         .update({
           status: nextStatus,
           completedAt:

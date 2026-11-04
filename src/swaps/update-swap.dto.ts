@@ -1,4 +1,4 @@
-import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateSwapDto {
   @IsOptional()
@@ -24,18 +24,6 @@ export class UpdateSwapDto {
   @IsOptional()
   @IsNumber()
   newBatteryId?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(100)
-  oldBatterySoc?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(100)
-  newBatterySoc?: number;
 
   @IsOptional()
   @IsString()

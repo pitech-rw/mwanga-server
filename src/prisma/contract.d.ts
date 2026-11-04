@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'bf11e0e4d790f38c01ae697aad778cd2457e9cc864fbe1dce0a66c193811a107'>;
+  StorageHashBase<'e50ff1f421e1efb4c4fb866aeacbf41bb92390699be8e137143324b862607000'>;
 export type ExecutionHash =
   ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
@@ -278,6 +278,9 @@ type ParameterizedOutputTypeFunctions = PgParameterizedOutputTypes;
 type FieldTypeOverrides = {
   readonly public: {
     readonly models: {
+      readonly BatteryReading: {
+        readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
+      };
       readonly SwapTransaction: {
         readonly paymentStatus: {
           readonly output: 'pending' | 'captured' | 'failed' | 'reversed';
@@ -331,6 +334,9 @@ export type FieldInputTypes = FieldTypesFromDomain<
 >;
 type ColumnTypeOverrides = {
   readonly public: {
+    readonly BatteryReading: {
+      readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
+    };
     readonly SwapTransaction: {
       readonly paymentStatus: {
         readonly output: 'pending' | 'captured' | 'failed' | 'reversed';
@@ -411,8 +417,24 @@ export namespace Models {
     bike: public_Bike | null;
     newSwapTransactions: public_SwapTransaction[];
     oldSwapTransactions: public_SwapTransaction[];
+    readings: public_BatteryReading[];
     station: public_Station | null;
-    readonly [RelationKeys]?: 'bike' | 'newSwapTransactions' | 'oldSwapTransactions' | 'station';
+    readonly [RelationKeys]?:
+      'bike' | 'newSwapTransactions' | 'oldSwapTransactions' | 'readings' | 'station';
+  };
+  export type public_BatteryReading = {
+    batteryId: FieldOutputTypes['public']['BatteryReading']['batteryId'];
+    cycleCount: FieldOutputTypes['public']['BatteryReading']['cycleCount'];
+    direction: FieldOutputTypes['public']['BatteryReading']['direction'];
+    id: FieldOutputTypes['public']['BatteryReading']['id'];
+    recordedAt: FieldOutputTypes['public']['BatteryReading']['recordedAt'];
+    soc: FieldOutputTypes['public']['BatteryReading']['soc'];
+    soh: FieldOutputTypes['public']['BatteryReading']['soh'];
+    swapTransactionId: FieldOutputTypes['public']['BatteryReading']['swapTransactionId'];
+    voltage: FieldOutputTypes['public']['BatteryReading']['voltage'];
+    battery: public_Battery;
+    swapTransaction: public_SwapTransaction;
+    readonly [RelationKeys]?: 'battery' | 'swapTransaction';
   };
   export type public_Bike = {
     chassisNumber: FieldOutputTypes['public']['Bike']['chassisNumber'];
@@ -521,10 +543,8 @@ export namespace Models {
     fee: FieldOutputTypes['public']['SwapTransaction']['fee'];
     id: FieldOutputTypes['public']['SwapTransaction']['id'];
     newBatteryId: FieldOutputTypes['public']['SwapTransaction']['newBatteryId'];
-    newBatterySoc: FieldOutputTypes['public']['SwapTransaction']['newBatterySoc'];
     notes: FieldOutputTypes['public']['SwapTransaction']['notes'];
     oldBatteryId: FieldOutputTypes['public']['SwapTransaction']['oldBatteryId'];
-    oldBatterySoc: FieldOutputTypes['public']['SwapTransaction']['oldBatterySoc'];
     paymentReference: FieldOutputTypes['public']['SwapTransaction']['paymentReference'];
     paymentStatus: FieldOutputTypes['public']['SwapTransaction']['paymentStatus'];
     riderId: FieldOutputTypes['public']['SwapTransaction']['riderId'];
@@ -538,6 +558,7 @@ export namespace Models {
     ledgerEntries: public_LedgerEntry[];
     newBattery: public_Battery | null;
     oldBattery: public_Battery | null;
+    readings: public_BatteryReading[];
     rider: public_Rider;
     station: public_Station;
     readonly [RelationKeys]?:
@@ -547,6 +568,7 @@ export namespace Models {
       | 'ledgerEntries'
       | 'newBattery'
       | 'oldBattery'
+      | 'readings'
       | 'rider'
       | 'station';
   };
@@ -584,6 +606,7 @@ export declare const models: {
   public: {
     AuditLog: Models.public_AuditLog;
     Battery: Models.public_Battery;
+    BatteryReading: Models.public_BatteryReading;
     Bike: Models.public_Bike;
     LedgerEntry: Models.public_LedgerEntry;
     NfcCard: Models.public_NfcCard;
@@ -836,6 +859,112 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Station';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly BatteryReading: {
+              columns: {
+                readonly batteryId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly cycleCount: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly direction: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly recordedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly soc: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly soh: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly swapTransactionId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly voltage: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['swapTransactionId', 'direction'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'BatteryReading_batteryId_idx_87376261';
+                  readonly prefix: 'BatteryReading_batteryId_idx';
+                  readonly columns: readonly ['batteryId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'BatteryReading_swapTransactionId_idx_64f4df5e';
+                  readonly prefix: 'BatteryReading_swapTransactionId_idx';
+                  readonly columns: readonly ['swapTransactionId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'BatteryReading';
+                    readonly columns: readonly ['batteryId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Battery';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'BatteryReading';
+                    readonly columns: readonly ['swapTransactionId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'SwapTransaction';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -1516,12 +1645,6 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
-                readonly newBatterySoc: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
                 readonly notes: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1529,12 +1652,6 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly oldBatteryId: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
-                readonly oldBatterySoc: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: true;
@@ -1919,6 +2036,10 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['pending', 'captured', 'failed', 'reversed'];
             };
+            readonly ReadingDirection: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['in', 'out'];
+            };
             readonly SwapStatus: {
               readonly kind: 'valueSet';
               readonly values: readonly [
@@ -1949,6 +2070,10 @@ type ContractBase = Omit<
   readonly roots: {
     readonly AuditLog: { readonly namespace: 'public' & NamespaceId; readonly model: 'AuditLog' };
     readonly Battery: { readonly namespace: 'public' & NamespaceId; readonly model: 'Battery' };
+    readonly BatteryReading: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'BatteryReading';
+    };
     readonly Bike: { readonly namespace: 'public' & NamespaceId; readonly model: 'Bike' };
     readonly LedgerEntry: {
       readonly namespace: 'public' & NamespaceId;
@@ -2141,6 +2266,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['oldBatteryId'];
                 };
               };
+              readonly readings: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'BatteryReading';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['batteryId'];
+                };
+              };
               readonly station: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -2171,6 +2307,91 @@ type ContractBase = Omit<
                 readonly stationId: { readonly column: 'stationId' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly voltage: { readonly column: 'voltage' };
+              };
+            };
+          };
+          readonly BatteryReading: {
+            readonly fields: {
+              readonly batteryId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly cycleCount: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly direction: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly recordedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly soc: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly soh: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly swapTransactionId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly voltage: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+            };
+            readonly relations: {
+              readonly battery: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Battery';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['batteryId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly swapTransaction: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'SwapTransaction';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['swapTransactionId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'BatteryReading';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly batteryId: { readonly column: 'batteryId' };
+                readonly cycleCount: { readonly column: 'cycleCount' };
+                readonly direction: { readonly column: 'direction' };
+                readonly id: { readonly column: 'id' };
+                readonly recordedAt: { readonly column: 'recordedAt' };
+                readonly soc: { readonly column: 'soc' };
+                readonly soh: { readonly column: 'soh' };
+                readonly swapTransactionId: { readonly column: 'swapTransactionId' };
                 readonly voltage: { readonly column: 'voltage' };
               };
             };
@@ -2846,19 +3067,11 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
-              readonly newBatterySoc: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
               readonly notes: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly oldBatteryId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly oldBatterySoc: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
@@ -2967,6 +3180,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly readings: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'BatteryReading';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['swapTransactionId'];
+                };
+              };
               readonly rider: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3003,10 +3227,8 @@ type ContractBase = Omit<
                 readonly fee: { readonly column: 'fee' };
                 readonly id: { readonly column: 'id' };
                 readonly newBatteryId: { readonly column: 'newBatteryId' };
-                readonly newBatterySoc: { readonly column: 'newBatterySoc' };
                 readonly notes: { readonly column: 'notes' };
                 readonly oldBatteryId: { readonly column: 'oldBatteryId' };
-                readonly oldBatterySoc: { readonly column: 'oldBatterySoc' };
                 readonly paymentReference: { readonly column: 'paymentReference' };
                 readonly paymentStatus: { readonly column: 'paymentStatus' };
                 readonly riderId: { readonly column: 'riderId' };
@@ -3193,6 +3415,13 @@ type ContractBase = Omit<
               { readonly name: 'reversed'; readonly value: 'reversed' },
             ];
           };
+          readonly ReadingDirection: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'in'; readonly value: 'in' },
+              { readonly name: 'out'; readonly value: 'out' },
+            ];
+          };
           readonly SwapStatus: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -3223,6 +3452,10 @@ type ContractBase = Omit<
             { readonly name: 'captured'; readonly value: 'captured' },
             { readonly name: 'failed'; readonly value: 'failed' },
             { readonly name: 'reversed'; readonly value: 'reversed' },
+          ];
+          readonly ReadingDirection: readonly [
+            { readonly name: 'in'; readonly value: 'in' },
+            { readonly name: 'out'; readonly value: 'out' },
           ];
           readonly SwapStatus: readonly [
             { readonly name: 'initiated'; readonly value: 'initiated' },

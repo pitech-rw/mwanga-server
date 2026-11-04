@@ -12,6 +12,10 @@
       "model": "Battery",
       "namespace": "public"
     },
+    "BatteryReading": {
+      "model": "BatteryReading",
+      "namespace": "public"
+    },
     "Bike": {
       "model": "Bike",
       "namespace": "public"
@@ -79,6 +83,19 @@
               {
                 "name": "reversed",
                 "value": "reversed"
+              }
+            ]
+          },
+          "ReadingDirection": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "in",
+                "value": "in"
+              },
+              {
+                "name": "out",
+                "value": "out"
               }
             ]
           },
@@ -411,6 +428,21 @@
                   "namespace": "public"
                 }
               },
+              "readings": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "batteryId"
+                  ]
+                },
+                "to": {
+                  "model": "BatteryReading",
+                  "namespace": "public"
+                }
+              },
               "station": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -475,6 +507,149 @@
               },
               "namespaceId": "public",
               "table": "Battery"
+            }
+          },
+          "BatteryReading": {
+            "fields": {
+              "batteryId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "cycleCount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "direction": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ReadingDirection",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "recordedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "soc": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "soh": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "swapTransactionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "voltage": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "battery": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "batteryId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Battery",
+                  "namespace": "public"
+                }
+              },
+              "swapTransaction": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "swapTransactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "batteryId": {
+                  "column": "batteryId"
+                },
+                "cycleCount": {
+                  "column": "cycleCount"
+                },
+                "direction": {
+                  "column": "direction"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "recordedAt": {
+                  "column": "recordedAt"
+                },
+                "soc": {
+                  "column": "soc"
+                },
+                "soh": {
+                  "column": "soh"
+                },
+                "swapTransactionId": {
+                  "column": "swapTransactionId"
+                },
+                "voltage": {
+                  "column": "voltage"
+                }
+              },
+              "namespaceId": "public",
+              "table": "BatteryReading"
             }
           },
           "Bike": {
@@ -1524,13 +1699,6 @@
                   "kind": "scalar"
                 }
               },
-              "newBatterySoc": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "notes": {
                 "nullable": true,
                 "type": {
@@ -1539,13 +1707,6 @@
                 }
               },
               "oldBatteryId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "oldBatterySoc": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
@@ -1716,6 +1877,21 @@
                   "namespace": "public"
                 }
               },
+              "readings": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "swapTransactionId"
+                  ]
+                },
+                "to": {
+                  "model": "BatteryReading",
+                  "namespace": "public"
+                }
+              },
               "rider": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -1772,17 +1948,11 @@
                 "newBatteryId": {
                   "column": "newBatteryId"
                 },
-                "newBatterySoc": {
-                  "column": "newBatterySoc"
-                },
                 "notes": {
                   "column": "notes"
                 },
                 "oldBatteryId": {
                   "column": "oldBatteryId"
-                },
-                "oldBatterySoc": {
-                  "column": "oldBatterySoc"
                 },
                 "paymentReference": {
                   "column": "paymentReference"
@@ -2340,6 +2510,150 @@
                 {
                   "columns": [
                     "serialNumber"
+                  ]
+                }
+              ]
+            },
+            "BatteryReading": {
+              "checks": [
+                {
+                  "expression": "\"direction\" IN ('in', 'out')",
+                  "name": "BatteryReading_direction_check_57535cc1",
+                  "prefix": "BatteryReading_direction_check"
+                }
+              ],
+              "columns": {
+                "batteryId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "cycleCount": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "direction": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ReadingDirection",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "recordedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "soc": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "soh": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "swapTransactionId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "voltage": {
+                  "codecId": "pg/float8@1",
+                  "dataType": "pg/float8",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "BatteryReading_batteryId_idx_87376261"
+                  },
+                  "source": {
+                    "columns": [
+                      "batteryId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "BatteryReading"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Battery"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "BatteryReading_swapTransactionId_idx_64f4df5e"
+                  },
+                  "source": {
+                    "columns": [
+                      "swapTransactionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "BatteryReading"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "SwapTransaction"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "batteryId"
+                  ],
+                  "name": "BatteryReading_batteryId_idx_87376261",
+                  "prefix": "BatteryReading_batteryId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "swapTransactionId"
+                  ],
+                  "name": "BatteryReading_swapTransactionId_idx_64f4df5e",
+                  "prefix": "BatteryReading_swapTransactionId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "swapTransactionId",
+                    "direction"
                   ]
                 }
               ]
@@ -3173,22 +3487,12 @@
                   "dataType": "pg/int4",
                   "nullable": true
                 },
-                "newBatterySoc": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
-                },
                 "notes": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
                 },
                 "oldBatteryId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
-                },
-                "oldBatterySoc": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": true
@@ -3703,6 +4007,13 @@
                 "reversed"
               ]
             },
+            "ReadingDirection": {
+              "kind": "valueSet",
+              "values": [
+                "in",
+                "out"
+              ]
+            },
             "SwapStatus": {
               "kind": "valueSet",
               "values": [
@@ -3732,7 +4043,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "bf11e0e4d790f38c01ae697aad778cd2457e9cc864fbe1dce0a66c193811a107"
+    "storageHash": "e50ff1f421e1efb4c4fb866aeacbf41bb92390699be8e137143324b862607000"
   },
   "execution": {
     "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",

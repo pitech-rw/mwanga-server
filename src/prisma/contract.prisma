@@ -60,6 +60,11 @@ enum PaymentStatus {
   reversed
 }
 
+enum ReadingDirection {
+  in
+  out
+}
+
 model Owner {
   id        Int      @id @default(autoincrement())
   name      String
@@ -146,6 +151,7 @@ model Battery {
   bike                Bike?             @relation("CurrentBattery")
   oldSwapTransactions SwapTransaction[] @relation("OldBattery")
   newSwapTransactions SwapTransaction[] @relation("NewBattery")
+  readings            BatteryReading[]
 }
 
 model NfcCard {
@@ -181,8 +187,6 @@ model SwapTransaction {
   cardId            Int
   oldBatteryId      Int?
   newBatteryId      Int?
-  oldBatterySoc     Int?
-  newBatterySoc     Int?
   status            SwapStatus    @default(initiated)
   paymentStatus     PaymentStatus @default(pending)
   fee               Numeric(10, 2)       @default(0)
@@ -199,8 +203,26 @@ model SwapTransaction {
   card         NfcCard       @relation(fields: [cardId], references: [id])
   oldBattery   Battery?      @relation("OldBattery", fields: [oldBatteryId], references: [id])
   newBattery   Battery?      @relation("NewBattery", fields: [newBatteryId], references: [id])
+  readings     BatteryReading[]
   ledgerEntries LedgerEntry[]
   auditLogs    AuditLog[]
+}
+
+model BatteryReading {
+  id                Int              @id @default(autoincrement())
+  batteryId         Int
+  swapTransactionId Int
+  direction         ReadingDirection
+  soc               Int
+  soh               Int
+  voltage           Float?
+  cycleCount        Int
+  recordedAt        DateTime         @default(now())
+
+  battery         Battery         @relation(fields: [batteryId], references: [id])
+  swapTransaction SwapTransaction @relation(fields: [swapTransactionId], references: [id])
+
+  @@unique([swapTransactionId, direction])
 }
 
 model LedgerEntry {

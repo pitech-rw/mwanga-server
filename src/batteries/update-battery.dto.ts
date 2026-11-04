@@ -14,6 +14,11 @@ export class UpdateBatteryDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(80)
+  oem?: string;
+
+  @IsOptional()
+  @IsString()
   @MinLength(2)
   @MaxLength(120)
   model?: string;
@@ -39,6 +44,16 @@ export class UpdateBatteryDto {
   @Min(0)
   @Max(100)
   soh?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  cycleCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  voltage?: number;
 
   @IsOptional()
   @IsNumber()

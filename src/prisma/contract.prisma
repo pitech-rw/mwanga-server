@@ -96,11 +96,14 @@ model Battery {
   id              Int      @id @default(autoincrement())
   serialNumber    String   @unique
   manufacturer    String?
+  oem             String?
   model           String
   batteryType     String   @default("lithium")
   status          String   @default("available")
   soc             Int      @default(100)
   soh             Int      @default(100)
+  cycleCount      Int      @default(0)
+  voltage         Float?
   stationId       Int?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @onCreate(now()) @onUpdate(now())

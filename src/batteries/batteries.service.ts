@@ -32,11 +32,14 @@ export class BatteriesService {
       return await this.prisma.db.orm.public.Battery.include('station').create({
         serialNumber: data.serialNumber,
         manufacturer: data.manufacturer,
+        oem: data.oem,
         model: data.model,
         batteryType: data.batteryType ?? 'lithium',
         status: data.status ?? 'available',
         soc: data.soc ?? 100,
         soh: data.soh ?? 100,
+        cycleCount: data.cycleCount ?? 0,
+        voltage: data.voltage,
         stationId: data.stationId,
       });
     } catch (error) {
@@ -58,11 +61,14 @@ export class BatteriesService {
           withoutUndefined({
             serialNumber: data.serialNumber,
             manufacturer: data.manufacturer,
+            oem: data.oem,
             model: data.model,
             batteryType: data.batteryType,
             status: data.status,
             soc: data.soc,
             soh: data.soh,
+            cycleCount: data.cycleCount,
+            voltage: data.voltage,
             stationId: data.stationId,
           }),
         );

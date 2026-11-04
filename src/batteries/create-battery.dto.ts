@@ -11,6 +11,11 @@ export class CreateBatteryDto {
   @MaxLength(80)
   manufacturer?: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  oem?: string;
+
   @IsString()
   @MinLength(2)
   @MaxLength(120)
@@ -37,6 +42,16 @@ export class CreateBatteryDto {
   @Min(0)
   @Max(100)
   soh?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  cycleCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  voltage?: number;
 
   @IsOptional()
   @IsNumber()

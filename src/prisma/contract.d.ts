@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'447378fdf65505d956c456304ad287dabbb2afa24d98e00df6b9579c771d4d5a'>;
+  StorageHashBase<'4233901a6ce3f7c1649d7c502e5fd8aa2ae89c9d5850b2fd1794de1e3362fbf9'>;
 export type ExecutionHash =
   ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
@@ -384,15 +384,18 @@ export namespace Models {
   export type public_Battery = {
     batteryType: FieldOutputTypes['public']['Battery']['batteryType'];
     createdAt: FieldOutputTypes['public']['Battery']['createdAt'];
+    cycleCount: FieldOutputTypes['public']['Battery']['cycleCount'];
     id: FieldOutputTypes['public']['Battery']['id'];
     manufacturer: FieldOutputTypes['public']['Battery']['manufacturer'];
     model: FieldOutputTypes['public']['Battery']['model'];
+    oem: FieldOutputTypes['public']['Battery']['oem'];
     serialNumber: FieldOutputTypes['public']['Battery']['serialNumber'];
     soc: FieldOutputTypes['public']['Battery']['soc'];
     soh: FieldOutputTypes['public']['Battery']['soh'];
     stationId: FieldOutputTypes['public']['Battery']['stationId'];
     status: FieldOutputTypes['public']['Battery']['status'];
     updatedAt: FieldOutputTypes['public']['Battery']['updatedAt'];
+    voltage: FieldOutputTypes['public']['Battery']['voltage'];
     bike: public_Bike | null;
     newSwapTransactions: public_SwapTransaction[];
     oldSwapTransactions: public_SwapTransaction[];
@@ -677,6 +680,16 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
+                readonly cycleCount: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
+                  readonly many: false;
+                };
                 readonly id: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
@@ -697,6 +710,12 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly oem: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly serialNumber: {
@@ -746,6 +765,12 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly voltage: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
               };
@@ -1803,6 +1828,10 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                 };
               };
+              readonly cycleCount: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -1813,6 +1842,10 @@ type ContractBase = Omit<
               };
               readonly model: {
                 readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly oem: {
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly serialNumber: {
@@ -1842,6 +1875,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly typeParams: { readonly precision: 3 };
                 };
+              };
+              readonly voltage: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
               };
             };
             readonly relations: {
@@ -1895,15 +1932,18 @@ type ContractBase = Omit<
               readonly fields: {
                 readonly batteryType: { readonly column: 'batteryType' };
                 readonly createdAt: { readonly column: 'createdAt' };
+                readonly cycleCount: { readonly column: 'cycleCount' };
                 readonly id: { readonly column: 'id' };
                 readonly manufacturer: { readonly column: 'manufacturer' };
                 readonly model: { readonly column: 'model' };
+                readonly oem: { readonly column: 'oem' };
                 readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly soc: { readonly column: 'soc' };
                 readonly soh: { readonly column: 'soh' };
                 readonly stationId: { readonly column: 'stationId' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly voltage: { readonly column: 'voltage' };
               };
             };
           };

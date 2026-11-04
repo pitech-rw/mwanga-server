@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -16,17 +17,21 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { PERMISSIONS } from '../auth/permission-catalog.js';
+import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { Station } from '../prisma/types.js';
 import { CreateStationDto } from './create-station.dto.js';
 import { UpdateStationDto } from './update-station.dto.js';
 import { StationsService } from './stations.service.js';
 
+@ApiBearerAuth('JWT-auth')
 @ApiTags('Stations')
 @Controller('stations')
 export class StationsController {
   constructor(private readonly stationsService: StationsService) {}
 
   @Get()
+  @RequirePermissions(PERMISSIONS.stations.read)
   @ApiOperation({ summary: 'List all swap stations' })
   @ApiOkResponse({ description: 'All stations' })
   findAll(): Promise<Station[]> {
@@ -34,6 +39,7 @@ export class StationsController {
   }
 
   @Get(':id')
+  @RequirePermissions(PERMISSIONS.stations.read)
   @ApiOperation({ summary: 'Get station by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Station record' })
@@ -43,6 +49,7 @@ export class StationsController {
   }
 
   @Post()
+  @RequirePermissions(PERMISSIONS.stations.write)
   @ApiOperation({ summary: 'Create a swap station' })
   @ApiCreatedResponse({ description: 'Created station' })
   create(@Body() createStationDto: CreateStationDto): Promise<Station> {
@@ -50,6 +57,7 @@ export class StationsController {
   }
 
   @Patch(':id')
+  @RequirePermissions(PERMISSIONS.stations.write)
   @ApiOperation({ summary: 'Update a swap station' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Updated station' })
@@ -62,6 +70,7 @@ export class StationsController {
   }
 
   @Delete(':id')
+  @RequirePermissions(PERMISSIONS.stations.delete)
   @ApiOperation({ summary: 'Delete a swap station' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted station' })

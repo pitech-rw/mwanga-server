@@ -140,12 +140,16 @@
             "codecId": "pg/text@1",
             "members": [
               {
-                "name": "rider",
-                "value": "rider"
+                "name": "admin",
+                "value": "admin"
               },
               {
                 "name": "office",
                 "value": "office"
+              },
+              {
+                "name": "office_manager",
+                "value": "office_manager"
               },
               {
                 "name": "swapper",
@@ -156,8 +160,12 @@
                 "value": "agent"
               },
               {
-                "name": "customer",
-                "value": "customer"
+                "name": "rider",
+                "value": "rider"
+              },
+              {
+                "name": "viewer",
+                "value": "viewer"
               }
             ]
           }
@@ -2125,6 +2133,16 @@
                   "kind": "scalar"
                 }
               },
+              "lastLoginAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
               "lastName": {
                 "nullable": false,
                 "type": {
@@ -2133,6 +2151,13 @@
                 }
               },
               "nationalId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "passwordHash": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
@@ -2240,11 +2265,17 @@
                 "isActive": {
                   "column": "isActive"
                 },
+                "lastLoginAt": {
+                  "column": "lastLoginAt"
+                },
                 "lastName": {
                   "column": "lastName"
                 },
                 "nationalId": {
                   "column": "nationalId"
+                },
+                "passwordHash": {
+                  "column": "passwordHash"
                 },
                 "phone": {
                   "column": "phone"
@@ -3918,8 +3949,8 @@
             "User": {
               "checks": [
                 {
-                  "expression": "\"type\" IN ('rider', 'office', 'swapper', 'agent', 'customer')",
-                  "name": "User_type_check_d69fdc33",
+                  "expression": "\"type\" IN ('admin', 'office', 'office_manager', 'swapper', 'agent', 'rider', 'viewer')",
+                  "name": "User_type_check_8eb0021c",
                   "prefix": "User_type_check"
                 }
               ],
@@ -3974,12 +4005,25 @@
                   },
                   "nullable": false
                 },
+                "lastLoginAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
                 "lastName": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
                 },
                 "nationalId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "passwordHash": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
@@ -4208,11 +4252,13 @@
             "UserType": {
               "kind": "valueSet",
               "values": [
-                "rider",
+                "admin",
                 "office",
+                "office_manager",
                 "swapper",
                 "agent",
-                "customer"
+                "rider",
+                "viewer"
               ]
             }
           }
@@ -4221,7 +4267,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "c926b7fcc80c17523d8668473e654350526a31ea617d29339754fac029e5b9e7"
+    "storageHash": "6d58290afa308a8abbee6e13f4c7cd58b37b5f43523116b2595f892a311507a0"
   },
   "execution": {
     "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",

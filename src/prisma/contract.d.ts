@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'c926b7fcc80c17523d8668473e654350526a31ea617d29339754fac029e5b9e7'>;
+  StorageHashBase<'6d58290afa308a8abbee6e13f4c7cd58b37b5f43523116b2595f892a311507a0'>;
 export type ExecutionHash =
   ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
@@ -309,8 +309,10 @@ type FieldTypeOverrides = {
       };
       readonly User: {
         readonly type: {
-          readonly output: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
-          readonly input: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
+          readonly output:
+            'admin' | 'office' | 'office_manager' | 'swapper' | 'agent' | 'rider' | 'viewer';
+          readonly input:
+            'admin' | 'office' | 'office_manager' | 'swapper' | 'agent' | 'rider' | 'viewer';
         };
       };
     };
@@ -365,8 +367,10 @@ type ColumnTypeOverrides = {
     };
     readonly User: {
       readonly type: {
-        readonly output: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
-        readonly input: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
+        readonly output:
+          'admin' | 'office' | 'office_manager' | 'swapper' | 'agent' | 'rider' | 'viewer';
+        readonly input:
+          'admin' | 'office' | 'office_manager' | 'swapper' | 'agent' | 'rider' | 'viewer';
       };
     };
   };
@@ -588,8 +592,10 @@ export namespace Models {
     id: FieldOutputTypes['public']['User']['id'];
     image: FieldOutputTypes['public']['User']['image'];
     isActive: FieldOutputTypes['public']['User']['isActive'];
+    lastLoginAt: FieldOutputTypes['public']['User']['lastLoginAt'];
     lastName: FieldOutputTypes['public']['User']['lastName'];
     nationalId: FieldOutputTypes['public']['User']['nationalId'];
+    passwordHash: FieldOutputTypes['public']['User']['passwordHash'];
     phone: FieldOutputTypes['public']['User']['phone'];
     roleId: FieldOutputTypes['public']['User']['roleId'];
     type: FieldOutputTypes['public']['User']['type'];
@@ -1951,6 +1957,13 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly lastLoginAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
                 readonly lastName: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1958,6 +1971,12 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly nationalId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly passwordHash: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
@@ -2123,7 +2142,15 @@ type ContractBase = Omit<
             };
             readonly UserType: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['rider', 'office', 'swapper', 'agent', 'customer'];
+              readonly values: readonly [
+                'admin',
+                'office',
+                'office_manager',
+                'swapper',
+                'agent',
+                'rider',
+                'viewer',
+              ];
             };
           };
         };
@@ -3400,11 +3427,23 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
+              readonly lastLoginAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
               readonly lastName: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly nationalId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly passwordHash: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
@@ -3466,8 +3505,10 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly image: { readonly column: 'image' };
                 readonly isActive: { readonly column: 'isActive' };
+                readonly lastLoginAt: { readonly column: 'lastLoginAt' };
                 readonly lastName: { readonly column: 'lastName' };
                 readonly nationalId: { readonly column: 'nationalId' };
+                readonly passwordHash: { readonly column: 'passwordHash' };
                 readonly phone: { readonly column: 'phone' };
                 readonly roleId: { readonly column: 'roleId' };
                 readonly type: { readonly column: 'type' };
@@ -3576,11 +3617,13 @@ type ContractBase = Omit<
           readonly UserType: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
-              { readonly name: 'rider'; readonly value: 'rider' },
+              { readonly name: 'admin'; readonly value: 'admin' },
               { readonly name: 'office'; readonly value: 'office' },
+              { readonly name: 'office_manager'; readonly value: 'office_manager' },
               { readonly name: 'swapper'; readonly value: 'swapper' },
               { readonly name: 'agent'; readonly value: 'agent' },
-              { readonly name: 'customer'; readonly value: 'customer' },
+              { readonly name: 'rider'; readonly value: 'rider' },
+              { readonly name: 'viewer'; readonly value: 'viewer' },
             ];
           };
         };
@@ -3606,11 +3649,13 @@ type ContractBase = Omit<
             { readonly name: 'reversed'; readonly value: 'reversed' },
           ];
           readonly UserType: readonly [
-            { readonly name: 'rider'; readonly value: 'rider' },
+            { readonly name: 'admin'; readonly value: 'admin' },
             { readonly name: 'office'; readonly value: 'office' },
+            { readonly name: 'office_manager'; readonly value: 'office_manager' },
             { readonly name: 'swapper'; readonly value: 'swapper' },
             { readonly name: 'agent'; readonly value: 'agent' },
-            { readonly name: 'customer'; readonly value: 'customer' },
+            { readonly name: 'rider'; readonly value: 'rider' },
+            { readonly name: 'viewer'; readonly value: 'viewer' },
           ];
         };
       };

@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
@@ -17,6 +18,8 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { PERMISSIONS } from '../auth/permission-catalog.js';
+import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { SwapTransaction } from '../prisma/types.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
 import { AssignmentService } from './assignment.service.js';
@@ -33,6 +36,7 @@ const swapCompleteActions = [
   'cancelled',
 ] as const;
 
+@ApiBearerAuth('JWT-auth')
 @ApiTags('Swaps')
 @Controller('swaps')
 export class SwapsController {
@@ -42,6 +46,7 @@ export class SwapsController {
   ) {}
 
   @Post('assign')
+  @RequirePermissions(PERMISSIONS.swaps.operate)
   @ApiOperation({
     summary: 'Start a swap by assigning a battery at a station',
     description:
@@ -54,6 +59,7 @@ export class SwapsController {
   }
 
   @Post(':id/complete/:action')
+  @RequirePermissions(PERMISSIONS.swaps.operate)
   @ApiOperation({
     summary: 'Advance or finalize a swap workflow step',
     description:
@@ -77,6 +83,7 @@ export class SwapsController {
   }
 
   @Get()
+  @RequirePermissions(PERMISSIONS.swaps.read)
   @ApiOperation({ summary: 'List all swap transactions' })
   @ApiOkResponse({ description: 'All swaps' })
   findAll(): Promise<SwapTransaction[]> {
@@ -84,6 +91,7 @@ export class SwapsController {
   }
 
   @Get(':id')
+  @RequirePermissions(PERMISSIONS.swaps.read)
   @ApiOperation({ summary: 'Get swap transaction by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Swap record' })
@@ -93,6 +101,7 @@ export class SwapsController {
   }
 
   @Post()
+  @RequirePermissions(PERMISSIONS.swaps.write)
   @ApiOperation({ summary: 'Create a swap transaction (manual / admin)' })
   @ApiCreatedResponse({ description: 'Created swap' })
   create(@Body() createSwapDto: CreateSwapDto): Promise<SwapTransaction> {
@@ -100,6 +109,7 @@ export class SwapsController {
   }
 
   @Patch(':id')
+  @RequirePermissions(PERMISSIONS.swaps.write)
   @ApiOperation({ summary: 'Update a swap transaction' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Updated swap' })
@@ -112,6 +122,7 @@ export class SwapsController {
   }
 
   @Delete(':id')
+  @RequirePermissions(PERMISSIONS.swaps.delete)
   @ApiOperation({ summary: 'Delete a swap transaction' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted swap' })

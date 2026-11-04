@@ -2,15 +2,12 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
-  IsInt,
   IsOptional,
   IsString,
   MaxLength,
-  Min,
   MinLength,
 } from 'class-validator';
-
-const userTypes = ['rider', 'office', 'swapper', 'agent', 'customer'] as const;
+import { USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -56,15 +53,16 @@ export class UpdateUserDto {
   nationalId?: string;
 
   @IsOptional()
-  @IsIn(userTypes)
-  type?: (typeof userTypes)[number];
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  roleId?: number;
+  @IsIn(USER_TYPE_NAMES)
+  type?: (typeof USER_TYPE_NAMES)[number];
 
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password?: string;
 }

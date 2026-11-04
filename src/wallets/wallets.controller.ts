@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -16,17 +17,21 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { PERMISSIONS } from '../auth/permission-catalog.js';
+import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { Wallet } from '../prisma/types.js';
 import { CreateWalletDto } from './create-wallet.dto.js';
 import { UpdateWalletDto } from './update-wallet.dto.js';
 import { WalletsService } from './wallets.service.js';
 
+@ApiBearerAuth('JWT-auth')
 @ApiTags('Wallets')
 @Controller('wallets')
 export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
   @Get()
+  @RequirePermissions(PERMISSIONS.wallets.read)
   @ApiOperation({ summary: 'List all rider wallets' })
   @ApiOkResponse({ description: 'All wallets' })
   findAll(): Promise<Wallet[]> {
@@ -34,6 +39,7 @@ export class WalletsController {
   }
 
   @Get(':id')
+  @RequirePermissions(PERMISSIONS.wallets.read)
   @ApiOperation({ summary: 'Get wallet by ID' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Wallet record' })
@@ -43,6 +49,7 @@ export class WalletsController {
   }
 
   @Post()
+  @RequirePermissions(PERMISSIONS.wallets.write)
   @ApiOperation({ summary: 'Create a wallet for a rider' })
   @ApiCreatedResponse({ description: 'Created wallet' })
   create(@Body() createWalletDto: CreateWalletDto): Promise<Wallet> {
@@ -50,6 +57,7 @@ export class WalletsController {
   }
 
   @Patch(':id')
+  @RequirePermissions(PERMISSIONS.wallets.write)
   @ApiOperation({ summary: 'Update a wallet' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Updated wallet' })
@@ -62,6 +70,7 @@ export class WalletsController {
   }
 
   @Delete(':id')
+  @RequirePermissions(PERMISSIONS.wallets.delete)
   @ApiOperation({ summary: 'Delete a wallet' })
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted wallet' })

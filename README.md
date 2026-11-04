@@ -1,5 +1,12 @@
 # Mwanga Server 
 
+## API documentation
+
+With the server running (`npm run start:dev`), open:
+
+- Swagger UI: `http://localhost:3005/api/docs`
+- OpenAPI JSON: `http://localhost:3005/api/docs-json`
+
 How to make changes to the model
 0. edit src/prisma/contract.prisma
 1. npm run contract:emit

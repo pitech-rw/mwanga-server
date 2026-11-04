@@ -1,4 +1,5 @@
 import { ValidationPipe, type INestApplication } from '@nestjs/common';
+import { configureSwagger } from './configure-swagger.js';
 
 export function configureApp(app: INestApplication) {
   app.enableCors({
@@ -12,4 +13,5 @@ export function configureApp(app: INestApplication) {
       forbidNonWhitelisted: true,
     }),
   );
+  configureSwagger(app);
 }

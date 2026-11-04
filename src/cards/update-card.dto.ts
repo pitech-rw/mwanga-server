@@ -9,6 +9,18 @@ export class UpdateCardDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(3)
+  @MaxLength(120)
+  serialNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(30)
+  type?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(20)
   status?: string;
 

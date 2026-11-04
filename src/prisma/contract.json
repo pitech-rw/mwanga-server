@@ -12,6 +12,10 @@
       "model": "Battery",
       "namespace": "public"
     },
+    "BatteryReading": {
+      "model": "BatteryReading",
+      "namespace": "public"
+    },
     "Bike": {
       "model": "Bike",
       "namespace": "public"
@@ -28,8 +32,16 @@
       "model": "Owner",
       "namespace": "public"
     },
+    "Permission": {
+      "model": "Permission",
+      "namespace": "public"
+    },
     "Rider": {
       "model": "Rider",
+      "namespace": "public"
+    },
+    "Role": {
+      "model": "Role",
       "namespace": "public"
     },
     "Station": {
@@ -74,6 +86,19 @@
               }
             ]
           },
+          "ReadingDirection": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "in",
+                "value": "in"
+              },
+              {
+                "name": "out",
+                "value": "out"
+              }
+            ]
+          },
           "SwapStatus": {
             "codecId": "pg/text@1",
             "members": [
@@ -108,6 +133,31 @@
               {
                 "name": "reversed",
                 "value": "reversed"
+              }
+            ]
+          },
+          "UserType": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "rider",
+                "value": "rider"
+              },
+              {
+                "name": "office",
+                "value": "office"
+              },
+              {
+                "name": "swapper",
+                "value": "swapper"
+              },
+              {
+                "name": "agent",
+                "value": "agent"
+              },
+              {
+                "name": "customer",
+                "value": "customer"
               }
             ]
           }
@@ -243,6 +293,13 @@
                   }
                 }
               },
+              "cycleCount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -259,6 +316,13 @@
               },
               "model": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "oem": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -307,6 +371,13 @@
                   "typeParams": {
                     "precision": 3
                   }
+                }
+              },
+              "voltage": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
                 }
               }
             },
@@ -357,6 +428,21 @@
                   "namespace": "public"
                 }
               },
+              "readings": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "batteryId"
+                  ]
+                },
+                "to": {
+                  "model": "BatteryReading",
+                  "namespace": "public"
+                }
+              },
               "station": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -382,6 +468,9 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "cycleCount": {
+                  "column": "cycleCount"
+                },
                 "id": {
                   "column": "id"
                 },
@@ -390,6 +479,9 @@
                 },
                 "model": {
                   "column": "model"
+                },
+                "oem": {
+                  "column": "oem"
                 },
                 "serialNumber": {
                   "column": "serialNumber"
@@ -408,14 +500,167 @@
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "voltage": {
+                  "column": "voltage"
                 }
               },
               "namespaceId": "public",
               "table": "Battery"
             }
           },
+          "BatteryReading": {
+            "fields": {
+              "batteryId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "cycleCount": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "direction": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ReadingDirection",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "recordedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "soc": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "soh": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "swapTransactionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "voltage": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "battery": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "batteryId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Battery",
+                  "namespace": "public"
+                }
+              },
+              "swapTransaction": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "swapTransactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "batteryId": {
+                  "column": "batteryId"
+                },
+                "cycleCount": {
+                  "column": "cycleCount"
+                },
+                "direction": {
+                  "column": "direction"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "recordedAt": {
+                  "column": "recordedAt"
+                },
+                "soc": {
+                  "column": "soc"
+                },
+                "soh": {
+                  "column": "soh"
+                },
+                "swapTransactionId": {
+                  "column": "swapTransactionId"
+                },
+                "voltage": {
+                  "column": "voltage"
+                }
+              },
+              "namespaceId": "public",
+              "table": "BatteryReading"
+            }
+          },
           "Bike": {
             "fields": {
+              "chassisNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -437,6 +682,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "image": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -468,6 +720,13 @@
                   "kind": "scalar"
                 }
               },
+              "serialNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -483,13 +742,6 @@
                   "typeParams": {
                     "precision": 3
                   }
-                }
-              },
-              "vin": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
                 }
               }
             },
@@ -560,6 +812,9 @@
             },
             "storage": {
               "fields": {
+                "chassisNumber": {
+                  "column": "chassisNumber"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
@@ -568,6 +823,9 @@
                 },
                 "id": {
                   "column": "id"
+                },
+                "image": {
+                  "column": "image"
                 },
                 "model": {
                   "column": "model"
@@ -581,14 +839,14 @@
                 "riderId": {
                   "column": "riderId"
                 },
+                "serialNumber": {
+                  "column": "serialNumber"
+                },
                 "status": {
                   "column": "status"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
-                },
-                "vin": {
-                  "column": "vin"
                 }
               },
               "namespaceId": "public",
@@ -716,6 +974,13 @@
                   "kind": "scalar"
                 }
               },
+              "serialNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "status": {
                 "nullable": false,
                 "type": {
@@ -724,6 +989,13 @@
                 }
               },
               "token": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "type": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
@@ -785,11 +1057,17 @@
                 "riderId": {
                   "column": "riderId"
                 },
+                "serialNumber": {
+                  "column": "serialNumber"
+                },
                 "status": {
                   "column": "status"
                 },
                 "token": {
                   "column": "token"
+                },
+                "type": {
+                  "column": "type"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -915,6 +1193,64 @@
               },
               "namespaceId": "public",
               "table": "Owner"
+            }
+          },
+          "Permission": {
+            "fields": {
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "roleId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "role": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "roleId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Role",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "roleId": {
+                  "column": "roleId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Permission"
             }
           },
           "Rider": {
@@ -1102,6 +1438,68 @@
               "table": "Rider"
             }
           },
+          "Role": {
+            "fields": {
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "permissions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "roleId"
+                  ]
+                },
+                "to": {
+                  "model": "Permission",
+                  "namespace": "public"
+                }
+              },
+              "users": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "roleId"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Role"
+            }
+          },
           "Station": {
             "fields": {
               "capacity": {
@@ -1242,6 +1640,16 @@
           },
           "SwapTransaction": {
             "fields": {
+              "assignedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
               "bikeId": {
                 "nullable": false,
                 "type": {
@@ -1249,11 +1657,31 @@
                   "kind": "scalar"
                 }
               },
+              "cancelledAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
               "cardId": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
+                }
+              },
+              "collectedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
                 }
               },
               "completedAt": {
@@ -1268,6 +1696,16 @@
               },
               "createdAt": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "failedAt": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar",
@@ -1292,6 +1730,16 @@
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
+                }
+              },
+              "installedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
                 }
               },
               "newBatteryId": {
@@ -1360,6 +1808,13 @@
                   "entityName": "SwapStatus",
                   "namespaceId": "public",
                   "plane": "domain"
+                }
+              },
+              "swapperId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
                 }
               },
               "updatedAt": {
@@ -1479,6 +1934,21 @@
                   "namespace": "public"
                 }
               },
+              "readings": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "swapTransactionId"
+                  ]
+                },
+                "to": {
+                  "model": "BatteryReading",
+                  "namespace": "public"
+                }
+              },
               "rider": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -1510,15 +1980,40 @@
                   "model": "Station",
                   "namespace": "public"
                 }
+              },
+              "swapper": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "swapperId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
               "fields": {
+                "assignedAt": {
+                  "column": "assignedAt"
+                },
                 "bikeId": {
                   "column": "bikeId"
                 },
+                "cancelledAt": {
+                  "column": "cancelledAt"
+                },
                 "cardId": {
                   "column": "cardId"
+                },
+                "collectedAt": {
+                  "column": "collectedAt"
                 },
                 "completedAt": {
                   "column": "completedAt"
@@ -1526,11 +2021,17 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "failedAt": {
+                  "column": "failedAt"
+                },
                 "fee": {
                   "column": "fee"
                 },
                 "id": {
                   "column": "id"
+                },
+                "installedAt": {
+                  "column": "installedAt"
                 },
                 "newBatteryId": {
                   "column": "newBatteryId"
@@ -1556,6 +2057,9 @@
                 "status": {
                   "column": "status"
                 },
+                "swapperId": {
+                  "column": "swapperId"
+                },
                 "updatedAt": {
                   "column": "updatedAt"
                 },
@@ -1569,6 +2073,13 @@
           },
           "User": {
             "fields": {
+              "address": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -1586,10 +2097,24 @@
                   "kind": "scalar"
                 }
               },
+              "firstName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "image": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -1600,18 +2125,45 @@
                   "kind": "scalar"
                 }
               },
-              "name": {
+              "lastName": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
-              "role": {
+              "nationalId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "phone": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "roleId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "type": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "UserType",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "updatedAt": {
@@ -1623,31 +2175,91 @@
                     "precision": 3
                   }
                 }
+              },
+              "username": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
               }
             },
-            "relations": {},
+            "relations": {
+              "role": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "roleId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Role",
+                  "namespace": "public"
+                }
+              },
+              "swapsAsSwapper": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "swapperId"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              }
+            },
             "storage": {
               "fields": {
+                "address": {
+                  "column": "address"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
                 "email": {
                   "column": "email"
                 },
+                "firstName": {
+                  "column": "firstName"
+                },
                 "id": {
                   "column": "id"
+                },
+                "image": {
+                  "column": "image"
                 },
                 "isActive": {
                   "column": "isActive"
                 },
-                "name": {
-                  "column": "name"
+                "lastName": {
+                  "column": "lastName"
                 },
-                "role": {
-                  "column": "role"
+                "nationalId": {
+                  "column": "nationalId"
+                },
+                "phone": {
+                  "column": "phone"
+                },
+                "roleId": {
+                  "column": "roleId"
+                },
+                "type": {
+                  "column": "type"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "username": {
+                  "column": "username"
                 }
               },
               "namespaceId": "public",
@@ -1880,6 +2492,15 @@
                     "precision": 3
                   }
                 },
+                "cycleCount": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
@@ -1898,6 +2519,11 @@
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
+                },
+                "oem": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
                 },
                 "serialNumber": {
                   "codecId": "pg/text@1",
@@ -1943,6 +2569,11 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "voltage": {
+                  "codecId": "pg/float8@1",
+                  "dataType": "pg/float8",
+                  "nullable": true
                 }
               },
               "foreignKeys": [
@@ -1989,8 +2620,157 @@
                 }
               ]
             },
+            "BatteryReading": {
+              "checks": [
+                {
+                  "expression": "\"direction\" IN ('in', 'out')",
+                  "name": "BatteryReading_direction_check_57535cc1",
+                  "prefix": "BatteryReading_direction_check"
+                }
+              ],
+              "columns": {
+                "batteryId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "cycleCount": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "direction": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ReadingDirection",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "recordedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "soc": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "soh": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "swapTransactionId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "voltage": {
+                  "codecId": "pg/float8@1",
+                  "dataType": "pg/float8",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "BatteryReading_batteryId_idx_87376261"
+                  },
+                  "source": {
+                    "columns": [
+                      "batteryId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "BatteryReading"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Battery"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "BatteryReading_swapTransactionId_idx_64f4df5e"
+                  },
+                  "source": {
+                    "columns": [
+                      "swapTransactionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "BatteryReading"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "SwapTransaction"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "batteryId"
+                  ],
+                  "name": "BatteryReading_batteryId_idx_87376261",
+                  "prefix": "BatteryReading_batteryId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "swapTransactionId"
+                  ],
+                  "name": "BatteryReading_swapTransactionId_idx_64f4df5e",
+                  "prefix": "BatteryReading_swapTransactionId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "swapTransactionId",
+                    "direction"
+                  ]
+                }
+              ]
+            },
             "Bike": {
               "columns": {
+                "chassisNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
@@ -2017,6 +2797,11 @@
                   },
                   "nullable": false
                 },
+                "image": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "model": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -2037,6 +2822,11 @@
                   "dataType": "pg/int4",
                   "nullable": true
                 },
+                "serialNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
                 "status": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -2053,11 +2843,6 @@
                   "typeParams": {
                     "precision": 3
                   }
-                },
-                "vin": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": true
                 }
               },
               "foreignKeys": [
@@ -2152,7 +2937,12 @@
                 },
                 {
                   "columns": [
-                    "vin"
+                    "chassisNumber"
+                  ]
+                },
+                {
+                  "columns": [
+                    "serialNumber"
                   ]
                 },
                 {
@@ -2276,6 +3066,11 @@
                   "dataType": "pg/int4",
                   "nullable": true
                 },
+                "serialNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
                 "status": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -2286,6 +3081,11 @@
                   "nullable": false
                 },
                 "token": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "type": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
@@ -2339,6 +3139,11 @@
                 {
                   "columns": [
                     "token"
+                  ]
+                },
+                {
+                  "columns": [
+                    "serialNumber"
                   ]
                 }
               ]
@@ -2410,6 +3215,73 @@
                 {
                   "columns": [
                     "email"
+                  ]
+                }
+              ]
+            },
+            "Permission": {
+              "columns": {
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "roleId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "Permission_roleId_idx_ffccc9a4"
+                  },
+                  "source": {
+                    "columns": [
+                      "roleId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Permission"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Role"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "roleId"
+                  ],
+                  "name": "Permission_roleId_idx_ffccc9a4",
+                  "prefix": "Permission_roleId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "roleId",
+                    "name"
                   ]
                 }
               ]
@@ -2533,6 +3405,38 @@
                 }
               ]
             },
+            "Role": {
+              "columns": {
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "name"
+                  ]
+                }
+              ]
+            },
             "Station": {
               "columns": {
                 "capacity": {
@@ -2632,15 +3536,39 @@
                 }
               ],
               "columns": {
+                "assignedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
                 "bikeId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": false
                 },
+                "cancelledAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
                 "cardId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": false
+                },
+                "collectedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
                 },
                 "completedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -2658,6 +3586,14 @@
                     "kind": "function"
                   },
                   "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "failedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
                   "typeParams": {
                     "precision": 3
                   }
@@ -2683,6 +3619,14 @@
                     "kind": "function"
                   },
                   "nullable": false
+                },
+                "installedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
                 },
                 "newBatteryId": {
                   "codecId": "pg/int4@1",
@@ -2743,6 +3687,11 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "swapperId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -2845,6 +3794,25 @@
                 },
                 {
                   "index": {
+                    "name": "SwapTransaction_swapperId_idx_db16cbd2"
+                  },
+                  "source": {
+                    "columns": [
+                      "swapperId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "SwapTransaction"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                },
+                {
+                  "index": {
                     "name": "SwapTransaction_oldBatteryId_idx_cdbd3cde"
                   },
                   "source": {
@@ -2930,6 +3898,14 @@
                   "name": "SwapTransaction_stationId_idx_0626a60c",
                   "prefix": "SwapTransaction_stationId_idx",
                   "unique": false
+                },
+                {
+                  "columns": [
+                    "swapperId"
+                  ],
+                  "name": "SwapTransaction_swapperId_idx_db16cbd2",
+                  "prefix": "SwapTransaction_swapperId_idx",
+                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -2940,7 +3916,19 @@
               "uniques": []
             },
             "User": {
+              "checks": [
+                {
+                  "expression": "\"type\" IN ('rider', 'office', 'swapper', 'agent', 'customer')",
+                  "name": "User_type_check_d69fdc33",
+                  "prefix": "User_type_check"
+                }
+              ],
               "columns": {
+                "address": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
@@ -2958,6 +3946,11 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "firstName": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
@@ -2966,6 +3959,11 @@
                     "kind": "function"
                   },
                   "nullable": false
+                },
+                "image": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
                 },
                 "isActive": {
                   "codecId": "pg/bool@1",
@@ -2976,19 +3974,36 @@
                   },
                   "nullable": false
                 },
-                "name": {
+                "lastName": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
                 },
-                "role": {
+                "nationalId": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
-                  "default": {
-                    "kind": "literal",
-                    "value": "member"
-                  },
+                  "nullable": true
+                },
+                "phone": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "roleId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "nullable": false
+                },
+                "type": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "UserType",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -2997,10 +4012,44 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "username": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
                 }
               },
-              "foreignKeys": [],
-              "indexes": [],
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "User_roleId_idx_ffccc9a4"
+                  },
+                  "source": {
+                    "columns": [
+                      "roleId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Role"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "roleId"
+                  ],
+                  "name": "User_roleId_idx_ffccc9a4",
+                  "prefix": "User_roleId_idx",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -3009,7 +4058,22 @@
               "uniques": [
                 {
                   "columns": [
+                    "username"
+                  ]
+                },
+                {
+                  "columns": [
                     "email"
+                  ]
+                },
+                {
+                  "columns": [
+                    "phone"
+                  ]
+                },
+                {
+                  "columns": [
+                    "nationalId"
                   ]
                 }
               ]
@@ -3121,6 +4185,13 @@
                 "reversed"
               ]
             },
+            "ReadingDirection": {
+              "kind": "valueSet",
+              "values": [
+                "in",
+                "out"
+              ]
+            },
             "SwapStatus": {
               "kind": "valueSet",
               "values": [
@@ -3133,6 +4204,16 @@
                 "cancelled",
                 "reversed"
               ]
+            },
+            "UserType": {
+              "kind": "valueSet",
+              "values": [
+                "rider",
+                "office",
+                "swapper",
+                "agent",
+                "customer"
+              ]
             }
           }
         },
@@ -3140,13 +4221,20 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "447378fdf65505d956c456304ad287dabbb2afa24d98e00df6b9579c771d4d5a"
+    "storageHash": "c926b7fcc80c17523d8668473e654350526a31ea617d29339754fac029e5b9e7"
   },
   "execution": {
-    "executionHash": "3a6133852ef3b68a9e08f45272125c0ecf80eaeb157b18205e851d83e9cf8e54",
+    "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",
     "mutations": {
       "defaults": [
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3161,6 +4249,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3175,6 +4270,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3189,6 +4291,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3203,6 +4312,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3217,6 +4333,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3231,6 +4354,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3245,6 +4375,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",
@@ -3259,6 +4396,13 @@
           }
         },
         {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
           "onUpdate": {
             "id": "timestampNow",
             "kind": "generator",

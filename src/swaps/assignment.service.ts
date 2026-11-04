@@ -1,34 +1,58 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Prisma, SwapStatus } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { asNumeric } from '../prisma/errors.js';
+import type { SwapStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
+import { recordBatteryReading } from './record-battery-reading.js';
+import { requireSwapper } from './require-swapper.js';
+import { statusTimestampsForTransition } from './swap-status-timestamps.js';
+import type { CompleteSwapDto } from './complete-swap.dto.js';
+
+type Tx = Parameters<Parameters<PrismaService['db']['transaction']>[0]>[0];
+
+type SwapCustody = {
+  bikeId: number;
+  stationId: number;
+  oldBatteryId: number | null;
+  newBatteryId: number | null;
+};
 
 @Injectable()
 export class AssignmentService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private swapQuery() {
+    return this.prisma.db.orm.public.SwapTransaction.include('rider')
+      .include('bike')
+      .include('station')
+      .include('card')
+      .include('swapper')
+      .include('oldBattery')
+      .include('newBattery')
+      .include('readings');
+  }
+
   async assignBattery(dto: AssignBatteryDto) {
-    const rider = await this.prisma.rider.findUnique({
-      where: { id: dto.riderId },
-      include: { wallet: true, cards: true },
-    });
+    await requireSwapper(this.prisma, dto.swapperId);
+
+    const rider = await this.prisma.db.orm.public.Rider.where({ id: dto.riderId })
+      .include('wallet')
+      .include('cards')
+      .first();
 
     if (!rider) {
       throw new NotFoundException(`Rider with id ${dto.riderId} not found`);
     }
 
-    const bike = await this.prisma.bike.findUnique({
-      where: { id: dto.bikeId },
-      include: { currentBattery: true },
-    });
+    const bike = await this.prisma.db.orm.public.Bike.where({ id: dto.bikeId })
+      .include('currentBattery')
+      .first();
 
     if (!bike) {
       throw new NotFoundException(`Bike with id ${dto.bikeId} not found`);
     }
 
-    const station = await this.prisma.station.findUnique({
-      where: { id: dto.stationId },
-    });
+    const station = await this.prisma.db.orm.public.Station.first({ id: dto.stationId });
 
     if (!station) {
       throw new NotFoundException(`Station with id ${dto.stationId} not found`);
@@ -43,59 +67,75 @@ export class AssignmentService {
       throw new BadRequestException('Rider has no active NFC card for this swap');
     }
 
-    const availableBattery = await this.prisma.battery.findFirst({
-      where: {
-        stationId: dto.stationId,
-        status: 'available',
-      },
-      orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
-    });
+    const availableBattery = await this.prisma.db.orm.public.Battery.where({
+      stationId: dto.stationId,
+      status: 'available',
+    })
+      .orderBy([(battery) => battery.updatedAt.asc(), (battery) => battery.id.asc()])
+      .first();
 
     if (!availableBattery) {
       throw new BadRequestException('No available battery at the selected station');
     }
 
-    const swap = await this.prisma.swapTransaction.create({
-      data: {
-        rider: { connect: { id: rider.id } },
-        bike: { connect: { id: bike.id } },
-        station: { connect: { id: station.id } },
-        card: { connect: { id: activeCard.id } },
-        oldBattery: bike.currentBatteryId ? { connect: { id: bike.currentBatteryId } } : undefined,
-        newBattery: { connect: { id: availableBattery.id } },
-        status: 'assigned',
-        paymentStatus: 'pending',
-        fee: dto.fee ?? 0,
-        walletBalanceAfter: rider.wallet?.balance ?? 0,
-        notes: dto.notes ?? 'Battery assigned by system',
-      },
-      include: {
-        rider: true,
-        bike: true,
-        station: true,
-        card: true,
-        oldBattery: true,
-        newBattery: true,
-      },
-    });
+    const assignedAt = new Date();
 
-    await this.prisma.battery.update({
-      where: { id: availableBattery.id },
-      data: {
+    const swap = await this.prisma.db.transaction(async (tx) => {
+      const created = await tx.orm.public.SwapTransaction.include('rider')
+        .include('bike')
+        .include('station')
+        .include('card')
+        .include('swapper')
+        .include('oldBattery')
+        .include('newBattery')
+        .create({
+          riderId: rider.id,
+          bikeId: bike.id,
+          stationId: station.id,
+          cardId: activeCard.id,
+          swapperId: dto.swapperId,
+          oldBatteryId: bike.currentBatteryId,
+          newBatteryId: availableBattery.id,
+          status: 'assigned',
+          paymentStatus: 'pending',
+          fee: asNumeric(dto.fee ?? 0),
+          walletBalanceAfter: asNumeric(rider.wallet?.balance ?? 0),
+          notes: dto.notes ?? 'Battery assigned by system',
+          ...statusTimestampsForTransition('assigned', assignedAt),
+        });
+
+      await recordBatteryReading(tx, created.id, bike.currentBatteryId, 'in');
+      await recordBatteryReading(tx, created.id, availableBattery.id, 'out');
+
+      await tx.orm.public.Battery.where({ id: availableBattery.id }).update({
         status: 'assigned',
         stationId: dto.stationId,
-      },
-    });
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        swapTransactionId: swap.id,
+      await tx.orm.public.AuditLog.create({
+        swapTransactionId: created.id,
         entityType: 'swap',
-        entityId: swap.id,
+        entityId: created.id,
         actor: 'system',
         action: 'battery_assigned',
         details: `Battery ${availableBattery.serialNumber} assigned to rider ${rider.id} at station ${station.code}`,
-      },
+      });
+
+      const recorded = await tx.orm.public.SwapTransaction.include('rider')
+        .include('bike')
+        .include('station')
+        .include('card')
+        .include('swapper')
+        .include('oldBattery')
+        .include('newBattery')
+        .include('readings')
+        .first({ id: created.id });
+
+      if (!recorded) {
+        throw new NotFoundException(`Swap transaction with id ${created.id} not found`);
+      }
+
+      return recorded;
     });
 
     return {
@@ -116,17 +156,18 @@ export class AssignmentService {
     };
   }
 
-  async completeSwap(swapId: number, action: 'collected' | 'installed' | 'completed' | 'failed' | 'cancelled') {
-    const swap = await this.prisma.swapTransaction.findUnique({
-      where: { id: swapId },
-      include: { rider: true, bike: true, station: true, card: true, newBattery: true, wallet: undefined },
-    });
+  async completeSwap(
+    swapId: number,
+    action: 'collected' | 'installed' | 'completed' | 'failed' | 'cancelled',
+    dto: CompleteSwapDto = {},
+  ) {
+    const loaded = await this.swapQuery().where({ id: swapId }).first();
 
-    if (!swap) {
+    if (!loaded) {
       throw new NotFoundException(`Swap transaction with id ${swapId} not found`);
     }
 
-    const nextStatus =
+    const nextStatus: SwapStatus =
       action === 'collected'
         ? 'collected'
         : action === 'installed'
@@ -137,107 +178,149 @@ export class AssignmentService {
               ? 'failed'
               : 'cancelled';
 
-    if (action === 'completed' && swap.paymentStatus !== 'captured') {
-      const riderWallet = await this.prisma.wallet.findUnique({
-        where: { riderId: swap.riderId },
-      });
-
-      if (!riderWallet) {
-        throw new BadRequestException('Rider wallet not found for payment capture');
+    return this.prisma.db.transaction(async (tx) => {
+      if (dto.swapperId !== undefined) {
+        await requireSwapper(this.prisma, dto.swapperId);
       }
 
-      const fee = Number(swap.fee);
-      const updatedBalance = Number(riderWallet.balance) - fee;
+      if (action === 'completed' && loaded.paymentStatus !== 'captured') {
+        const riderWallet = await tx.orm.public.Wallet.where({ riderId: loaded.riderId }).first();
 
-      if (updatedBalance < 0) {
-        throw new BadRequestException('Insufficient wallet balance to complete the swap');
-      }
+        if (!riderWallet) {
+          throw new BadRequestException('Rider wallet not found for payment capture');
+        }
 
-      await this.prisma.wallet.update({
-        where: { id: riderWallet.id },
-        data: {
-          balance: updatedBalance,
-        },
-      });
+        const fee = Number(loaded.fee);
+        const updatedBalance = Number(riderWallet.balance) - fee;
 
-      await this.prisma.swapTransaction.update({
-        where: { id: swapId },
-        data: {
+        if (updatedBalance < 0) {
+          throw new BadRequestException('Insufficient wallet balance to complete the swap');
+        }
+
+        await tx.orm.public.Wallet.where({ id: riderWallet.id }).update({
+          balance: asNumeric(updatedBalance),
+        });
+
+        await tx.orm.public.SwapTransaction.where({ id: swapId }).update({
           paymentStatus: 'captured',
-          paymentReference: `MWANGA-${swap.id}-${Date.now()}`,
-          walletBalanceAfter: updatedBalance,
-        },
-      });
-    }
+          paymentReference: `MWANGA-${loaded.id}-${Date.now()}`,
+          walletBalanceAfter: asNumeric(updatedBalance),
+        });
+      }
 
-    const updatedSwap = await this.prisma.swapTransaction.update({
-      where: { id: swapId },
-      data: {
-        status: nextStatus as SwapStatus,
-        completedAt:
-          action === 'completed' || action === 'failed' || action === 'cancelled'
-            ? new Date()
-            : undefined,
-      },
-      include: {
-        rider: true,
-        bike: true,
-        station: true,
-        card: true,
-        oldBattery: true,
-        newBattery: true,
-      },
-    });
+      const updatedSwap = await tx.orm.public.SwapTransaction.where({ id: swapId })
+        .include('rider')
+        .include('bike')
+        .include('station')
+        .include('card')
+        .include('swapper')
+        .include('oldBattery')
+        .include('newBattery')
+        .include('readings')
+        .update({
+          status: nextStatus,
+          ...(dto.swapperId !== undefined ? { swapperId: dto.swapperId } : {}),
+          ...statusTimestampsForTransition(nextStatus),
+        });
 
-    await this.prisma.auditLog.create({
-      data: {
+      if (!updatedSwap) {
+        throw new NotFoundException(`Swap transaction with id ${swapId} not found`);
+      }
+
+      await tx.orm.public.AuditLog.create({
         swapTransactionId: swapId,
         entityType: 'swap',
         entityId: swapId,
         actor: 'system',
-        action: action,
+        action,
         details: `Swap ${swapId} moved to status ${nextStatus}`,
-      },
-    });
+      });
 
-    if (action === 'completed') {
-      await this.prisma.ledgerEntry.create({
-        data: {
+      if (action === 'completed') {
+        await tx.orm.public.LedgerEntry.create({
           swapTransactionId: swapId,
           eventType: 'swap_completed',
           amount: updatedSwap.fee,
           description: `Swap completed for rider ${updatedSwap.riderId} at station ${updatedSwap.stationId}`,
-        },
-      });
-
-      if (updatedSwap.newBatteryId) {
-        await this.prisma.battery.update({
-          where: { id: updatedSwap.newBatteryId },
-          data: {
-            status: 'available',
-          },
         });
-      }
-    }
 
-    if (action === 'failed' || action === 'cancelled') {
-      await this.prisma.ledgerEntry.create({
-        data: {
+        await this.transferCustody(tx, updatedSwap);
+      }
+
+      if (action === 'failed' || action === 'cancelled') {
+        await tx.orm.public.LedgerEntry.create({
           swapTransactionId: swapId,
           eventType: action === 'failed' ? 'swap_failed' : 'swap_cancelled',
           amount: updatedSwap.fee,
           description: `Swap ${action} for rider ${updatedSwap.riderId}`,
-        },
-      });
-
-      if (updatedSwap.newBatteryId) {
-        await this.prisma.battery.update({
-          where: { id: updatedSwap.newBatteryId },
-          data: { status: 'available' },
         });
+
+        await this.releaseIssuedBattery(tx, updatedSwap);
       }
+
+      const settled = await tx.orm.public.SwapTransaction.where({ id: swapId })
+        .include('rider')
+        .include('bike')
+        .include('station')
+        .include('card')
+        .include('swapper')
+        .include('oldBattery')
+        .include('newBattery')
+        .include('readings')
+        .first();
+
+      if (!settled) {
+        throw new NotFoundException(`Swap transaction with id ${swapId} not found`);
+      }
+
+      return settled;
+    });
+  }
+
+  private async transferCustody(tx: Tx, swap: SwapCustody) {
+    if (swap.oldBatteryId != null && swap.oldBatteryId === swap.newBatteryId) {
+      throw new BadRequestException('A swap cannot return and issue the same battery');
     }
 
-    return updatedSwap;
+    if (swap.newBatteryId != null) {
+      const otherBike = await tx.orm.public.Bike.where({
+        currentBatteryId: swap.newBatteryId,
+      }).first();
+
+      if (otherBike && otherBike.id !== swap.bikeId) {
+        throw new BadRequestException('Issued battery is already mounted on another bike');
+      }
+
+      await tx.orm.public.Bike.where({ id: swap.bikeId }).update({
+        currentBatteryId: swap.newBatteryId,
+      });
+
+      await tx.orm.public.Battery.where({ id: swap.newBatteryId }).update({
+        stationId: null,
+        status: 'in_use',
+      });
+    } else if (swap.oldBatteryId != null) {
+      await tx.orm.public.Bike.where({ id: swap.bikeId }).update({
+        currentBatteryId: null,
+      });
+    }
+
+    if (swap.oldBatteryId != null) {
+      await tx.orm.public.Battery.where({ id: swap.oldBatteryId }).update({
+        stationId: swap.stationId,
+        status: 'available',
+      });
+    }
+  }
+
+  private async releaseIssuedBattery(tx: Tx, swap: SwapCustody) {
+    if (swap.newBatteryId == null) {
+      return;
+    }
+
+    await tx.orm.public.Battery.where({ id: swap.newBatteryId }).update({
+      stationId: swap.stationId,
+      status: 'available',
+    });
   }
 }

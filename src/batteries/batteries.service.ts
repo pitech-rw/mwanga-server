@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Battery, Prisma } from '@prisma/client';
+import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
+import type { Battery } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
 import { UpdateBatteryDto } from './update-battery.dto.js';
@@ -8,18 +9,16 @@ import { UpdateBatteryDto } from './update-battery.dto.js';
 export class BatteriesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<Battery[]> {
-    return this.prisma.battery.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { station: true },
-    });
+  private batteryQuery() {
+    return this.prisma.db.orm.public.Battery.include('station');
   }
 
-  async findOne(id: number): Promise<Battery> {
-    const battery = await this.prisma.battery.findUnique({
-      where: { id },
-      include: { station: true },
-    });
+  async findAll() {
+    return this.batteryQuery().orderBy((battery) => battery.createdAt.desc()).all();
+  }
+
+  async findOne(id: number) {
+    const battery = await this.batteryQuery().first({ id });
 
     if (!battery) {
       throw new NotFoundException(`Battery with id ${id} not found`);
@@ -29,27 +28,22 @@ export class BatteriesService {
   }
 
   async create(data: CreateBatteryDto): Promise<Battery> {
-    const batteryData: Prisma.BatteryCreateInput = {
-      serialNumber: data.serialNumber,
-      manufacturer: data.manufacturer,
-      model: data.model,
-      batteryType: data.batteryType ?? 'lithium',
-      status: data.status ?? 'available',
-      soc: data.soc ?? 100,
-      soh: data.soh ?? 100,
-      station: data.stationId ? { connect: { id: data.stationId } } : undefined,
-    };
-
     try {
-      return await this.prisma.battery.create({
-        data: batteryData,
-        include: { station: true },
+      return await this.prisma.db.orm.public.Battery.include('station').create({
+        serialNumber: data.serialNumber,
+        manufacturer: data.manufacturer,
+        oem: data.oem,
+        model: data.model,
+        batteryType: data.batteryType ?? 'lithium',
+        status: data.status ?? 'available',
+        soc: data.soc ?? 100,
+        soh: data.soh ?? 100,
+        cycleCount: data.cycleCount ?? 0,
+        voltage: data.voltage,
+        stationId: data.stationId,
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('A battery with this serial number already exists');
       }
 
@@ -60,28 +54,32 @@ export class BatteriesService {
   async update(id: number, data: UpdateBatteryDto): Promise<Battery> {
     await this.findOne(id);
 
-    const updateData: Prisma.BatteryUpdateInput = {
-      serialNumber: data.serialNumber,
-      manufacturer: data.manufacturer,
-      model: data.model,
-      batteryType: data.batteryType,
-      status: data.status,
-      soc: data.soc,
-      soh: data.soh,
-      station: data.stationId !== undefined ? { connect: { id: data.stationId } } : undefined,
-    };
-
     try {
-      return await this.prisma.battery.update({
-        where: { id },
-        data: updateData,
-        include: { station: true },
-      });
+      const battery = await this.prisma.db.orm.public.Battery.where({ id })
+        .include('station')
+        .update(
+          withoutUndefined({
+            serialNumber: data.serialNumber,
+            manufacturer: data.manufacturer,
+            oem: data.oem,
+            model: data.model,
+            batteryType: data.batteryType,
+            status: data.status,
+            soc: data.soc,
+            soh: data.soh,
+            cycleCount: data.cycleCount,
+            voltage: data.voltage,
+            stationId: data.stationId,
+          }),
+        );
+
+      if (!battery) {
+        throw new NotFoundException(`Battery with id ${id} not found`);
+      }
+
+      return battery;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('A battery with this serial number already exists');
       }
 
@@ -92,6 +90,12 @@ export class BatteriesService {
   async remove(id: number): Promise<Battery> {
     await this.findOne(id);
 
-    return this.prisma.battery.delete({ where: { id } });
+    const battery = await this.prisma.db.orm.public.Battery.where({ id }).delete();
+
+    if (!battery) {
+      throw new NotFoundException(`Battery with id ${id} not found`);
+    }
+
+    return battery;
   }
 }

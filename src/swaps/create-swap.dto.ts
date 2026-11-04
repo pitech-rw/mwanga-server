@@ -15,6 +15,10 @@ export class CreateSwapDto {
 
   @IsOptional()
   @IsNumber()
+  swapperId?: number;
+
+  @IsOptional()
+  @IsNumber()
   oldBatteryId?: number;
 
   @IsOptional()

@@ -1,4 +1,4 @@
-import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, isString, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CreateBatteryDto {
   @IsString()
@@ -10,6 +10,11 @@ export class CreateBatteryDto {
   @IsString()
   @MaxLength(80)
   manufacturer?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  oem?: string;
 
   @IsString()
   @MinLength(2)
@@ -39,6 +44,25 @@ export class CreateBatteryDto {
   soh?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(0)
+  cycleCount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  voltage?: number;
+
+  @IsOptional()
   @IsNumber()
   stationId?: number;
+
+  @IsOptional()
+  @IsString()
+  Attached_to: string;
+
+  
+  @IsOptional()
+  @IsString()
+  Attached_by: string;
 }

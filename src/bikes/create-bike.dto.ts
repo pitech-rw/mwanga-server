@@ -9,12 +9,22 @@ export class CreateBikeDto {
   @IsOptional()
   @IsString()
   @MaxLength(80)
-  vin?: string;
+  chassisNumber?: string;
+
+  @IsString()
+  @MinLength(3)
+  @MaxLength(120)
+  serialNumber: string;
 
   @IsString()
   @MinLength(2)
   @MaxLength(120)
   model: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  image?: string;
 
   @IsOptional()
   @IsString()

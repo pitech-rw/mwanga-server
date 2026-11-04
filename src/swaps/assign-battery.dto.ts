@@ -1,6 +1,10 @@
-import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class AssignBatteryDto {
+  @IsInt()
+  @Min(1)
+  swapperId: number;
+
   @IsNumber()
   riderId: number;
 

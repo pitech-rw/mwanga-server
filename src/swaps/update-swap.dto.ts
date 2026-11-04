@@ -19,6 +19,10 @@ export class UpdateSwapDto {
 
   @IsOptional()
   @IsNumber()
+  swapperId?: number;
+
+  @IsOptional()
+  @IsNumber()
   oldBatteryId?: number;
 
   @IsOptional()
@@ -52,7 +56,4 @@ export class UpdateSwapDto {
   @IsString()
   @MaxLength(500)
   notes?: string;
-
-  @IsOptional()
-  completedAt?: Date;
 }

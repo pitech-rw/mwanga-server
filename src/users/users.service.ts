@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
+import type { User } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateUserDto } from './create-user.dto.js';
 import { UpdateUserDto } from './update-user.dto.js';
@@ -8,14 +9,24 @@ import { UpdateUserDto } from './update-user.dto.js';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private userQuery() {
+    return this.prisma.db.orm.public.User.include('role');
+  }
+
+  private async requireRole(roleId: number) {
+    const role = await this.prisma.db.orm.public.Role.first({ id: roleId });
+
+    if (!role) {
+      throw new NotFoundException(`Role with id ${roleId} not found`);
+    }
+  }
+
   async findAll(): Promise<User[]> {
-    return this.prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    return this.userQuery().orderBy((user) => user.createdAt.desc()).all();
   }
 
   async findOne(id: number): Promise<User> {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.userQuery().first({ id });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -25,18 +36,27 @@ export class UsersService {
   }
 
   async create(data: CreateUserDto): Promise<User> {
-    const userData: Prisma.UserCreateInput = {
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      isActive: data.isActive ?? true,
-    };
+    await this.requireRole(data.roleId);
 
     try {
-      return await this.prisma.user.create({ data: userData });
+      return await this.prisma.db.orm.public.User.include('role').create({
+        username: data.username,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        image: data.image,
+        nationalId: data.nationalId,
+        type: data.type,
+        roleId: data.roleId,
+        isActive: data.isActive ?? true,
+      });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new BadRequestException('A user with this email already exists');
+      if (isUniqueViolation(error)) {
+        throw new BadRequestException(
+          'A user with this email, username, phone, or national ID already exists',
+        );
       }
 
       throw error;
@@ -46,14 +66,39 @@ export class UsersService {
   async update(id: number, data: UpdateUserDto): Promise<User> {
     await this.findOne(id);
 
+    if (data.roleId !== undefined) {
+      await this.requireRole(data.roleId);
+    }
+
     try {
-      return await this.prisma.user.update({
-        where: { id },
-        data,
-      });
+      const user = await this.userQuery()
+        .where({ id })
+        .update(
+          withoutUndefined({
+            username: data.username,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            image: data.image,
+            nationalId: data.nationalId,
+            type: data.type,
+            roleId: data.roleId,
+            isActive: data.isActive,
+          }),
+        );
+
+      if (!user) {
+        throw new NotFoundException(`User with id ${id} not found`);
+      }
+
+      return user;
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new BadRequestException('A user with this email already exists');
+      if (isUniqueViolation(error)) {
+        throw new BadRequestException(
+          'A user with this email, username, phone, or national ID already exists',
+        );
       }
 
       throw error;
@@ -63,6 +108,12 @@ export class UsersService {
   async remove(id: number): Promise<User> {
     await this.findOne(id);
 
-    return this.prisma.user.delete({ where: { id } });
+    const user = await this.prisma.db.orm.public.User.where({ id }).delete();
+
+    if (!user) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    return user;
   }
 }

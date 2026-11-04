@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Bike, Prisma } from '@prisma/client';
+import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
+import type { Bike } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateBikeDto } from './create-bike.dto.js';
 import { UpdateBikeDto } from './update-bike.dto.js';
@@ -8,18 +9,16 @@ import { UpdateBikeDto } from './update-bike.dto.js';
 export class BikesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<Bike[]> {
-    return this.prisma.bike.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { owner: true, rider: true, currentBattery: true },
-    });
+  private bikeQuery() {
+    return this.prisma.db.orm.public.Bike.include('owner').include('rider').include('currentBattery');
   }
 
-  async findOne(id: number): Promise<Bike> {
-    const bike = await this.prisma.bike.findUnique({
-      where: { id },
-      include: { owner: true, rider: true, currentBattery: true },
-    });
+  async findAll() {
+    return this.bikeQuery().orderBy((bike) => bike.createdAt.desc()).all();
+  }
+
+  async findOne(id: number) {
+    const bike = await this.bikeQuery().first({ id });
 
     if (!bike) {
       throw new NotFoundException(`Bike with id ${id} not found`);
@@ -29,29 +28,26 @@ export class BikesService {
   }
 
   async create(data: CreateBikeDto): Promise<Bike> {
-    const bikeData: Prisma.BikeCreateInput = {
-      plateNumber: data.plateNumber,
-      vin: data.vin,
-      model: data.model,
-      status: data.status ?? 'active',
-      owner: data.ownerId ? { connect: { id: data.ownerId } } : undefined,
-      rider: data.riderId ? { connect: { id: data.riderId } } : undefined,
-      currentBattery: data.currentBatteryId
-        ? { connect: { id: data.currentBatteryId } }
-        : undefined,
-    };
-
     try {
-      return await this.prisma.bike.create({
-        data: bikeData,
-        include: { owner: true, rider: true, currentBattery: true },
-      });
+      return await this.prisma.db.orm.public.Bike.include('owner')
+        .include('rider')
+        .include('currentBattery')
+        .create({
+          plateNumber: data.plateNumber,
+          chassisNumber: data.chassisNumber,
+          serialNumber: data.serialNumber,
+          model: data.model,
+          image: data.image,
+          status: data.status ?? 'active',
+          ownerId: data.ownerId,
+          riderId: data.riderId,
+          currentBatteryId: data.currentBatteryId,
+        });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new BadRequestException('A bike with this plate number or VIN already exists');
+      if (isUniqueViolation(error)) {
+        throw new BadRequestException(
+          'A bike with this plate number, chassis number, serial number, or current battery already exists',
+        );
       }
 
       throw error;
@@ -61,31 +57,35 @@ export class BikesService {
   async update(id: number, data: UpdateBikeDto): Promise<Bike> {
     await this.findOne(id);
 
-    const updateData: Prisma.BikeUpdateInput = {
-      plateNumber: data.plateNumber,
-      vin: data.vin,
-      model: data.model,
-      status: data.status,
-      owner: data.ownerId !== undefined ? { connect: { id: data.ownerId } } : undefined,
-      rider: data.riderId !== undefined ? { connect: { id: data.riderId } } : undefined,
-      currentBattery:
-        data.currentBatteryId !== undefined
-          ? { connect: { id: data.currentBatteryId } }
-          : undefined,
-    };
-
     try {
-      return await this.prisma.bike.update({
-        where: { id },
-        data: updateData,
-        include: { owner: true, rider: true, currentBattery: true },
-      });
+      const bike = await this.prisma.db.orm.public.Bike.where({ id })
+        .include('owner')
+        .include('rider')
+        .include('currentBattery')
+        .update(
+          withoutUndefined({
+            plateNumber: data.plateNumber,
+            chassisNumber: data.chassisNumber,
+            serialNumber: data.serialNumber,
+            model: data.model,
+            image: data.image,
+            status: data.status,
+            ownerId: data.ownerId,
+            riderId: data.riderId,
+            currentBatteryId: data.currentBatteryId,
+          }),
+        );
+
+      if (!bike) {
+        throw new NotFoundException(`Bike with id ${id} not found`);
+      }
+
+      return bike;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new BadRequestException('A bike with this plate number or VIN already exists');
+      if (isUniqueViolation(error)) {
+        throw new BadRequestException(
+          'A bike with this plate number, chassis number, serial number, or current battery already exists',
+        );
       }
 
       throw error;
@@ -95,6 +95,12 @@ export class BikesService {
   async remove(id: number): Promise<Bike> {
     await this.findOne(id);
 
-    return this.prisma.bike.delete({ where: { id } });
+    const bike = await this.prisma.db.orm.public.Bike.where({ id }).delete();
+
+    if (!bike) {
+      throw new NotFoundException(`Bike with id ${id} not found`);
+    }
+
+    return bike;
   }
 }

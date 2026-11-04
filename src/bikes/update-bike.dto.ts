@@ -10,13 +10,24 @@ export class UpdateBikeDto {
   @IsOptional()
   @IsString()
   @MaxLength(80)
-  vin?: string;
+  chassisNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(120)
+  serialNumber?: string;
 
   @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(120)
   model?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  image?: string;
 
   @IsOptional()
   @IsString()

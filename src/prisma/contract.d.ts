@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'447378fdf65505d956c456304ad287dabbb2afa24d98e00df6b9579c771d4d5a'>;
+  StorageHashBase<'c926b7fcc80c17523d8668473e654350526a31ea617d29339754fac029e5b9e7'>;
 export type ExecutionHash =
-  ExecutionHashBase<'3a6133852ef3b68a9e08f45272125c0ecf80eaeb157b18205e851d83e9cf8e54'>;
+  ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -278,6 +278,9 @@ type ParameterizedOutputTypeFunctions = PgParameterizedOutputTypes;
 type FieldTypeOverrides = {
   readonly public: {
     readonly models: {
+      readonly BatteryReading: {
+        readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
+      };
       readonly SwapTransaction: {
         readonly paymentStatus: {
           readonly output: 'pending' | 'captured' | 'failed' | 'reversed';
@@ -304,6 +307,12 @@ type FieldTypeOverrides = {
             | 'reversed';
         };
       };
+      readonly User: {
+        readonly type: {
+          readonly output: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
+          readonly input: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
+        };
+      };
     };
   };
 };
@@ -325,6 +334,9 @@ export type FieldInputTypes = FieldTypesFromDomain<
 >;
 type ColumnTypeOverrides = {
   readonly public: {
+    readonly BatteryReading: {
+      readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
+    };
     readonly SwapTransaction: {
       readonly paymentStatus: {
         readonly output: 'pending' | 'captured' | 'failed' | 'reversed';
@@ -349,6 +361,12 @@ type ColumnTypeOverrides = {
           | 'failed'
           | 'cancelled'
           | 'reversed';
+      };
+    };
+    readonly User: {
+      readonly type: {
+        readonly output: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
+        readonly input: 'rider' | 'office' | 'swapper' | 'agent' | 'customer';
       };
     };
   };
@@ -384,32 +402,53 @@ export namespace Models {
   export type public_Battery = {
     batteryType: FieldOutputTypes['public']['Battery']['batteryType'];
     createdAt: FieldOutputTypes['public']['Battery']['createdAt'];
+    cycleCount: FieldOutputTypes['public']['Battery']['cycleCount'];
     id: FieldOutputTypes['public']['Battery']['id'];
     manufacturer: FieldOutputTypes['public']['Battery']['manufacturer'];
     model: FieldOutputTypes['public']['Battery']['model'];
+    oem: FieldOutputTypes['public']['Battery']['oem'];
     serialNumber: FieldOutputTypes['public']['Battery']['serialNumber'];
     soc: FieldOutputTypes['public']['Battery']['soc'];
     soh: FieldOutputTypes['public']['Battery']['soh'];
     stationId: FieldOutputTypes['public']['Battery']['stationId'];
     status: FieldOutputTypes['public']['Battery']['status'];
     updatedAt: FieldOutputTypes['public']['Battery']['updatedAt'];
+    voltage: FieldOutputTypes['public']['Battery']['voltage'];
     bike: public_Bike | null;
     newSwapTransactions: public_SwapTransaction[];
     oldSwapTransactions: public_SwapTransaction[];
+    readings: public_BatteryReading[];
     station: public_Station | null;
-    readonly [RelationKeys]?: 'bike' | 'newSwapTransactions' | 'oldSwapTransactions' | 'station';
+    readonly [RelationKeys]?:
+      'bike' | 'newSwapTransactions' | 'oldSwapTransactions' | 'readings' | 'station';
+  };
+  export type public_BatteryReading = {
+    batteryId: FieldOutputTypes['public']['BatteryReading']['batteryId'];
+    cycleCount: FieldOutputTypes['public']['BatteryReading']['cycleCount'];
+    direction: FieldOutputTypes['public']['BatteryReading']['direction'];
+    id: FieldOutputTypes['public']['BatteryReading']['id'];
+    recordedAt: FieldOutputTypes['public']['BatteryReading']['recordedAt'];
+    soc: FieldOutputTypes['public']['BatteryReading']['soc'];
+    soh: FieldOutputTypes['public']['BatteryReading']['soh'];
+    swapTransactionId: FieldOutputTypes['public']['BatteryReading']['swapTransactionId'];
+    voltage: FieldOutputTypes['public']['BatteryReading']['voltage'];
+    battery: public_Battery;
+    swapTransaction: public_SwapTransaction;
+    readonly [RelationKeys]?: 'battery' | 'swapTransaction';
   };
   export type public_Bike = {
+    chassisNumber: FieldOutputTypes['public']['Bike']['chassisNumber'];
     createdAt: FieldOutputTypes['public']['Bike']['createdAt'];
     currentBatteryId: FieldOutputTypes['public']['Bike']['currentBatteryId'];
     id: FieldOutputTypes['public']['Bike']['id'];
+    image: FieldOutputTypes['public']['Bike']['image'];
     model: FieldOutputTypes['public']['Bike']['model'];
     ownerId: FieldOutputTypes['public']['Bike']['ownerId'];
     plateNumber: FieldOutputTypes['public']['Bike']['plateNumber'];
     riderId: FieldOutputTypes['public']['Bike']['riderId'];
+    serialNumber: FieldOutputTypes['public']['Bike']['serialNumber'];
     status: FieldOutputTypes['public']['Bike']['status'];
     updatedAt: FieldOutputTypes['public']['Bike']['updatedAt'];
-    vin: FieldOutputTypes['public']['Bike']['vin'];
     currentBattery: public_Battery | null;
     owner: public_Owner | null;
     rider: public_Rider | null;
@@ -430,8 +469,10 @@ export namespace Models {
     createdAt: FieldOutputTypes['public']['NfcCard']['createdAt'];
     id: FieldOutputTypes['public']['NfcCard']['id'];
     riderId: FieldOutputTypes['public']['NfcCard']['riderId'];
+    serialNumber: FieldOutputTypes['public']['NfcCard']['serialNumber'];
     status: FieldOutputTypes['public']['NfcCard']['status'];
     token: FieldOutputTypes['public']['NfcCard']['token'];
+    type: FieldOutputTypes['public']['NfcCard']['type'];
     updatedAt: FieldOutputTypes['public']['NfcCard']['updatedAt'];
     rider: public_Rider | null;
     transactions: public_SwapTransaction[];
@@ -448,6 +489,13 @@ export namespace Models {
     bikes: public_Bike[];
     riders: public_Rider[];
     readonly [RelationKeys]?: 'bikes' | 'riders';
+  };
+  export type public_Permission = {
+    id: FieldOutputTypes['public']['Permission']['id'];
+    name: FieldOutputTypes['public']['Permission']['name'];
+    roleId: FieldOutputTypes['public']['Permission']['roleId'];
+    role: public_Role;
+    readonly [RelationKeys]?: 'role';
   };
   export type public_Rider = {
     createdAt: FieldOutputTypes['public']['Rider']['createdAt'];
@@ -466,6 +514,13 @@ export namespace Models {
     wallet: public_Wallet | null;
     readonly [RelationKeys]?: 'bikes' | 'cards' | 'owner' | 'transactions' | 'wallet';
   };
+  export type public_Role = {
+    id: FieldOutputTypes['public']['Role']['id'];
+    name: FieldOutputTypes['public']['Role']['name'];
+    permissions: public_Permission[];
+    users: public_User[];
+    readonly [RelationKeys]?: 'permissions' | 'users';
+  };
   export type public_Station = {
     capacity: FieldOutputTypes['public']['Station']['capacity'];
     code: FieldOutputTypes['public']['Station']['code'];
@@ -481,12 +536,17 @@ export namespace Models {
     readonly [RelationKeys]?: 'batteries' | 'transactions';
   };
   export type public_SwapTransaction = {
+    assignedAt: FieldOutputTypes['public']['SwapTransaction']['assignedAt'];
     bikeId: FieldOutputTypes['public']['SwapTransaction']['bikeId'];
+    cancelledAt: FieldOutputTypes['public']['SwapTransaction']['cancelledAt'];
     cardId: FieldOutputTypes['public']['SwapTransaction']['cardId'];
+    collectedAt: FieldOutputTypes['public']['SwapTransaction']['collectedAt'];
     completedAt: FieldOutputTypes['public']['SwapTransaction']['completedAt'];
     createdAt: FieldOutputTypes['public']['SwapTransaction']['createdAt'];
+    failedAt: FieldOutputTypes['public']['SwapTransaction']['failedAt'];
     fee: FieldOutputTypes['public']['SwapTransaction']['fee'];
     id: FieldOutputTypes['public']['SwapTransaction']['id'];
+    installedAt: FieldOutputTypes['public']['SwapTransaction']['installedAt'];
     newBatteryId: FieldOutputTypes['public']['SwapTransaction']['newBatteryId'];
     notes: FieldOutputTypes['public']['SwapTransaction']['notes'];
     oldBatteryId: FieldOutputTypes['public']['SwapTransaction']['oldBatteryId'];
@@ -495,6 +555,7 @@ export namespace Models {
     riderId: FieldOutputTypes['public']['SwapTransaction']['riderId'];
     stationId: FieldOutputTypes['public']['SwapTransaction']['stationId'];
     status: FieldOutputTypes['public']['SwapTransaction']['status'];
+    swapperId: FieldOutputTypes['public']['SwapTransaction']['swapperId'];
     updatedAt: FieldOutputTypes['public']['SwapTransaction']['updatedAt'];
     walletBalanceAfter: FieldOutputTypes['public']['SwapTransaction']['walletBalanceAfter'];
     auditLogs: public_AuditLog[];
@@ -503,8 +564,10 @@ export namespace Models {
     ledgerEntries: public_LedgerEntry[];
     newBattery: public_Battery | null;
     oldBattery: public_Battery | null;
+    readings: public_BatteryReading[];
     rider: public_Rider;
     station: public_Station;
+    swapper: public_User | null;
     readonly [RelationKeys]?:
       | 'auditLogs'
       | 'bike'
@@ -512,18 +575,29 @@ export namespace Models {
       | 'ledgerEntries'
       | 'newBattery'
       | 'oldBattery'
+      | 'readings'
       | 'rider'
-      | 'station';
+      | 'station'
+      | 'swapper';
   };
   export type public_User = {
+    address: FieldOutputTypes['public']['User']['address'];
     createdAt: FieldOutputTypes['public']['User']['createdAt'];
     email: FieldOutputTypes['public']['User']['email'];
+    firstName: FieldOutputTypes['public']['User']['firstName'];
     id: FieldOutputTypes['public']['User']['id'];
+    image: FieldOutputTypes['public']['User']['image'];
     isActive: FieldOutputTypes['public']['User']['isActive'];
-    name: FieldOutputTypes['public']['User']['name'];
-    role: FieldOutputTypes['public']['User']['role'];
+    lastName: FieldOutputTypes['public']['User']['lastName'];
+    nationalId: FieldOutputTypes['public']['User']['nationalId'];
+    phone: FieldOutputTypes['public']['User']['phone'];
+    roleId: FieldOutputTypes['public']['User']['roleId'];
+    type: FieldOutputTypes['public']['User']['type'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
-    readonly [RelationKeys]?: never;
+    username: FieldOutputTypes['public']['User']['username'];
+    role: public_Role;
+    swapsAsSwapper: public_SwapTransaction[];
+    readonly [RelationKeys]?: 'role' | 'swapsAsSwapper';
   };
   export type public_Wallet = {
     balance: FieldOutputTypes['public']['Wallet']['balance'];
@@ -541,11 +615,14 @@ export declare const models: {
   public: {
     AuditLog: Models.public_AuditLog;
     Battery: Models.public_Battery;
+    BatteryReading: Models.public_BatteryReading;
     Bike: Models.public_Bike;
     LedgerEntry: Models.public_LedgerEntry;
     NfcCard: Models.public_NfcCard;
     Owner: Models.public_Owner;
+    Permission: Models.public_Permission;
     Rider: Models.public_Rider;
+    Role: Models.public_Role;
     Station: Models.public_Station;
     SwapTransaction: Models.public_SwapTransaction;
     User: Models.public_User;
@@ -677,6 +754,16 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
+                readonly cycleCount: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
+                  readonly many: false;
+                };
                 readonly id: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
@@ -697,6 +784,12 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly oem: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly serialNumber: {
@@ -748,6 +841,12 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
+                readonly voltage: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [{ readonly columns: readonly ['serialNumber'] }];
@@ -774,8 +873,120 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly BatteryReading: {
+              columns: {
+                readonly batteryId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly cycleCount: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly direction: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly recordedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly soc: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly soh: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly swapTransactionId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly voltage: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['swapTransactionId', 'direction'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'BatteryReading_batteryId_idx_87376261';
+                  readonly prefix: 'BatteryReading_batteryId_idx';
+                  readonly columns: readonly ['batteryId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'BatteryReading_swapTransactionId_idx_64f4df5e';
+                  readonly prefix: 'BatteryReading_swapTransactionId_idx';
+                  readonly columns: readonly ['swapTransactionId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'BatteryReading';
+                    readonly columns: readonly ['batteryId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Battery';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'BatteryReading';
+                    readonly columns: readonly ['swapTransactionId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'SwapTransaction';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly Bike: {
               columns: {
+                readonly chassisNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly createdAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -798,6 +1009,12 @@ type ContractBase = Omit<
                     readonly kind: 'function';
                     readonly expression: 'autoincrement()';
                   };
+                  readonly many: false;
+                };
+                readonly image: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly model: {
@@ -824,6 +1041,12 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly serialNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
                 readonly status: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -841,17 +1064,12 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
-                readonly vin: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [
                 { readonly columns: readonly ['plateNumber'] },
-                { readonly columns: readonly ['vin'] },
+                { readonly columns: readonly ['chassisNumber'] },
+                { readonly columns: readonly ['serialNumber'] },
                 { readonly columns: readonly ['currentBatteryId'] },
               ];
               indexes: readonly [
@@ -1004,6 +1222,12 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly serialNumber: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
                 readonly status: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1020,6 +1244,12 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly type: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
                 readonly updatedAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -1029,7 +1259,10 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['token'] }];
+              uniques: readonly [
+                { readonly columns: readonly ['token'] },
+                { readonly columns: readonly ['serialNumber'] },
+              ];
               indexes: readonly [
                 {
                   readonly name: 'NfcCard_riderId_idx_966752c5';
@@ -1113,6 +1346,56 @@ type ContractBase = Omit<
               uniques: readonly [{ readonly columns: readonly ['email'] }];
               indexes: readonly [];
               foreignKeys: readonly [];
+            };
+            readonly Permission: {
+              columns: {
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly name: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly roleId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['roleId', 'name'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'Permission_roleId_idx_ffccc9a4';
+                  readonly prefix: 'Permission_roleId_idx';
+                  readonly columns: readonly ['roleId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Permission';
+                    readonly columns: readonly ['roleId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Role';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly Rider: {
               columns: {
@@ -1214,6 +1497,30 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly Role: {
+              columns: {
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly name: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['name'] }];
+              indexes: readonly [];
+              foreignKeys: readonly [];
+            };
             readonly Station: {
               columns: {
                 readonly capacity: {
@@ -1293,16 +1600,37 @@ type ContractBase = Omit<
             };
             readonly SwapTransaction: {
               columns: {
+                readonly assignedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
                 readonly bikeId: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly cancelledAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
                 readonly cardId: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly collectedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
                 readonly completedAt: {
@@ -1317,6 +1645,13 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly failedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
@@ -1339,6 +1674,13 @@ type ContractBase = Omit<
                     readonly kind: 'function';
                     readonly expression: 'autoincrement()';
                   };
+                  readonly many: false;
+                };
+                readonly installedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
                 readonly newBatteryId: {
@@ -1395,6 +1737,12 @@ type ContractBase = Omit<
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/text@1', 'initiated'>;
                   };
+                  readonly many: false;
+                };
+                readonly swapperId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly updatedAt: {
@@ -1455,6 +1803,12 @@ type ContractBase = Omit<
                   readonly columns: readonly ['stationId'];
                   readonly unique: false;
                 },
+                {
+                  readonly name: 'SwapTransaction_swapperId_idx_db16cbd2';
+                  readonly prefix: 'SwapTransaction_swapperId_idx';
+                  readonly columns: readonly ['swapperId'];
+                  readonly unique: false;
+                },
               ];
               foreignKeys: readonly [
                 {
@@ -1509,6 +1863,18 @@ type ContractBase = Omit<
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'SwapTransaction';
+                    readonly columns: readonly ['swapperId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'SwapTransaction';
                     readonly columns: readonly ['oldBatteryId'];
                   };
                   readonly target: {
@@ -1533,6 +1899,12 @@ type ContractBase = Omit<
             };
             readonly User: {
               columns: {
+                readonly address: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly createdAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -1542,6 +1914,12 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly email: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly firstName: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
@@ -1557,6 +1935,12 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly image: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly isActive: {
                   readonly dataType: 'pg/bool';
                   readonly codecId: 'pg/bool@1';
@@ -1567,20 +1951,34 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
-                readonly name: {
+                readonly lastName: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                   readonly many: false;
                 };
-                readonly role: {
+                readonly nationalId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly phone: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly roleId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly type: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'member'>;
-                  };
                   readonly many: false;
                 };
                 readonly updatedAt: {
@@ -1590,11 +1988,42 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
+                readonly username: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['email'] }];
-              indexes: readonly [];
-              foreignKeys: readonly [];
+              uniques: readonly [
+                { readonly columns: readonly ['username'] },
+                { readonly columns: readonly ['email'] },
+                { readonly columns: readonly ['phone'] },
+                { readonly columns: readonly ['nationalId'] },
+              ];
+              indexes: readonly [
+                {
+                  readonly name: 'User_roleId_idx_ffccc9a4';
+                  readonly prefix: 'User_roleId_idx';
+                  readonly columns: readonly ['roleId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['roleId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Role';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly Wallet: {
               columns: {
@@ -1675,6 +2104,10 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['pending', 'captured', 'failed', 'reversed'];
             };
+            readonly ReadingDirection: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['in', 'out'];
+            };
             readonly SwapStatus: {
               readonly kind: 'valueSet';
               readonly values: readonly [
@@ -1687,6 +2120,10 @@ type ContractBase = Omit<
                 'cancelled',
                 'reversed',
               ];
+            };
+            readonly UserType: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['rider', 'office', 'swapper', 'agent', 'customer'];
             };
           };
         };
@@ -1701,6 +2138,10 @@ type ContractBase = Omit<
   readonly roots: {
     readonly AuditLog: { readonly namespace: 'public' & NamespaceId; readonly model: 'AuditLog' };
     readonly Battery: { readonly namespace: 'public' & NamespaceId; readonly model: 'Battery' };
+    readonly BatteryReading: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'BatteryReading';
+    };
     readonly Bike: { readonly namespace: 'public' & NamespaceId; readonly model: 'Bike' };
     readonly LedgerEntry: {
       readonly namespace: 'public' & NamespaceId;
@@ -1708,7 +2149,12 @@ type ContractBase = Omit<
     };
     readonly NfcCard: { readonly namespace: 'public' & NamespaceId; readonly model: 'NfcCard' };
     readonly Owner: { readonly namespace: 'public' & NamespaceId; readonly model: 'Owner' };
+    readonly Permission: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'Permission';
+    };
     readonly Rider: { readonly namespace: 'public' & NamespaceId; readonly model: 'Rider' };
+    readonly Role: { readonly namespace: 'public' & NamespaceId; readonly model: 'Role' };
     readonly Station: { readonly namespace: 'public' & NamespaceId; readonly model: 'Station' };
     readonly SwapTransaction: {
       readonly namespace: 'public' & NamespaceId;
@@ -1803,6 +2249,10 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                 };
               };
+              readonly cycleCount: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -1813,6 +2263,10 @@ type ContractBase = Omit<
               };
               readonly model: {
                 readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly oem: {
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly serialNumber: {
@@ -1842,6 +2296,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly typeParams: { readonly precision: 3 };
                 };
+              };
+              readonly voltage: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
               };
             };
             readonly relations: {
@@ -1876,6 +2334,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['oldBatteryId'];
                 };
               };
+              readonly readings: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'BatteryReading';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['batteryId'];
+                };
+              };
               readonly station: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -1895,20 +2364,112 @@ type ContractBase = Omit<
               readonly fields: {
                 readonly batteryType: { readonly column: 'batteryType' };
                 readonly createdAt: { readonly column: 'createdAt' };
+                readonly cycleCount: { readonly column: 'cycleCount' };
                 readonly id: { readonly column: 'id' };
                 readonly manufacturer: { readonly column: 'manufacturer' };
                 readonly model: { readonly column: 'model' };
+                readonly oem: { readonly column: 'oem' };
                 readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly soc: { readonly column: 'soc' };
                 readonly soh: { readonly column: 'soh' };
                 readonly stationId: { readonly column: 'stationId' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly voltage: { readonly column: 'voltage' };
+              };
+            };
+          };
+          readonly BatteryReading: {
+            readonly fields: {
+              readonly batteryId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly cycleCount: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly direction: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly recordedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly soc: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly soh: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly swapTransactionId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly voltage: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+            };
+            readonly relations: {
+              readonly battery: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Battery';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['batteryId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly swapTransaction: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'SwapTransaction';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['swapTransactionId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'BatteryReading';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly batteryId: { readonly column: 'batteryId' };
+                readonly cycleCount: { readonly column: 'cycleCount' };
+                readonly direction: { readonly column: 'direction' };
+                readonly id: { readonly column: 'id' };
+                readonly recordedAt: { readonly column: 'recordedAt' };
+                readonly soc: { readonly column: 'soc' };
+                readonly soh: { readonly column: 'soh' };
+                readonly swapTransactionId: { readonly column: 'swapTransactionId' };
+                readonly voltage: { readonly column: 'voltage' };
               };
             };
           };
           readonly Bike: {
             readonly fields: {
+              readonly chassisNumber: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -1924,6 +2485,10 @@ type ContractBase = Omit<
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly image: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly model: {
                 readonly nullable: false;
@@ -1941,6 +2506,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly serialNumber: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -1952,10 +2521,6 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly typeParams: { readonly precision: 3 };
                 };
-              };
-              readonly vin: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
             };
             readonly relations: {
@@ -2011,16 +2576,18 @@ type ContractBase = Omit<
               readonly table: 'Bike';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly chassisNumber: { readonly column: 'chassisNumber' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly currentBatteryId: { readonly column: 'currentBatteryId' };
                 readonly id: { readonly column: 'id' };
+                readonly image: { readonly column: 'image' };
                 readonly model: { readonly column: 'model' };
                 readonly ownerId: { readonly column: 'ownerId' };
                 readonly plateNumber: { readonly column: 'plateNumber' };
                 readonly riderId: { readonly column: 'riderId' };
+                readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
-                readonly vin: { readonly column: 'vin' };
               };
             };
           };
@@ -2104,11 +2671,19 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly serialNumber: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly token: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly type: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
@@ -2153,8 +2728,10 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly riderId: { readonly column: 'riderId' };
+                readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly status: { readonly column: 'status' };
                 readonly token: { readonly column: 'token' };
+                readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };
@@ -2230,6 +2807,42 @@ type ContractBase = Omit<
                 readonly phone: { readonly column: 'phone' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly Permission: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly roleId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: {
+              readonly role: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Role' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['roleId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'Permission';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly name: { readonly column: 'name' };
+                readonly roleId: { readonly column: 'roleId' };
               };
             };
           };
@@ -2352,6 +2965,47 @@ type ContractBase = Omit<
               };
             };
           };
+          readonly Role: {
+            readonly fields: {
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly permissions: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Permission';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['roleId'];
+                };
+              };
+              readonly users: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['roleId'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'Role';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly id: { readonly column: 'id' };
+                readonly name: { readonly column: 'name' };
+              };
+            };
+          };
           readonly Station: {
             readonly fields: {
               readonly capacity: {
@@ -2441,13 +3095,37 @@ type ContractBase = Omit<
           };
           readonly SwapTransaction: {
             readonly fields: {
+              readonly assignedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
               readonly bikeId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly cancelledAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
               readonly cardId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly collectedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
               };
               readonly completedAt: {
                 readonly nullable: true;
@@ -2465,6 +3143,14 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                 };
               };
+              readonly failedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
               readonly fee: {
                 readonly nullable: false;
                 readonly type: {
@@ -2476,6 +3162,14 @@ type ContractBase = Omit<
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly installedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
               };
               readonly newBatteryId: {
                 readonly nullable: true;
@@ -2508,6 +3202,10 @@ type ContractBase = Omit<
               readonly status: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly swapperId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly updatedAt: {
                 readonly nullable: false;
@@ -2594,6 +3292,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly readings: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'BatteryReading';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['swapTransactionId'];
+                };
+              };
               readonly rider: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -2618,17 +3327,31 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly swapper: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['swapperId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'SwapTransaction';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly assignedAt: { readonly column: 'assignedAt' };
                 readonly bikeId: { readonly column: 'bikeId' };
+                readonly cancelledAt: { readonly column: 'cancelledAt' };
                 readonly cardId: { readonly column: 'cardId' };
+                readonly collectedAt: { readonly column: 'collectedAt' };
                 readonly completedAt: { readonly column: 'completedAt' };
                 readonly createdAt: { readonly column: 'createdAt' };
+                readonly failedAt: { readonly column: 'failedAt' };
                 readonly fee: { readonly column: 'fee' };
                 readonly id: { readonly column: 'id' };
+                readonly installedAt: { readonly column: 'installedAt' };
                 readonly newBatteryId: { readonly column: 'newBatteryId' };
                 readonly notes: { readonly column: 'notes' };
                 readonly oldBatteryId: { readonly column: 'oldBatteryId' };
@@ -2637,6 +3360,7 @@ type ContractBase = Omit<
                 readonly riderId: { readonly column: 'riderId' };
                 readonly stationId: { readonly column: 'stationId' };
                 readonly status: { readonly column: 'status' };
+                readonly swapperId: { readonly column: 'swapperId' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly walletBalanceAfter: { readonly column: 'walletBalanceAfter' };
               };
@@ -2644,6 +3368,10 @@ type ContractBase = Omit<
           };
           readonly User: {
             readonly fields: {
+              readonly address: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -2656,19 +3384,39 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly firstName: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly image: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly isActive: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
-              readonly name: {
+              readonly lastName: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly role: {
+              readonly nationalId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly phone: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly roleId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly type: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
@@ -2680,19 +3428,51 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                 };
               };
+              readonly username: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
             };
-            readonly relations: Record<string, never>;
+            readonly relations: {
+              readonly role: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Role' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['roleId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly swapsAsSwapper: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'SwapTransaction';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['swapperId'];
+                };
+              };
+            };
             readonly storage: {
               readonly table: 'User';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly address: { readonly column: 'address' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly email: { readonly column: 'email' };
+                readonly firstName: { readonly column: 'firstName' };
                 readonly id: { readonly column: 'id' };
+                readonly image: { readonly column: 'image' };
                 readonly isActive: { readonly column: 'isActive' };
-                readonly name: { readonly column: 'name' };
-                readonly role: { readonly column: 'role' };
+                readonly lastName: { readonly column: 'lastName' };
+                readonly nationalId: { readonly column: 'nationalId' };
+                readonly phone: { readonly column: 'phone' };
+                readonly roleId: { readonly column: 'roleId' };
+                readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly username: { readonly column: 'username' };
               };
             };
           };
@@ -2773,6 +3553,13 @@ type ContractBase = Omit<
               { readonly name: 'reversed'; readonly value: 'reversed' },
             ];
           };
+          readonly ReadingDirection: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'in'; readonly value: 'in' },
+              { readonly name: 'out'; readonly value: 'out' },
+            ];
+          };
           readonly SwapStatus: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -2786,6 +3573,16 @@ type ContractBase = Omit<
               { readonly name: 'reversed'; readonly value: 'reversed' },
             ];
           };
+          readonly UserType: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'rider'; readonly value: 'rider' },
+              { readonly name: 'office'; readonly value: 'office' },
+              { readonly name: 'swapper'; readonly value: 'swapper' },
+              { readonly name: 'agent'; readonly value: 'agent' },
+              { readonly name: 'customer'; readonly value: 'customer' },
+            ];
+          };
         };
         readonly enumMemberTypes?: {
           readonly PaymentStatus: readonly [
@@ -2793,6 +3590,10 @@ type ContractBase = Omit<
             { readonly name: 'captured'; readonly value: 'captured' },
             { readonly name: 'failed'; readonly value: 'failed' },
             { readonly name: 'reversed'; readonly value: 'reversed' },
+          ];
+          readonly ReadingDirection: readonly [
+            { readonly name: 'in'; readonly value: 'in' },
+            { readonly name: 'out'; readonly value: 'out' },
           ];
           readonly SwapStatus: readonly [
             { readonly name: 'initiated'; readonly value: 'initiated' },
@@ -2803,6 +3604,13 @@ type ContractBase = Omit<
             { readonly name: 'failed'; readonly value: 'failed' },
             { readonly name: 'cancelled'; readonly value: 'cancelled' },
             { readonly name: 'reversed'; readonly value: 'reversed' },
+          ];
+          readonly UserType: readonly [
+            { readonly name: 'rider'; readonly value: 'rider' },
+            { readonly name: 'office'; readonly value: 'office' },
+            { readonly name: 'swapper'; readonly value: 'swapper' },
+            { readonly name: 'agent'; readonly value: 'agent' },
+            { readonly name: 'customer'; readonly value: 'customer' },
           ];
         };
       };
@@ -2841,6 +3649,11 @@ type ContractBase = Omit<
     readonly mutations: {
       readonly defaults: readonly [
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2853,6 +3666,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2865,6 +3683,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2877,6 +3700,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2889,6 +3717,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2901,6 +3734,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2913,6 +3751,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2925,6 +3768,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2937,6 +3785,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';

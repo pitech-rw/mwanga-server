@@ -10,7 +10,9 @@ export class AppService {
   }
 
   async getHealth() {
-    const userCount = await this.prisma.user.count();
+    const { userCount } = await this.prisma.db.orm.public.User.aggregate((aggregate) => ({
+      userCount: aggregate.count(),
+    }));
 
     return {
       ok: true,

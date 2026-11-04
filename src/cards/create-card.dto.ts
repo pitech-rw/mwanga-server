@@ -6,6 +6,16 @@ export class CreateCardDto {
   @MaxLength(200)
   token: string;
 
+  @IsString()
+  @MinLength(3)
+  @MaxLength(120)
+  serialNumber: string;
+
+  @IsString()
+  @MinLength(2)
+  @MaxLength(30)
+  type: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(20)

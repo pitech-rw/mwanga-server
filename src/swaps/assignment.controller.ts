@@ -1,6 +1,7 @@
 import { Body, Controller, Param, ParseIntPipe, Post } from '@nestjs/common';
 import { AssignBatteryDto } from './assign-battery.dto.js';
 import { AssignmentService } from './assignment.service.js';
+import { CompleteSwapDto } from './complete-swap.dto.js';
 
 @Controller('swaps')
 export class AssignmentController {
@@ -15,7 +16,8 @@ export class AssignmentController {
   completeSwap(
     @Param('id', ParseIntPipe) id: number,
     @Param('action') action: 'collected' | 'installed' | 'completed' | 'failed' | 'cancelled',
+    @Body() body: CompleteSwapDto,
   ) {
-    return this.assignmentService.completeSwap(id, action);
+    return this.assignmentService.completeSwap(id, action, body);
   }
 }

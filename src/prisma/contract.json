@@ -1640,6 +1640,16 @@
           },
           "SwapTransaction": {
             "fields": {
+              "assignedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
               "bikeId": {
                 "nullable": false,
                 "type": {
@@ -1647,11 +1657,31 @@
                   "kind": "scalar"
                 }
               },
+              "cancelledAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
               "cardId": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
+                }
+              },
+              "collectedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
                 }
               },
               "completedAt": {
@@ -1666,6 +1696,16 @@
               },
               "createdAt": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "failedAt": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar",
@@ -1690,6 +1730,16 @@
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
+                }
+              },
+              "installedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
                 }
               },
               "newBatteryId": {
@@ -1758,6 +1808,13 @@
                   "entityName": "SwapStatus",
                   "namespaceId": "public",
                   "plane": "domain"
+                }
+              },
+              "swapperId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
                 }
               },
               "updatedAt": {
@@ -1923,15 +1980,40 @@
                   "model": "Station",
                   "namespace": "public"
                 }
+              },
+              "swapper": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "swapperId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
               "fields": {
+                "assignedAt": {
+                  "column": "assignedAt"
+                },
                 "bikeId": {
                   "column": "bikeId"
                 },
+                "cancelledAt": {
+                  "column": "cancelledAt"
+                },
                 "cardId": {
                   "column": "cardId"
+                },
+                "collectedAt": {
+                  "column": "collectedAt"
                 },
                 "completedAt": {
                   "column": "completedAt"
@@ -1939,11 +2021,17 @@
                 "createdAt": {
                   "column": "createdAt"
                 },
+                "failedAt": {
+                  "column": "failedAt"
+                },
                 "fee": {
                   "column": "fee"
                 },
                 "id": {
                   "column": "id"
+                },
+                "installedAt": {
+                  "column": "installedAt"
                 },
                 "newBatteryId": {
                   "column": "newBatteryId"
@@ -1968,6 +2056,9 @@
                 },
                 "status": {
                   "column": "status"
+                },
+                "swapperId": {
+                  "column": "swapperId"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -2107,6 +2198,21 @@
                 },
                 "to": {
                   "model": "Role",
+                  "namespace": "public"
+                }
+              },
+              "swapsAsSwapper": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "swapperId"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
                   "namespace": "public"
                 }
               }
@@ -3430,15 +3536,39 @@
                 }
               ],
               "columns": {
+                "assignedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
                 "bikeId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": false
                 },
+                "cancelledAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
                 "cardId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": false
+                },
+                "collectedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
                 },
                 "completedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -3456,6 +3586,14 @@
                     "kind": "function"
                   },
                   "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "failedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
                   "typeParams": {
                     "precision": 3
                   }
@@ -3481,6 +3619,14 @@
                     "kind": "function"
                   },
                   "nullable": false
+                },
+                "installedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": true,
+                  "typeParams": {
+                    "precision": 3
+                  }
                 },
                 "newBatteryId": {
                   "codecId": "pg/int4@1",
@@ -3541,6 +3687,11 @@
                     "namespaceId": "public",
                     "plane": "storage"
                   }
+                },
+                "swapperId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -3643,6 +3794,25 @@
                 },
                 {
                   "index": {
+                    "name": "SwapTransaction_swapperId_idx_db16cbd2"
+                  },
+                  "source": {
+                    "columns": [
+                      "swapperId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "SwapTransaction"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                },
+                {
+                  "index": {
                     "name": "SwapTransaction_oldBatteryId_idx_cdbd3cde"
                   },
                   "source": {
@@ -3727,6 +3897,14 @@
                   ],
                   "name": "SwapTransaction_stationId_idx_0626a60c",
                   "prefix": "SwapTransaction_stationId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "swapperId"
+                  ],
+                  "name": "SwapTransaction_swapperId_idx_db16cbd2",
+                  "prefix": "SwapTransaction_swapperId_idx",
                   "unique": false
                 }
               ],
@@ -4043,7 +4221,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "ba61fbd624e333fe5f15827020d3370133c2b2d976bfac0854792bcdc4e3e418"
+    "storageHash": "c926b7fcc80c17523d8668473e654350526a31ea617d29339754fac029e5b9e7"
   },
   "execution": {
     "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",

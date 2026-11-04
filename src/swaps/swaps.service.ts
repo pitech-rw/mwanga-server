@@ -4,6 +4,8 @@ import type { PaymentStatus, SwapStatus, SwapTransaction } from '../prisma/types
 import { PrismaService } from '../prisma.service.js';
 import { CreateSwapDto } from './create-swap.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
+import { requireSwapper } from './require-swapper.js';
+import { statusTimestampsForTransition } from './swap-status-timestamps.js';
 import { UpdateSwapDto } from './update-swap.dto.js';
 
 const swapStatusMap = {
@@ -33,6 +35,7 @@ export class SwapsService {
       .include('bike')
       .include('station')
       .include('card')
+      .include('swapper')
       .include('oldBattery')
       .include('newBattery')
       .include('readings');
@@ -62,6 +65,10 @@ export class SwapsService {
       throw new BadRequestException('Invalid swap or payment status');
     }
 
+    if (data.swapperId !== undefined) {
+      await requireSwapper(this.prisma, data.swapperId);
+    }
+
     try {
       return await this.prisma.db.transaction(async (tx) => {
         const created = await tx.orm.public.SwapTransaction.create({
@@ -69,6 +76,7 @@ export class SwapsService {
           bikeId: data.bikeId,
           stationId: data.stationId,
           cardId: data.cardId,
+          swapperId: data.swapperId,
           oldBatteryId: data.oldBatteryId,
           newBatteryId: data.newBatteryId,
           status,
@@ -77,6 +85,7 @@ export class SwapsService {
           walletBalanceAfter: asNumeric(data.walletBalanceAfter ?? 0),
           paymentReference: data.paymentReference,
           notes: data.notes,
+          ...statusTimestampsForTransition(status),
         });
 
         await recordBatteryReading(tx, created.id, data.oldBatteryId, 'in');
@@ -86,6 +95,7 @@ export class SwapsService {
           .include('bike')
           .include('station')
           .include('card')
+          .include('swapper')
           .include('oldBattery')
           .include('newBattery')
           .include('readings')
@@ -122,6 +132,10 @@ export class SwapsService {
       throw new BadRequestException('Invalid payment status');
     }
 
+    if (data.swapperId !== undefined) {
+      await requireSwapper(this.prisma, data.swapperId);
+    }
+
     try {
       const swap = await this.prisma.db.transaction(async (tx) => {
         const updated = await tx.orm.public.SwapTransaction.where({ id })
@@ -129,6 +143,7 @@ export class SwapsService {
           .include('bike')
           .include('station')
           .include('card')
+          .include('swapper')
           .include('oldBattery')
           .include('newBattery')
           .include('readings')
@@ -138,6 +153,7 @@ export class SwapsService {
               bikeId: data.bikeId,
               stationId: data.stationId,
               cardId: data.cardId,
+              swapperId: data.swapperId,
               oldBatteryId: data.oldBatteryId,
               newBatteryId: data.newBatteryId,
               status,
@@ -147,7 +163,7 @@ export class SwapsService {
                 data.walletBalanceAfter === undefined ? undefined : asNumeric(data.walletBalanceAfter),
               paymentReference: data.paymentReference,
               notes: data.notes,
-              completedAt: data.completedAt,
+              ...(status ? statusTimestampsForTransition(status) : {}),
             }),
           );
 
@@ -167,6 +183,7 @@ export class SwapsService {
           .include('bike')
           .include('station')
           .include('card')
+          .include('swapper')
           .include('oldBattery')
           .include('newBattery')
           .include('readings')

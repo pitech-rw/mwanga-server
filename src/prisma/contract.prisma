@@ -24,6 +24,8 @@ model User {
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @onCreate(now()) @onUpdate(now())
+
+  swapsAsSwapper SwapTransaction[]
 }
 
 model Role {
@@ -185,6 +187,7 @@ model SwapTransaction {
   bikeId            Int
   stationId         Int
   cardId            Int
+  swapperId         Int?
   oldBatteryId      Int?
   newBatteryId      Int?
   status            SwapStatus    @default(initiated)
@@ -193,14 +196,20 @@ model SwapTransaction {
   walletBalanceAfter Numeric(10, 2)       @default(0)
   paymentReference  String?
   notes             String?
+  assignedAt        DateTime?
+  collectedAt       DateTime?
+  installedAt       DateTime?
+  completedAt       DateTime?
+  failedAt          DateTime?
+  cancelledAt       DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @onCreate(now()) @onUpdate(now())
-  completedAt       DateTime?
 
   rider        Rider         @relation(fields: [riderId], references: [id])
   bike         Bike          @relation(fields: [bikeId], references: [id])
   station      Station       @relation(fields: [stationId], references: [id])
   card         NfcCard       @relation(fields: [cardId], references: [id])
+  swapper      User?         @relation(fields: [swapperId], references: [id])
   oldBattery   Battery?      @relation("OldBattery", fields: [oldBatteryId], references: [id])
   newBattery   Battery?      @relation("NewBattery", fields: [newBatteryId], references: [id])
   readings     BatteryReading[]

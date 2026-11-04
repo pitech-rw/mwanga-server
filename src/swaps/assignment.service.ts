@@ -4,6 +4,9 @@ import type { SwapStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
+import { requireSwapper } from './require-swapper.js';
+import { statusTimestampsForTransition } from './swap-status-timestamps.js';
+import type { CompleteSwapDto } from './complete-swap.dto.js';
 
 type Tx = Parameters<Parameters<PrismaService['db']['transaction']>[0]>[0];
 
@@ -23,12 +26,15 @@ export class AssignmentService {
       .include('bike')
       .include('station')
       .include('card')
+      .include('swapper')
       .include('oldBattery')
       .include('newBattery')
       .include('readings');
   }
 
   async assignBattery(dto: AssignBatteryDto) {
+    await requireSwapper(this.prisma, dto.swapperId);
+
     const rider = await this.prisma.db.orm.public.Rider.where({ id: dto.riderId })
       .include('wallet')
       .include('cards')
@@ -72,11 +78,14 @@ export class AssignmentService {
       throw new BadRequestException('No available battery at the selected station');
     }
 
+    const assignedAt = new Date();
+
     const swap = await this.prisma.db.transaction(async (tx) => {
       const created = await tx.orm.public.SwapTransaction.include('rider')
         .include('bike')
         .include('station')
         .include('card')
+        .include('swapper')
         .include('oldBattery')
         .include('newBattery')
         .create({
@@ -84,6 +93,7 @@ export class AssignmentService {
           bikeId: bike.id,
           stationId: station.id,
           cardId: activeCard.id,
+          swapperId: dto.swapperId,
           oldBatteryId: bike.currentBatteryId,
           newBatteryId: availableBattery.id,
           status: 'assigned',
@@ -91,6 +101,7 @@ export class AssignmentService {
           fee: asNumeric(dto.fee ?? 0),
           walletBalanceAfter: asNumeric(rider.wallet?.balance ?? 0),
           notes: dto.notes ?? 'Battery assigned by system',
+          ...statusTimestampsForTransition('assigned', assignedAt),
         });
 
       await recordBatteryReading(tx, created.id, bike.currentBatteryId, 'in');
@@ -114,6 +125,7 @@ export class AssignmentService {
         .include('bike')
         .include('station')
         .include('card')
+        .include('swapper')
         .include('oldBattery')
         .include('newBattery')
         .include('readings')
@@ -147,6 +159,7 @@ export class AssignmentService {
   async completeSwap(
     swapId: number,
     action: 'collected' | 'installed' | 'completed' | 'failed' | 'cancelled',
+    dto: CompleteSwapDto = {},
   ) {
     const loaded = await this.swapQuery().where({ id: swapId }).first();
 
@@ -166,6 +179,10 @@ export class AssignmentService {
               : 'cancelled';
 
     return this.prisma.db.transaction(async (tx) => {
+      if (dto.swapperId !== undefined) {
+        await requireSwapper(this.prisma, dto.swapperId);
+      }
+
       if (action === 'completed' && loaded.paymentStatus !== 'captured') {
         const riderWallet = await tx.orm.public.Wallet.where({ riderId: loaded.riderId }).first();
 
@@ -196,15 +213,14 @@ export class AssignmentService {
         .include('bike')
         .include('station')
         .include('card')
+        .include('swapper')
         .include('oldBattery')
         .include('newBattery')
         .include('readings')
         .update({
           status: nextStatus,
-          completedAt:
-            action === 'completed' || action === 'failed' || action === 'cancelled'
-              ? new Date()
-              : undefined,
+          ...(dto.swapperId !== undefined ? { swapperId: dto.swapperId } : {}),
+          ...statusTimestampsForTransition(nextStatus),
         });
 
       if (!updatedSwap) {
@@ -247,6 +263,7 @@ export class AssignmentService {
         .include('bike')
         .include('station')
         .include('card')
+        .include('swapper')
         .include('oldBattery')
         .include('newBattery')
         .include('readings')

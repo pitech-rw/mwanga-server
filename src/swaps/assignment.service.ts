@@ -75,6 +75,8 @@ export class AssignmentService {
           cardId: activeCard.id,
           oldBatteryId: bike.currentBatteryId,
           newBatteryId: availableBattery.id,
+          oldBatterySoc: bike.currentBattery?.soc,
+          newBatterySoc: availableBattery.soc,
           status: 'assigned',
           paymentStatus: 'pending',
           fee: asNumeric(dto.fee ?? 0),

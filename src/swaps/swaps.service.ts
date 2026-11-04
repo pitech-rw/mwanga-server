@@ -27,6 +27,15 @@ const paymentStatusMap = {
 export class SwapsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async batterySoc(batteryId?: number) {
+    if (batteryId === undefined) {
+      return undefined;
+    }
+
+    const battery = await this.prisma.db.orm.public.Battery.first({ id: batteryId });
+    return battery?.soc;
+  }
+
   private swapQuery() {
     return this.prisma.db.orm.public.SwapTransaction.include('rider')
       .include('bike')
@@ -68,6 +77,8 @@ export class SwapsService {
         cardId: data.cardId,
         oldBatteryId: data.oldBatteryId,
         newBatteryId: data.newBatteryId,
+        oldBatterySoc: data.oldBatterySoc ?? (await this.batterySoc(data.oldBatteryId)),
+        newBatterySoc: data.newBatterySoc ?? (await this.batterySoc(data.newBatteryId)),
         status,
         paymentStatus,
         fee: asNumeric(data.fee ?? 0),
@@ -100,6 +111,19 @@ export class SwapsService {
       throw new BadRequestException('Invalid payment status');
     }
 
+    const oldBatterySoc =
+      data.oldBatterySoc !== undefined
+        ? data.oldBatterySoc
+        : data.oldBatteryId !== undefined
+          ? await this.batterySoc(data.oldBatteryId)
+          : undefined;
+    const newBatterySoc =
+      data.newBatterySoc !== undefined
+        ? data.newBatterySoc
+        : data.newBatteryId !== undefined
+          ? await this.batterySoc(data.newBatteryId)
+          : undefined;
+
     try {
       const swap = await this.prisma.db.orm.public.SwapTransaction.where({ id })
         .include('rider')
@@ -116,6 +140,8 @@ export class SwapsService {
             cardId: data.cardId,
             oldBatteryId: data.oldBatteryId,
             newBatteryId: data.newBatteryId,
+            oldBatterySoc,
+            newBatterySoc,
             status,
             paymentStatus,
             fee: data.fee === undefined ? undefined : asNumeric(data.fee),

@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0766d561b5075b89bc1867b7d1fe3f2097c76a35470de031a098f830e1cc626c'>;
+  StorageHashBase<'bf11e0e4d790f38c01ae697aad778cd2457e9cc864fbe1dce0a66c193811a107'>;
 export type ExecutionHash =
   ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
@@ -418,7 +418,6 @@ export namespace Models {
     chassisNumber: FieldOutputTypes['public']['Bike']['chassisNumber'];
     createdAt: FieldOutputTypes['public']['Bike']['createdAt'];
     currentBatteryId: FieldOutputTypes['public']['Bike']['currentBatteryId'];
-    dualBattery: FieldOutputTypes['public']['Bike']['dualBattery'];
     id: FieldOutputTypes['public']['Bike']['id'];
     image: FieldOutputTypes['public']['Bike']['image'];
     model: FieldOutputTypes['public']['Bike']['model'];
@@ -522,8 +521,10 @@ export namespace Models {
     fee: FieldOutputTypes['public']['SwapTransaction']['fee'];
     id: FieldOutputTypes['public']['SwapTransaction']['id'];
     newBatteryId: FieldOutputTypes['public']['SwapTransaction']['newBatteryId'];
+    newBatterySoc: FieldOutputTypes['public']['SwapTransaction']['newBatterySoc'];
     notes: FieldOutputTypes['public']['SwapTransaction']['notes'];
     oldBatteryId: FieldOutputTypes['public']['SwapTransaction']['oldBatteryId'];
+    oldBatterySoc: FieldOutputTypes['public']['SwapTransaction']['oldBatterySoc'];
     paymentReference: FieldOutputTypes['public']['SwapTransaction']['paymentReference'];
     paymentStatus: FieldOutputTypes['public']['SwapTransaction']['paymentStatus'];
     riderId: FieldOutputTypes['public']['SwapTransaction']['riderId'];
@@ -860,16 +861,6 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: true;
-                  readonly many: false;
-                };
-                readonly dualBattery: {
-                  readonly dataType: 'pg/bool';
-                  readonly codecId: 'pg/bool@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
-                  };
                   readonly many: false;
                 };
                 readonly id: {
@@ -1525,6 +1516,12 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly newBatterySoc: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly notes: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1532,6 +1529,12 @@ type ContractBase = Omit<
                   readonly many: false;
                 };
                 readonly oldBatteryId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly oldBatterySoc: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: true;
@@ -2190,10 +2193,6 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
-              readonly dualBattery: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
-              };
               readonly id: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -2291,7 +2290,6 @@ type ContractBase = Omit<
                 readonly chassisNumber: { readonly column: 'chassisNumber' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly currentBatteryId: { readonly column: 'currentBatteryId' };
-                readonly dualBattery: { readonly column: 'dualBattery' };
                 readonly id: { readonly column: 'id' };
                 readonly image: { readonly column: 'image' };
                 readonly model: { readonly column: 'model' };
@@ -2848,11 +2846,19 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly newBatterySoc: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly notes: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly oldBatteryId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly oldBatterySoc: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
@@ -2997,8 +3003,10 @@ type ContractBase = Omit<
                 readonly fee: { readonly column: 'fee' };
                 readonly id: { readonly column: 'id' };
                 readonly newBatteryId: { readonly column: 'newBatteryId' };
+                readonly newBatterySoc: { readonly column: 'newBatterySoc' };
                 readonly notes: { readonly column: 'notes' };
                 readonly oldBatteryId: { readonly column: 'oldBatteryId' };
+                readonly oldBatterySoc: { readonly column: 'oldBatterySoc' };
                 readonly paymentReference: { readonly column: 'paymentReference' };
                 readonly paymentStatus: { readonly column: 'paymentStatus' };
                 readonly riderId: { readonly column: 'riderId' };

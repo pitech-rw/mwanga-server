@@ -38,7 +38,6 @@ export class BikesService {
           serialNumber: data.serialNumber,
           model: data.model,
           image: data.image,
-          dualBattery: data.dualBattery ?? false,
           status: data.status ?? 'active',
           ownerId: data.ownerId,
           riderId: data.riderId,
@@ -47,7 +46,7 @@ export class BikesService {
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new BadRequestException(
-          'A bike with this plate number, chassis number, or serial number already exists',
+          'A bike with this plate number, chassis number, serial number, or current battery already exists',
         );
       }
 
@@ -70,7 +69,6 @@ export class BikesService {
             serialNumber: data.serialNumber,
             model: data.model,
             image: data.image,
-            dualBattery: data.dualBattery,
             status: data.status,
             ownerId: data.ownerId,
             riderId: data.riderId,
@@ -86,7 +84,7 @@ export class BikesService {
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new BadRequestException(
-          'A bike with this plate number, chassis number, or serial number already exists',
+          'A bike with this plate number, chassis number, serial number, or current battery already exists',
         );
       }
 

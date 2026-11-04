@@ -503,13 +503,6 @@
                   "kind": "scalar"
                 }
               },
-              "dualBattery": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/bool@1",
-                  "kind": "scalar"
-                }
-              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -652,9 +645,6 @@
                 },
                 "currentBatteryId": {
                   "column": "currentBatteryId"
-                },
-                "dualBattery": {
-                  "column": "dualBattery"
                 },
                 "id": {
                   "column": "id"
@@ -1534,6 +1524,13 @@
                   "kind": "scalar"
                 }
               },
+              "newBatterySoc": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "notes": {
                 "nullable": true,
                 "type": {
@@ -1542,6 +1539,13 @@
                 }
               },
               "oldBatteryId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "oldBatterySoc": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
@@ -1768,11 +1772,17 @@
                 "newBatteryId": {
                   "column": "newBatteryId"
                 },
+                "newBatterySoc": {
+                  "column": "newBatterySoc"
+                },
                 "notes": {
                   "column": "notes"
                 },
                 "oldBatteryId": {
                   "column": "oldBatteryId"
+                },
+                "oldBatterySoc": {
+                  "column": "oldBatterySoc"
                 },
                 "paymentReference": {
                   "column": "paymentReference"
@@ -2357,15 +2367,6 @@
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": true
-                },
-                "dualBattery": {
-                  "codecId": "pg/bool@1",
-                  "dataType": "pg/bool",
-                  "default": {
-                    "kind": "literal",
-                    "value": false
-                  },
-                  "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
@@ -3172,12 +3173,22 @@
                   "dataType": "pg/int4",
                   "nullable": true
                 },
+                "newBatterySoc": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
                 "notes": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": true
                 },
                 "oldBatteryId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "oldBatterySoc": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": true
@@ -3721,7 +3732,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "0766d561b5075b89bc1867b7d1fe3f2097c76a35470de031a098f830e1cc626c"
+    "storageHash": "bf11e0e4d790f38c01ae697aad778cd2457e9cc864fbe1dce0a66c193811a107"
   },
   "execution": {
     "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",

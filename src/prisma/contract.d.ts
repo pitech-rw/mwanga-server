@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'e50ff1f421e1efb4c4fb866aeacbf41bb92390699be8e137143324b862607000'>;
+  StorageHashBase<'ba61fbd624e333fe5f15827020d3370133c2b2d976bfac0854792bcdc4e3e418'>;
 export type ExecutionHash =
   ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
@@ -875,7 +875,7 @@ type ContractBase = Omit<
                 readonly cycleCount: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly direction: {
@@ -911,7 +911,7 @@ type ContractBase = Omit<
                 readonly soh: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly swapTransactionId: {
@@ -2318,7 +2318,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly cycleCount: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly direction: {
@@ -2342,7 +2342,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly soh: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly swapTransactionId: {

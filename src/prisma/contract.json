@@ -519,7 +519,7 @@
                 }
               },
               "cycleCount": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -563,7 +563,7 @@
                 }
               },
               "soh": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -2531,7 +2531,7 @@
                 "cycleCount": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
-                  "nullable": false
+                  "nullable": true
                 },
                 "direction": {
                   "codecId": "pg/text@1",
@@ -2573,7 +2573,7 @@
                 "soh": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
-                  "nullable": false
+                  "nullable": true
                 },
                 "swapTransactionId": {
                   "codecId": "pg/int4@1",
@@ -4043,7 +4043,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e50ff1f421e1efb4c4fb866aeacbf41bb92390699be8e137143324b862607000"
+    "storageHash": "ba61fbd624e333fe5f15827020d3370133c2b2d976bfac0854792bcdc4e3e418"
   },
   "execution": {
     "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",

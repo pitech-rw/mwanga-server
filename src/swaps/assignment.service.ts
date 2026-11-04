@@ -5,6 +5,15 @@ import { PrismaService } from '../prisma.service.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
 
+type Tx = Parameters<Parameters<PrismaService['db']['transaction']>[0]>[0];
+
+type SwapCustody = {
+  bikeId: number;
+  stationId: number;
+  oldBatteryId: number | null;
+  newBatteryId: number | null;
+};
+
 @Injectable()
 export class AssignmentService {
   constructor(private readonly prisma: PrismaService) {}
@@ -219,11 +228,7 @@ export class AssignmentService {
           description: `Swap completed for rider ${updatedSwap.riderId} at station ${updatedSwap.stationId}`,
         });
 
-        if (updatedSwap.newBatteryId) {
-          await tx.orm.public.Battery.where({ id: updatedSwap.newBatteryId }).update({
-            status: 'available',
-          });
-        }
+        await this.transferCustody(tx, updatedSwap);
       }
 
       if (action === 'failed' || action === 'cancelled') {
@@ -234,14 +239,71 @@ export class AssignmentService {
           description: `Swap ${action} for rider ${updatedSwap.riderId}`,
         });
 
-        if (updatedSwap.newBatteryId) {
-          await tx.orm.public.Battery.where({ id: updatedSwap.newBatteryId }).update({
-            status: 'available',
-          });
-        }
+        await this.releaseIssuedBattery(tx, updatedSwap);
       }
 
-      return updatedSwap;
+      const settled = await tx.orm.public.SwapTransaction.where({ id: swapId })
+        .include('rider')
+        .include('bike')
+        .include('station')
+        .include('card')
+        .include('oldBattery')
+        .include('newBattery')
+        .include('readings')
+        .first();
+
+      if (!settled) {
+        throw new NotFoundException(`Swap transaction with id ${swapId} not found`);
+      }
+
+      return settled;
+    });
+  }
+
+  private async transferCustody(tx: Tx, swap: SwapCustody) {
+    if (swap.oldBatteryId != null && swap.oldBatteryId === swap.newBatteryId) {
+      throw new BadRequestException('A swap cannot return and issue the same battery');
+    }
+
+    if (swap.newBatteryId != null) {
+      const otherBike = await tx.orm.public.Bike.where({
+        currentBatteryId: swap.newBatteryId,
+      }).first();
+
+      if (otherBike && otherBike.id !== swap.bikeId) {
+        throw new BadRequestException('Issued battery is already mounted on another bike');
+      }
+
+      await tx.orm.public.Bike.where({ id: swap.bikeId }).update({
+        currentBatteryId: swap.newBatteryId,
+      });
+
+      await tx.orm.public.Battery.where({ id: swap.newBatteryId }).update({
+        stationId: null,
+        status: 'in_use',
+      });
+    } else if (swap.oldBatteryId != null) {
+      await tx.orm.public.Bike.where({ id: swap.bikeId }).update({
+        currentBatteryId: null,
+      });
+    }
+
+    if (swap.oldBatteryId != null) {
+      await tx.orm.public.Battery.where({ id: swap.oldBatteryId }).update({
+        stationId: swap.stationId,
+        status: 'available',
+      });
+    }
+  }
+
+  private async releaseIssuedBattery(tx: Tx, swap: SwapCustody) {
+    if (swap.newBatteryId == null) {
+      return;
+    }
+
+    await tx.orm.public.Battery.where({ id: swap.newBatteryId }).update({
+      stationId: swap.stationId,
+      status: 'available',
     });
   }
 }

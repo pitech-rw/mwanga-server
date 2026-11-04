@@ -214,9 +214,9 @@ model BatteryReading {
   swapTransactionId Int
   direction         ReadingDirection
   soc               Int
-  soh               Int
+  soh               Int?
   voltage           Float?
-  cycleCount        Int
+  cycleCount        Int?
   recordedAt        DateTime         @default(now())
 
   battery         Battery         @relation(fields: [batteryId], references: [id])

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Owner, Prisma } from '@prisma/client';
+import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
+import type { Owner } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateOwnerDto } from './create-owner.dto.js';
 import { UpdateOwnerDto } from './update-owner.dto.js';
@@ -9,13 +10,11 @@ export class OwnersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Owner[]> {
-    return this.prisma.owner.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    return this.prisma.db.orm.public.Owner.orderBy((owner) => owner.createdAt.desc()).all();
   }
 
   async findOne(id: number): Promise<Owner> {
-    const owner = await this.prisma.owner.findUnique({ where: { id } });
+    const owner = await this.prisma.db.orm.public.Owner.first({ id });
 
     if (!owner) {
       throw new NotFoundException(`Owner with id ${id} not found`);
@@ -25,20 +24,15 @@ export class OwnersService {
   }
 
   async create(data: CreateOwnerDto): Promise<Owner> {
-    const ownerData: Prisma.OwnerCreateInput = {
-      name: data.name,
-      phone: data.phone,
-      email: data.email,
-      status: data.status ?? 'active',
-    };
-
     try {
-      return await this.prisma.owner.create({ data: ownerData });
+      return await this.prisma.db.orm.public.Owner.create({
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        status: data.status ?? 'active',
+      });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('An owner with this email already exists');
       }
 
@@ -50,15 +44,22 @@ export class OwnersService {
     await this.findOne(id);
 
     try {
-      return await this.prisma.owner.update({
-        where: { id },
-        data,
-      });
+      const owner = await this.prisma.db.orm.public.Owner.where({ id }).update(
+        withoutUndefined({
+          name: data.name,
+          phone: data.phone,
+          email: data.email,
+          status: data.status,
+        }),
+      );
+
+      if (!owner) {
+        throw new NotFoundException(`Owner with id ${id} not found`);
+      }
+
+      return owner;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('An owner with this email already exists');
       }
 
@@ -69,6 +70,12 @@ export class OwnersService {
   async remove(id: number): Promise<Owner> {
     await this.findOne(id);
 
-    return this.prisma.owner.delete({ where: { id } });
+    const owner = await this.prisma.db.orm.public.Owner.where({ id }).delete();
+
+    if (!owner) {
+      throw new NotFoundException(`Owner with id ${id} not found`);
+    }
+
+    return owner;
   }
 }

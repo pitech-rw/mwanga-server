@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, SwapTransaction } from '@prisma/client';
+import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
+import type { PaymentStatus, SwapStatus, SwapTransaction } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateSwapDto } from './create-swap.dto.js';
 import { UpdateSwapDto } from './update-swap.dto.js';
@@ -13,45 +14,34 @@ const swapStatusMap = {
   failed: 'failed',
   cancelled: 'cancelled',
   reversed: 'reversed',
-} as const;
+} as const satisfies Record<string, SwapStatus>;
 
 const paymentStatusMap = {
   pending: 'pending',
   captured: 'captured',
   failed: 'failed',
   reversed: 'reversed',
-} as const;
+} as const satisfies Record<string, PaymentStatus>;
 
 @Injectable()
 export class SwapsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<SwapTransaction[]> {
-    return this.prisma.swapTransaction.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        rider: true,
-        bike: true,
-        station: true,
-        card: true,
-        oldBattery: true,
-        newBattery: true,
-      },
-    });
+  private swapQuery() {
+    return this.prisma.db.orm.public.SwapTransaction.include('rider')
+      .include('bike')
+      .include('station')
+      .include('card')
+      .include('oldBattery')
+      .include('newBattery');
   }
 
-  async findOne(id: number): Promise<SwapTransaction> {
-    const swap = await this.prisma.swapTransaction.findUnique({
-      where: { id },
-      include: {
-        rider: true,
-        bike: true,
-        station: true,
-        card: true,
-        oldBattery: true,
-        newBattery: true,
-      },
-    });
+  async findAll() {
+    return this.swapQuery().orderBy((swap) => swap.createdAt.desc()).all();
+  }
+
+  async findOne(id: number) {
+    const swap = await this.swapQuery().first({ id });
 
     if (!swap) {
       throw new NotFoundException(`Swap transaction with id ${id} not found`);
@@ -66,38 +56,27 @@ export class SwapsService {
       ? paymentStatusMap[data.paymentStatus as keyof typeof paymentStatusMap]
       : 'pending';
 
-    const swapData: Prisma.SwapTransactionCreateInput = {
-      rider: { connect: { id: data.riderId } },
-      bike: { connect: { id: data.bikeId } },
-      station: { connect: { id: data.stationId } },
-      card: { connect: { id: data.cardId } },
-      oldBattery: data.oldBatteryId ? { connect: { id: data.oldBatteryId } } : undefined,
-      newBattery: data.newBatteryId ? { connect: { id: data.newBatteryId } } : undefined,
-      status,
-      paymentStatus,
-      fee: data.fee ?? 0,
-      walletBalanceAfter: data.walletBalanceAfter ?? 0,
-      paymentReference: data.paymentReference,
-      notes: data.notes,
-    };
+    if (!status || !paymentStatus) {
+      throw new BadRequestException('Invalid swap or payment status');
+    }
 
     try {
-      return await this.prisma.swapTransaction.create({
-        data: swapData,
-        include: {
-          rider: true,
-          bike: true,
-          station: true,
-          card: true,
-          oldBattery: true,
-          newBattery: true,
-        },
+      return await this.swapQuery().create({
+        riderId: data.riderId,
+        bikeId: data.bikeId,
+        stationId: data.stationId,
+        cardId: data.cardId,
+        oldBatteryId: data.oldBatteryId,
+        newBatteryId: data.newBatteryId,
+        status,
+        paymentStatus,
+        fee: asNumeric(data.fee ?? 0),
+        walletBalanceAfter: asNumeric(data.walletBalanceAfter ?? 0),
+        paymentReference: data.paymentReference,
+        notes: data.notes,
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('Could not create swap transaction');
       }
 
@@ -108,44 +87,53 @@ export class SwapsService {
   async update(id: number, data: UpdateSwapDto): Promise<SwapTransaction> {
     await this.findOne(id);
 
-    const updateData: Prisma.SwapTransactionUpdateInput = {
-      rider: data.riderId !== undefined ? { connect: { id: data.riderId } } : undefined,
-      bike: data.bikeId !== undefined ? { connect: { id: data.bikeId } } : undefined,
-      station: data.stationId !== undefined ? { connect: { id: data.stationId } } : undefined,
-      card: data.cardId !== undefined ? { connect: { id: data.cardId } } : undefined,
-      oldBattery:
-        data.oldBatteryId !== undefined ? { connect: { id: data.oldBatteryId } } : undefined,
-      newBattery:
-        data.newBatteryId !== undefined ? { connect: { id: data.newBatteryId } } : undefined,
-      status: data.status ? swapStatusMap[data.status as keyof typeof swapStatusMap] : undefined,
-      paymentStatus: data.paymentStatus
-        ? paymentStatusMap[data.paymentStatus as keyof typeof paymentStatusMap]
-        : undefined,
-      fee: data.fee,
-      walletBalanceAfter: data.walletBalanceAfter,
-      paymentReference: data.paymentReference,
-      notes: data.notes,
-      completedAt: data.completedAt,
-    };
+    const status = data.status ? swapStatusMap[data.status as keyof typeof swapStatusMap] : undefined;
+    const paymentStatus = data.paymentStatus
+      ? paymentStatusMap[data.paymentStatus as keyof typeof paymentStatusMap]
+      : undefined;
+
+    if (data.status && !status) {
+      throw new BadRequestException('Invalid swap status');
+    }
+
+    if (data.paymentStatus && !paymentStatus) {
+      throw new BadRequestException('Invalid payment status');
+    }
 
     try {
-      return await this.prisma.swapTransaction.update({
-        where: { id },
-        data: updateData,
-        include: {
-          rider: true,
-          bike: true,
-          station: true,
-          card: true,
-          oldBattery: true,
-          newBattery: true,
-        },
-      });
+      const swap = await this.prisma.db.orm.public.SwapTransaction.where({ id })
+        .include('rider')
+        .include('bike')
+        .include('station')
+        .include('card')
+        .include('oldBattery')
+        .include('newBattery')
+        .update(
+          withoutUndefined({
+            riderId: data.riderId,
+            bikeId: data.bikeId,
+            stationId: data.stationId,
+            cardId: data.cardId,
+            oldBatteryId: data.oldBatteryId,
+            newBatteryId: data.newBatteryId,
+            status,
+            paymentStatus,
+            fee: data.fee === undefined ? undefined : asNumeric(data.fee),
+            walletBalanceAfter:
+              data.walletBalanceAfter === undefined ? undefined : asNumeric(data.walletBalanceAfter),
+            paymentReference: data.paymentReference,
+            notes: data.notes,
+            completedAt: data.completedAt,
+          }),
+        );
+
+      if (!swap) {
+        throw new NotFoundException(`Swap transaction with id ${id} not found`);
+      }
+
+      return swap;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('Could not update swap transaction');
       }
 
@@ -156,6 +144,12 @@ export class SwapsService {
   async remove(id: number): Promise<SwapTransaction> {
     await this.findOne(id);
 
-    return this.prisma.swapTransaction.delete({ where: { id } });
+    const swap = await this.prisma.db.orm.public.SwapTransaction.where({ id }).delete();
+
+    if (!swap) {
+      throw new NotFoundException(`Swap transaction with id ${id} not found`);
+    }
+
+    return swap;
   }
 }

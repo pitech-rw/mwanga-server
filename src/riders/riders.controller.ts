@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Rider } from '@prisma/client';
+import type { Rider } from '../prisma/types.js';
 import { CreateRiderDto } from './create-rider.dto.js';
 import { UpdateRiderDto } from './update-rider.dto.js';
 import { RidersService } from './riders.service.js';

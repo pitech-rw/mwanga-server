@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Owner } from '@prisma/client';
+import type { Owner } from '../prisma/types.js';
 import { CreateOwnerDto } from './create-owner.dto.js';
 import { UpdateOwnerDto } from './update-owner.dto.js';
 import { OwnersService } from './owners.service.js';

@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Station } from '@prisma/client';
+import type { Station } from '../prisma/types.js';
 import { CreateStationDto } from './create-station.dto.js';
 import { UpdateStationDto } from './update-station.dto.js';
 import { StationsService } from './stations.service.js';

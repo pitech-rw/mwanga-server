@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service.js';
-import { UsersModule } from './users/users.module.js';
 
 @Injectable()
 export class AppService {
@@ -11,7 +10,9 @@ export class AppService {
   }
 
   async getHealth() {
-    const userCount = await this.prisma.user.count();
+    const { userCount } = await this.prisma.db.orm.public.User.aggregate((aggregate) => ({
+      userCount: aggregate.count(),
+    }));
 
     return {
       ok: true,

@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { NfcCard } from '@prisma/client';
+import type { NfcCard } from '../prisma/types.js';
 import { CardsService } from './cards.service.js';
 import { CreateCardDto } from './create-card.dto.js';
 import { UpdateCardDto } from './update-card.dto.js';

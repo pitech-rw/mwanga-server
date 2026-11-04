@@ -1,9 +1,17 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { db } from './prisma/db.js';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class PrismaService implements OnModuleInit {
+  readonly db = db;
+
   async onModuleInit() {
-    await this.$connect();
+    const url = process.env['DATABASE_URL'];
+
+    if (!url) {
+      return;
+    }
+
+    await this.db.connect({ url });
   }
 }

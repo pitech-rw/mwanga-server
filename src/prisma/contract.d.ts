@@ -25,7 +25,7 @@ import type {
 export type StorageHash =
   StorageHashBase<'447378fdf65505d956c456304ad287dabbb2afa24d98e00df6b9579c771d4d5a'>;
 export type ExecutionHash =
-  ExecutionHashBase<'3a6133852ef3b68a9e08f45272125c0ecf80eaeb157b18205e851d83e9cf8e54'>;
+  ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -2841,6 +2841,11 @@ type ContractBase = Omit<
     readonly mutations: {
       readonly defaults: readonly [
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2853,6 +2858,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2865,6 +2875,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2877,6 +2892,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2889,6 +2909,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2901,6 +2926,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2913,6 +2943,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2925,6 +2960,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';
@@ -2937,6 +2977,11 @@ type ContractBase = Omit<
           };
         },
         {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
           readonly onUpdate: {
             readonly id: 'timestampNow';
             readonly kind: 'generator';

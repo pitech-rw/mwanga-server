@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { SwapTransaction } from '@prisma/client';
+import type { SwapTransaction } from '../prisma/types.js';
 import { CreateSwapDto } from './create-swap.dto.js';
 import { UpdateSwapDto } from './update-swap.dto.js';
 import { SwapsService } from './swaps.service.js';

@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { User } from '@prisma/client';
+import type { User } from '../prisma/types.js';
 import { CreateUserDto } from './create-user.dto.js';
 import { UpdateUserDto } from './update-user.dto.js';
 import { UsersService } from './users.service.js';

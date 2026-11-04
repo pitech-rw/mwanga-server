@@ -8,8 +8,14 @@ describe('AppController', () => {
 
   beforeEach(async () => {
     const mockPrisma = {
-      user: {
-        count: async () => 0,
+      db: {
+        orm: {
+          public: {
+            User: {
+              aggregate: async () => ({ userCount: 0 }),
+            },
+          },
+        },
       },
     };
 

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Station } from '@prisma/client';
+import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
+import type { Station } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateStationDto } from './create-station.dto.js';
 import { UpdateStationDto } from './update-station.dto.js';
@@ -9,13 +10,11 @@ export class StationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Station[]> {
-    return this.prisma.station.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    return this.prisma.db.orm.public.Station.orderBy((station) => station.createdAt.desc()).all();
   }
 
   async findOne(id: number): Promise<Station> {
-    const station = await this.prisma.station.findUnique({ where: { id } });
+    const station = await this.prisma.db.orm.public.Station.first({ id });
 
     if (!station) {
       throw new NotFoundException(`Station with id ${id} not found`);
@@ -25,27 +24,17 @@ export class StationsService {
   }
 
   async create(data: CreateStationDto): Promise<Station> {
-    const stationData: Prisma.StationCreateInput = {
-      code: data.code,
-      name: data.name,
-      type: data.type,
-      model: data.model,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      latitude: data.latitude,
-      longitude: data.longitude,
-      address: data.address,
-      status: data.status ?? 'active',
-      capacity: data.capacity ?? 0,
-    };
-
     try {
-      return await this.prisma.station.create({ data: stationData });
+      return await this.prisma.db.orm.public.Station.create({
+        code: data.code,
+        name: data.name,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        status: data.status ?? 'active',
+        capacity: data.capacity ?? 0,
+      });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('A station with this code already exists');
       }
 
@@ -57,15 +46,24 @@ export class StationsService {
     await this.findOne(id);
 
     try {
-      return await this.prisma.station.update({
-        where: { id },
-        data,
-      });
+      const station = await this.prisma.db.orm.public.Station.where({ id }).update(
+        withoutUndefined({
+          code: data.code,
+          name: data.name,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          status: data.status,
+          capacity: data.capacity,
+        }),
+      );
+
+      if (!station) {
+        throw new NotFoundException(`Station with id ${id} not found`);
+      }
+
+      return station;
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (isUniqueViolation(error)) {
         throw new BadRequestException('A station with this code already exists');
       }
 
@@ -76,6 +74,12 @@ export class StationsService {
   async remove(id: number): Promise<Station> {
     await this.findOne(id);
 
-    return this.prisma.station.delete({ where: { id } });
+    const station = await this.prisma.db.orm.public.Station.where({ id }).delete();
+
+    if (!station) {
+      throw new NotFoundException(`Station with id ${id} not found`);
+    }
+
+    return station;
   }
 }

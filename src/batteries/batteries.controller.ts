@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Battery } from '@prisma/client';
+import type { Battery } from '../prisma/types.js';
 import { BatteriesService } from './batteries.service.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
 import { UpdateBatteryDto } from './update-battery.dto.js';

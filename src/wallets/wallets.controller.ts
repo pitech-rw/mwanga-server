@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Wallet } from '@prisma/client';
+import type { Wallet } from '../prisma/types.js';
 import { CreateWalletDto } from './create-wallet.dto.js';
 import { UpdateWalletDto } from './update-wallet.dto.js';
 import { WalletsService } from './wallets.service.js';

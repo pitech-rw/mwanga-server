@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import type { Bike } from '../prisma/types.js';
 import { BikesService } from './bikes.service.js';
 import { CreateBikeDto } from './create-bike.dto.js';
 import { UpdateBikeDto } from './update-bike.dto.js';

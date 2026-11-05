@@ -25,13 +25,20 @@ model User {
   type         UserType
   roleId       Int
   role         Role      @relation(fields: [roleId], references: [id])
+  ownerId      Int?
+  kycStatus    String    @default("pending")
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @onCreate(now()) @onUpdate(now())
 
-  swapsAsSwapper       SwapTransaction[]
-  reportedViolations   Violation[]       @relation("ViolationReporter")
-  offendingViolations  Violation[]       @relation("ViolationOffender")
+  owner               Owner?            @relation(fields: [ownerId], references: [id])
+  wallet              Wallet?
+  nfcCards            NfcCard[]
+  assignedBikes       Bike[]
+  riderSwaps          SwapTransaction[] @relation("RiderSwap")
+  swapsAsSwapper      SwapTransaction[] @relation("SwapperUser")
+  reportedViolations  Violation[]       @relation("ViolationReporter")
+  offendingViolations Violation[]       @relation("ViolationOffender")
 }
 
 model Role {
@@ -96,26 +103,8 @@ model Owner {
   createdAt DateTime @default(now())
   updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
-  riders Rider[]
-  bikes  Bike[]
-}
-
-model Rider {
-  id         Int      @id @default(autoincrement())
-  fullName   String
-  phone      String   @unique
-  idNumber   String?  @unique
-  kycStatus  String   @default("pending")
-  status     String   @default("active")
-  ownerId    Int?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @onCreate(now()) @onUpdate(now())
-
-  owner        Owner?           @relation(fields: [ownerId], references: [id])
-  wallet       Wallet?
-  cards        NfcCard[]
-  bikes        Bike[]
-  transactions SwapTransaction[]
+  users User[]
+  bikes Bike[]
 }
 
 model Bike {
@@ -127,13 +116,13 @@ model Bike {
   image            String?
   status           String   @default("active")
   ownerId          Int?
-  riderId          Int?
+  userId           Int?
   currentBatteryId  Int?     @unique
   createdAt        DateTime @default(now())
   updatedAt        DateTime @onCreate(now()) @onUpdate(now())
 
   owner         Owner?           @relation(fields: [ownerId], references: [id])
-  rider         Rider?           @relation(fields: [riderId], references: [id])
+  user          User?            @relation(fields: [userId], references: [id])
   currentBattery Battery?        @relation("CurrentBattery", fields: [currentBatteryId], references: [id])
   transactions  SwapTransaction[]
 }
@@ -183,28 +172,28 @@ model NfcCard {
   serialNumber String   @unique
   type         String
   status       String   @default("active")
-  riderId      Int?
+  userId       Int?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @onCreate(now()) @onUpdate(now())
 
-  rider       Rider?           @relation(fields: [riderId], references: [id])
+  user        User?            @relation(fields: [userId], references: [id])
   transactions SwapTransaction[]
 }
 
 model Wallet {
   id        Int      @id @default(autoincrement())
-  riderId   Int      @unique
+  userId    Int      @unique
   balance   Numeric(10,2)  @default(0)
   currency  String   @default("CDF")
   createdAt DateTime @default(now())
   updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
-  rider Rider @relation(fields: [riderId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model SwapTransaction {
   id                Int           @id @default(autoincrement())
-  riderId           Int
+  userId            Int
   bikeId            Int
   stationId         Int
   cardId            Int
@@ -226,11 +215,11 @@ model SwapTransaction {
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @onCreate(now()) @onUpdate(now())
 
-  rider        Rider         @relation(fields: [riderId], references: [id])
+  user         User          @relation("RiderSwap", fields: [userId], references: [id])
   bike         Bike          @relation(fields: [bikeId], references: [id])
   station      Station       @relation(fields: [stationId], references: [id])
   card         NfcCard       @relation(fields: [cardId], references: [id])
-  swapper      User?         @relation(fields: [swapperId], references: [id])
+  swapper      User?         @relation("SwapperUser", fields: [swapperId], references: [id])
   oldBattery   Battery?      @relation("OldBattery", fields: [oldBatteryId], references: [id])
   newBattery   Battery?      @relation("NewBattery", fields: [newBatteryId], references: [id])
   readings     BatteryReading[]

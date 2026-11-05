@@ -25,5 +25,5 @@ export class UpdateCardDto {
   status?: string;
 
   @IsOptional()
-  riderId?: number;
+  userId?: number;
 }

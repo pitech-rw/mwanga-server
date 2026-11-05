@@ -22,5 +22,5 @@ export class CreateCardDto {
   status?: string;
 
   @IsOptional()
-  riderId?: number;
+  userId?: number;
 }

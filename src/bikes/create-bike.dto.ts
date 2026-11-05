@@ -35,7 +35,7 @@ export class CreateBikeDto {
   ownerId?: number;
 
   @IsOptional()
-  riderId?: number;
+  userId?: number;
 
   @IsOptional()
   currentBatteryId?: number;

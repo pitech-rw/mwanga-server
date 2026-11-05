@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   MaxLength,
@@ -65,4 +66,13 @@ export class UpdateUserDto {
   @MinLength(8)
   @MaxLength(128)
   password?: string;
+
+  @IsOptional()
+  @IsInt()
+  ownerId?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  kycStatus?: string;
 }

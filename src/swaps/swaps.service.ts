@@ -31,7 +31,7 @@ export class SwapsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private swapQuery() {
-    return this.prisma.db.orm.public.SwapTransaction.include('rider')
+    return this.prisma.db.orm.public.SwapTransaction.include('user')
       .include('bike')
       .include('station')
       .include('card')
@@ -72,7 +72,7 @@ export class SwapsService {
     try {
       return await this.prisma.db.transaction(async (tx) => {
         const created = await tx.orm.public.SwapTransaction.create({
-          riderId: data.riderId,
+          userId: data.userId,
           bikeId: data.bikeId,
           stationId: data.stationId,
           cardId: data.cardId,
@@ -91,7 +91,7 @@ export class SwapsService {
         await recordBatteryReading(tx, created.id, data.oldBatteryId, 'in');
         await recordBatteryReading(tx, created.id, data.newBatteryId, 'out');
 
-        const swap = await tx.orm.public.SwapTransaction.include('rider')
+        const swap = await tx.orm.public.SwapTransaction.include('user')
           .include('bike')
           .include('station')
           .include('card')
@@ -139,7 +139,7 @@ export class SwapsService {
     try {
       const swap = await this.prisma.db.transaction(async (tx) => {
         const updated = await tx.orm.public.SwapTransaction.where({ id })
-          .include('rider')
+          .include('user')
           .include('bike')
           .include('station')
           .include('card')
@@ -149,7 +149,7 @@ export class SwapsService {
           .include('readings')
           .update(
             withoutUndefined({
-              riderId: data.riderId,
+              userId: data.userId,
               bikeId: data.bikeId,
               stationId: data.stationId,
               cardId: data.cardId,
@@ -179,7 +179,7 @@ export class SwapsService {
           await recordBatteryReading(tx, id, data.newBatteryId, 'out');
         }
 
-        return tx.orm.public.SwapTransaction.include('rider')
+        return tx.orm.public.SwapTransaction.include('user')
           .include('bike')
           .include('station')
           .include('card')

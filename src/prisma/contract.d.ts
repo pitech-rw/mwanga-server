@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'b240f2c1b156aecbc97b8f755475abc633292de0a54f294d61352a18fb112340'>;
+  StorageHashBase<'4d309f1c3e7b717bde9f7648c8d77ae7779916eb145f8e188d978bc485fdb7de'>;
 export type ExecutionHash =
-  ExecutionHashBase<'54229bc246e797a786c4be401e6bc0e8ed65fa588fd83336c8b390a53dc43ef2'>;
+  ExecutionHashBase<'d6d605fdf1c0d091c133bdae71506f5a9fc9dabd97c863f80eb7bdfd32cfbd61'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -469,15 +469,15 @@ export namespace Models {
     model: FieldOutputTypes['public']['Bike']['model'];
     ownerId: FieldOutputTypes['public']['Bike']['ownerId'];
     plateNumber: FieldOutputTypes['public']['Bike']['plateNumber'];
-    riderId: FieldOutputTypes['public']['Bike']['riderId'];
     serialNumber: FieldOutputTypes['public']['Bike']['serialNumber'];
     status: FieldOutputTypes['public']['Bike']['status'];
     updatedAt: FieldOutputTypes['public']['Bike']['updatedAt'];
+    userId: FieldOutputTypes['public']['Bike']['userId'];
     currentBattery: public_Battery | null;
     owner: public_Owner | null;
-    rider: public_Rider | null;
     transactions: public_SwapTransaction[];
-    readonly [RelationKeys]?: 'currentBattery' | 'owner' | 'rider' | 'transactions';
+    user: public_User | null;
+    readonly [RelationKeys]?: 'currentBattery' | 'owner' | 'transactions' | 'user';
   };
   export type public_LedgerEntry = {
     amount: FieldOutputTypes['public']['LedgerEntry']['amount'];
@@ -492,15 +492,15 @@ export namespace Models {
   export type public_NfcCard = {
     createdAt: FieldOutputTypes['public']['NfcCard']['createdAt'];
     id: FieldOutputTypes['public']['NfcCard']['id'];
-    riderId: FieldOutputTypes['public']['NfcCard']['riderId'];
     serialNumber: FieldOutputTypes['public']['NfcCard']['serialNumber'];
     status: FieldOutputTypes['public']['NfcCard']['status'];
     token: FieldOutputTypes['public']['NfcCard']['token'];
     type: FieldOutputTypes['public']['NfcCard']['type'];
     updatedAt: FieldOutputTypes['public']['NfcCard']['updatedAt'];
-    rider: public_Rider | null;
+    userId: FieldOutputTypes['public']['NfcCard']['userId'];
     transactions: public_SwapTransaction[];
-    readonly [RelationKeys]?: 'rider' | 'transactions';
+    user: public_User | null;
+    readonly [RelationKeys]?: 'transactions' | 'user';
   };
   export type public_Owner = {
     createdAt: FieldOutputTypes['public']['Owner']['createdAt'];
@@ -511,8 +511,8 @@ export namespace Models {
     status: FieldOutputTypes['public']['Owner']['status'];
     updatedAt: FieldOutputTypes['public']['Owner']['updatedAt'];
     bikes: public_Bike[];
-    riders: public_Rider[];
-    readonly [RelationKeys]?: 'bikes' | 'riders';
+    users: public_User[];
+    readonly [RelationKeys]?: 'bikes' | 'users';
   };
   export type public_Permission = {
     id: FieldOutputTypes['public']['Permission']['id'];
@@ -520,23 +520,6 @@ export namespace Models {
     roleId: FieldOutputTypes['public']['Permission']['roleId'];
     role: public_Role;
     readonly [RelationKeys]?: 'role';
-  };
-  export type public_Rider = {
-    createdAt: FieldOutputTypes['public']['Rider']['createdAt'];
-    fullName: FieldOutputTypes['public']['Rider']['fullName'];
-    id: FieldOutputTypes['public']['Rider']['id'];
-    idNumber: FieldOutputTypes['public']['Rider']['idNumber'];
-    kycStatus: FieldOutputTypes['public']['Rider']['kycStatus'];
-    ownerId: FieldOutputTypes['public']['Rider']['ownerId'];
-    phone: FieldOutputTypes['public']['Rider']['phone'];
-    status: FieldOutputTypes['public']['Rider']['status'];
-    updatedAt: FieldOutputTypes['public']['Rider']['updatedAt'];
-    bikes: public_Bike[];
-    cards: public_NfcCard[];
-    owner: public_Owner | null;
-    transactions: public_SwapTransaction[];
-    wallet: public_Wallet | null;
-    readonly [RelationKeys]?: 'bikes' | 'cards' | 'owner' | 'transactions' | 'wallet';
   };
   export type public_Role = {
     id: FieldOutputTypes['public']['Role']['id'];
@@ -577,11 +560,11 @@ export namespace Models {
     oldBatteryId: FieldOutputTypes['public']['SwapTransaction']['oldBatteryId'];
     paymentReference: FieldOutputTypes['public']['SwapTransaction']['paymentReference'];
     paymentStatus: FieldOutputTypes['public']['SwapTransaction']['paymentStatus'];
-    riderId: FieldOutputTypes['public']['SwapTransaction']['riderId'];
     stationId: FieldOutputTypes['public']['SwapTransaction']['stationId'];
     status: FieldOutputTypes['public']['SwapTransaction']['status'];
     swapperId: FieldOutputTypes['public']['SwapTransaction']['swapperId'];
     updatedAt: FieldOutputTypes['public']['SwapTransaction']['updatedAt'];
+    userId: FieldOutputTypes['public']['SwapTransaction']['userId'];
     walletBalanceAfter: FieldOutputTypes['public']['SwapTransaction']['walletBalanceAfter'];
     auditLogs: public_AuditLog[];
     bike: public_Bike;
@@ -590,9 +573,9 @@ export namespace Models {
     newBattery: public_Battery | null;
     oldBattery: public_Battery | null;
     readings: public_BatteryReading[];
-    rider: public_Rider;
     station: public_Station;
     swapper: public_User | null;
+    user: public_User;
     readonly [RelationKeys]?:
       | 'auditLogs'
       | 'bike'
@@ -601,9 +584,9 @@ export namespace Models {
       | 'newBattery'
       | 'oldBattery'
       | 'readings'
-      | 'rider'
       | 'station'
-      | 'swapper';
+      | 'swapper'
+      | 'user';
   };
   export type public_User = {
     address: FieldOutputTypes['public']['User']['address'];
@@ -613,21 +596,36 @@ export namespace Models {
     id: FieldOutputTypes['public']['User']['id'];
     image: FieldOutputTypes['public']['User']['image'];
     isActive: FieldOutputTypes['public']['User']['isActive'];
+    kycStatus: FieldOutputTypes['public']['User']['kycStatus'];
     lastLoginAt: FieldOutputTypes['public']['User']['lastLoginAt'];
     lastName: FieldOutputTypes['public']['User']['lastName'];
     nationalId: FieldOutputTypes['public']['User']['nationalId'];
+    ownerId: FieldOutputTypes['public']['User']['ownerId'];
     passwordHash: FieldOutputTypes['public']['User']['passwordHash'];
     phone: FieldOutputTypes['public']['User']['phone'];
     roleId: FieldOutputTypes['public']['User']['roleId'];
     type: FieldOutputTypes['public']['User']['type'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     username: FieldOutputTypes['public']['User']['username'];
+    assignedBikes: public_Bike[];
+    nfcCards: public_NfcCard[];
     offendingViolations: public_Violation[];
+    owner: public_Owner | null;
     reportedViolations: public_Violation[];
+    riderSwaps: public_SwapTransaction[];
     role: public_Role;
     swapsAsSwapper: public_SwapTransaction[];
+    wallet: public_Wallet | null;
     readonly [RelationKeys]?:
-      'offendingViolations' | 'reportedViolations' | 'role' | 'swapsAsSwapper';
+      | 'assignedBikes'
+      | 'nfcCards'
+      | 'offendingViolations'
+      | 'owner'
+      | 'reportedViolations'
+      | 'riderSwaps'
+      | 'role'
+      | 'swapsAsSwapper'
+      | 'wallet';
   };
   export type public_Violation = {
     createdAt: FieldOutputTypes['public']['Violation']['createdAt'];
@@ -653,10 +651,10 @@ export namespace Models {
     createdAt: FieldOutputTypes['public']['Wallet']['createdAt'];
     currency: FieldOutputTypes['public']['Wallet']['currency'];
     id: FieldOutputTypes['public']['Wallet']['id'];
-    riderId: FieldOutputTypes['public']['Wallet']['riderId'];
     updatedAt: FieldOutputTypes['public']['Wallet']['updatedAt'];
-    rider: public_Rider;
-    readonly [RelationKeys]?: 'rider';
+    userId: FieldOutputTypes['public']['Wallet']['userId'];
+    user: public_User;
+    readonly [RelationKeys]?: 'user';
   };
 }
 
@@ -670,7 +668,6 @@ export declare const models: {
     NfcCard: Models.public_NfcCard;
     Owner: Models.public_Owner;
     Permission: Models.public_Permission;
-    Rider: Models.public_Rider;
     Role: Models.public_Role;
     Station: Models.public_Station;
     SwapTransaction: Models.public_SwapTransaction;
@@ -1085,12 +1082,6 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
-                readonly riderId: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
                 readonly serialNumber: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1114,6 +1105,12 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [
@@ -1130,9 +1127,9 @@ type ContractBase = Omit<
                   readonly unique: false;
                 },
                 {
-                  readonly name: 'Bike_riderId_idx_966752c5';
-                  readonly prefix: 'Bike_riderId_idx';
-                  readonly columns: readonly ['riderId'];
+                  readonly name: 'Bike_userId_idx_a489d58a';
+                  readonly prefix: 'Bike_userId_idx';
+                  readonly columns: readonly ['userId'];
                   readonly unique: false;
                 },
               ];
@@ -1153,11 +1150,11 @@ type ContractBase = Omit<
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Bike';
-                    readonly columns: readonly ['riderId'];
+                    readonly columns: readonly ['userId'];
                   };
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Rider';
+                    readonly tableName: 'User';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -1266,12 +1263,6 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
-                readonly riderId: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
                 readonly serialNumber: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1307,6 +1298,12 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [
@@ -1315,9 +1312,9 @@ type ContractBase = Omit<
               ];
               indexes: readonly [
                 {
-                  readonly name: 'NfcCard_riderId_idx_966752c5';
-                  readonly prefix: 'NfcCard_riderId_idx';
-                  readonly columns: readonly ['riderId'];
+                  readonly name: 'NfcCard_userId_idx_a489d58a';
+                  readonly prefix: 'NfcCard_userId_idx';
+                  readonly columns: readonly ['userId'];
                   readonly unique: false;
                 },
               ];
@@ -1326,11 +1323,11 @@ type ContractBase = Omit<
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'NfcCard';
-                    readonly columns: readonly ['riderId'];
+                    readonly columns: readonly ['userId'];
                   };
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Rider';
+                    readonly tableName: 'User';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -1442,106 +1439,6 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Role';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
-            };
-            readonly Rider: {
-              columns: {
-                readonly createdAt: {
-                  readonly dataType: 'pg/timestamptz';
-                  readonly codecId: 'pg/timestamptz-date@1';
-                  readonly nullable: false;
-                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
-                  readonly typeParams: { readonly precision: 3 };
-                  readonly many: false;
-                };
-                readonly fullName: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
-                readonly id: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'function';
-                    readonly expression: 'autoincrement()';
-                  };
-                  readonly many: false;
-                };
-                readonly idNumber: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
-                readonly kycStatus: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'pending'>;
-                  };
-                  readonly many: false;
-                };
-                readonly ownerId: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: true;
-                  readonly many: false;
-                };
-                readonly phone: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
-                readonly status: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'active'>;
-                  };
-                  readonly many: false;
-                };
-                readonly updatedAt: {
-                  readonly dataType: 'pg/timestamptz';
-                  readonly codecId: 'pg/timestamptz-date@1';
-                  readonly nullable: false;
-                  readonly typeParams: { readonly precision: 3 };
-                  readonly many: false;
-                };
-              };
-              primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [
-                { readonly columns: readonly ['phone'] },
-                { readonly columns: readonly ['idNumber'] },
-              ];
-              indexes: readonly [
-                {
-                  readonly name: 'Rider_ownerId_idx_e2d0c1ef';
-                  readonly prefix: 'Rider_ownerId_idx';
-                  readonly columns: readonly ['ownerId'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Rider';
-                    readonly columns: readonly ['ownerId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Owner';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -1767,12 +1664,6 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
-                readonly riderId: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
                 readonly stationId: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
@@ -1800,6 +1691,12 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly nullable: false;
                   readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
                   readonly many: false;
                 };
                 readonly walletBalanceAfter: {
@@ -1842,12 +1739,6 @@ type ContractBase = Omit<
                   readonly unique: false;
                 },
                 {
-                  readonly name: 'SwapTransaction_riderId_idx_966752c5';
-                  readonly prefix: 'SwapTransaction_riderId_idx';
-                  readonly columns: readonly ['riderId'];
-                  readonly unique: false;
-                },
-                {
                   readonly name: 'SwapTransaction_stationId_idx_0626a60c';
                   readonly prefix: 'SwapTransaction_stationId_idx';
                   readonly columns: readonly ['stationId'];
@@ -1859,17 +1750,23 @@ type ContractBase = Omit<
                   readonly columns: readonly ['swapperId'];
                   readonly unique: false;
                 },
+                {
+                  readonly name: 'SwapTransaction_userId_idx_a489d58a';
+                  readonly prefix: 'SwapTransaction_userId_idx';
+                  readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
               ];
               foreignKeys: readonly [
                 {
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'SwapTransaction';
-                    readonly columns: readonly ['riderId'];
+                    readonly columns: readonly ['userId'];
                   };
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Rider';
+                    readonly tableName: 'User';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -2001,6 +1898,16 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly kycStatus: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'pending'>;
+                  };
+                  readonly many: false;
+                };
                 readonly lastLoginAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -2017,6 +1924,12 @@ type ContractBase = Omit<
                 readonly nationalId: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly ownerId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
                   readonly nullable: true;
                   readonly many: false;
                 };
@@ -2067,6 +1980,12 @@ type ContractBase = Omit<
               ];
               indexes: readonly [
                 {
+                  readonly name: 'User_ownerId_idx_e2d0c1ef';
+                  readonly prefix: 'User_ownerId_idx';
+                  readonly columns: readonly ['ownerId'];
+                  readonly unique: false;
+                },
+                {
                   readonly name: 'User_roleId_idx_ffccc9a4';
                   readonly prefix: 'User_roleId_idx';
                   readonly columns: readonly ['roleId'];
@@ -2083,6 +2002,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Role';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['ownerId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Owner';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -2287,12 +2218,6 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
-                readonly riderId: {
-                  readonly dataType: 'pg/int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                  readonly many: false;
-                };
                 readonly updatedAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -2300,20 +2225,26 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                   readonly many: false;
                 };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['riderId'] }];
+              uniques: readonly [{ readonly columns: readonly ['userId'] }];
               indexes: readonly [];
               foreignKeys: readonly [
                 {
                   readonly source: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Wallet';
-                    readonly columns: readonly ['riderId'];
+                    readonly columns: readonly ['userId'];
                   };
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'Rider';
+                    readonly tableName: 'User';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -2390,7 +2321,6 @@ type ContractBase = Omit<
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'Permission';
     };
-    readonly Rider: { readonly namespace: 'public' & NamespaceId; readonly model: 'Rider' };
     readonly Role: { readonly namespace: 'public' & NamespaceId; readonly model: 'Role' };
     readonly Station: { readonly namespace: 'public' & NamespaceId; readonly model: 'Station' };
     readonly SwapTransaction: {
@@ -2740,10 +2670,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly riderId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
               readonly serialNumber: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -2759,6 +2685,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly typeParams: { readonly precision: 3 };
                 };
+              };
+              readonly userId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
             };
             readonly relations: {
@@ -2786,18 +2716,6 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
-              readonly rider: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Rider';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['riderId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
               readonly transactions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -2807,6 +2725,15 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['bikeId'];
+                };
+              };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
                 };
               };
             };
@@ -2822,10 +2749,10 @@ type ContractBase = Omit<
                 readonly model: { readonly column: 'model' };
                 readonly ownerId: { readonly column: 'ownerId' };
                 readonly plateNumber: { readonly column: 'plateNumber' };
-                readonly riderId: { readonly column: 'riderId' };
                 readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
               };
             };
           };
@@ -2905,10 +2832,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
-              readonly riderId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
               readonly serialNumber: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -2933,20 +2856,12 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                 };
               };
+              readonly userId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
             };
             readonly relations: {
-              readonly rider: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Rider';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['riderId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
               readonly transactions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -2958,6 +2873,15 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['cardId'];
                 };
               };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'NfcCard';
@@ -2965,12 +2889,12 @@ type ContractBase = Omit<
               readonly fields: {
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
-                readonly riderId: { readonly column: 'riderId' };
                 readonly serialNumber: { readonly column: 'serialNumber' };
                 readonly status: { readonly column: 'status' };
                 readonly token: { readonly column: 'token' };
                 readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
               };
             };
           };
@@ -3022,11 +2946,8 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['ownerId'];
                 };
               };
-              readonly riders: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Rider';
-                };
+              readonly users: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: '1:N';
                 readonly on: {
                   readonly localFields: readonly ['id'];
@@ -3081,125 +3002,6 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly name: { readonly column: 'name' };
                 readonly roleId: { readonly column: 'roleId' };
-              };
-            };
-          };
-          readonly Rider: {
-            readonly fields: {
-              readonly createdAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-date@1';
-                  readonly typeParams: { readonly precision: 3 };
-                };
-              };
-              readonly fullName: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly id: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly idNumber: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly kycStatus: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly ownerId: {
-                readonly nullable: true;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly phone: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly status: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly updatedAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-date@1';
-                  readonly typeParams: { readonly precision: 3 };
-                };
-              };
-            };
-            readonly relations: {
-              readonly bikes: {
-                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Bike' };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['riderId'];
-                };
-              };
-              readonly cards: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'NfcCard';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['riderId'];
-                };
-              };
-              readonly owner: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Owner';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['ownerId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-              readonly transactions: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'SwapTransaction';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['riderId'];
-                };
-              };
-              readonly wallet: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Wallet';
-                };
-                readonly cardinality: '1:1';
-                readonly nullable: true;
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['riderId'];
-                };
-              };
-            };
-            readonly storage: {
-              readonly table: 'Rider';
-              readonly namespaceId: 'public';
-              readonly fields: {
-                readonly createdAt: { readonly column: 'createdAt' };
-                readonly fullName: { readonly column: 'fullName' };
-                readonly id: { readonly column: 'id' };
-                readonly idNumber: { readonly column: 'idNumber' };
-                readonly kycStatus: { readonly column: 'kycStatus' };
-                readonly ownerId: { readonly column: 'ownerId' };
-                readonly phone: { readonly column: 'phone' };
-                readonly status: { readonly column: 'status' };
-                readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };
           };
@@ -3440,10 +3242,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly riderId: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
               readonly stationId: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -3463,6 +3261,10 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/timestamptz-date@1';
                   readonly typeParams: { readonly precision: 3 };
                 };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly walletBalanceAfter: {
                 readonly nullable: false;
@@ -3552,18 +3354,6 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['swapTransactionId'];
                 };
               };
-              readonly rider: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Rider';
-                };
-                readonly cardinality: 'N:1';
-                readonly nullable: false;
-                readonly on: {
-                  readonly localFields: readonly ['riderId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
               readonly station: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3582,6 +3372,15 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly on: {
                   readonly localFields: readonly ['swapperId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
                   readonly targetFields: readonly ['id'];
                 };
               };
@@ -3606,11 +3405,11 @@ type ContractBase = Omit<
                 readonly oldBatteryId: { readonly column: 'oldBatteryId' };
                 readonly paymentReference: { readonly column: 'paymentReference' };
                 readonly paymentStatus: { readonly column: 'paymentStatus' };
-                readonly riderId: { readonly column: 'riderId' };
                 readonly stationId: { readonly column: 'stationId' };
                 readonly status: { readonly column: 'status' };
                 readonly swapperId: { readonly column: 'swapperId' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
                 readonly walletBalanceAfter: { readonly column: 'walletBalanceAfter' };
               };
             };
@@ -3649,6 +3448,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
+              readonly kycStatus: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly lastLoginAt: {
                 readonly nullable: true;
                 readonly type: {
@@ -3664,6 +3467,10 @@ type ContractBase = Omit<
               readonly nationalId: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly ownerId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly passwordHash: {
                 readonly nullable: true;
@@ -3695,6 +3502,25 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly assignedBikes: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Bike' };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly nfcCards: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'NfcCard';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
               readonly offendingViolations: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3706,6 +3532,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['offenderId'];
                 };
               };
+              readonly owner: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Owner';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['ownerId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly reportedViolations: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3715,6 +3553,17 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['reporterId'];
+                };
+              };
+              readonly riderSwaps: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'SwapTransaction';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
                 };
               };
               readonly role: {
@@ -3737,6 +3586,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['swapperId'];
                 };
               };
+              readonly wallet: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Wallet';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'User';
@@ -3749,9 +3610,11 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly image: { readonly column: 'image' };
                 readonly isActive: { readonly column: 'isActive' };
+                readonly kycStatus: { readonly column: 'kycStatus' };
                 readonly lastLoginAt: { readonly column: 'lastLoginAt' };
                 readonly lastName: { readonly column: 'lastName' };
                 readonly nationalId: { readonly column: 'nationalId' };
+                readonly ownerId: { readonly column: 'ownerId' };
                 readonly passwordHash: { readonly column: 'passwordHash' };
                 readonly phone: { readonly column: 'phone' };
                 readonly roleId: { readonly column: 'roleId' };
@@ -3906,10 +3769,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
-              readonly riderId: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
               readonly updatedAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -3918,17 +3777,18 @@ type ContractBase = Omit<
                   readonly typeParams: { readonly precision: 3 };
                 };
               };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
             };
             readonly relations: {
-              readonly rider: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Rider';
-                };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: 'N:1';
                 readonly nullable: false;
                 readonly on: {
-                  readonly localFields: readonly ['riderId'];
+                  readonly localFields: readonly ['userId'];
                   readonly targetFields: readonly ['id'];
                 };
               };
@@ -3941,8 +3801,8 @@ type ContractBase = Omit<
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly currency: { readonly column: 'currency' };
                 readonly id: { readonly column: 'id' };
-                readonly riderId: { readonly column: 'riderId' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
               };
             };
           };
@@ -4150,23 +4010,6 @@ type ContractBase = Omit<
           };
           readonly ref: {
             readonly entry: 'Owner';
-            readonly field: 'updatedAt';
-            readonly namespace: 'public';
-          };
-        },
-        {
-          readonly onCreate: {
-            readonly id: 'timestampNow';
-            readonly kind: 'generator';
-            readonly params: { readonly precision: 3 };
-          };
-          readonly onUpdate: {
-            readonly id: 'timestampNow';
-            readonly kind: 'generator';
-            readonly params: { readonly precision: 3 };
-          };
-          readonly ref: {
-            readonly entry: 'Rider';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

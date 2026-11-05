@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   MaxLength,
@@ -60,4 +61,13 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  ownerId?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  kycStatus?: string;
 }

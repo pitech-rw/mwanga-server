@@ -48,6 +48,8 @@ export class UsersService {
         nationalId: data.nationalId,
         type: data.type as UserType,
         roleId,
+        ownerId: data.ownerId,
+        kycStatus: data.kycStatus ?? 'pending',
         isActive: data.isActive ?? true,
         passwordHash,
       });
@@ -91,6 +93,8 @@ export class UsersService {
             nationalId: data.nationalId,
             type: data.type as UserType | undefined,
             roleId,
+            ownerId: data.ownerId,
+            kycStatus: data.kycStatus,
             isActive: data.isActive,
             passwordHash,
           }),

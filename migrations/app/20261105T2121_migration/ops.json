@@ -1,0 +1,1670 @@
+[
+  {
+    "id": "renameColumn.Bike.riderId",
+    "label": "Rename column \"Bike\".\"riderId\" to \"userId\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "userId",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"riderId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"riderId\" on \"Bike\""
+        }
+      },
+      {
+        "description": "ensure column \"userId\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"userId\" on \"Bike\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename column \"riderId\" to \"userId\"",
+        "sql": "ALTER TABLE \"public\".\"Bike\" RENAME COLUMN \"riderId\" TO \"userId\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"userId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"userId\" on \"Bike\""
+        }
+      },
+      {
+        "description": "verify column \"riderId\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"riderId\" on \"Bike\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.public.Bike.Bike_riderId_fkey.rename",
+    "label": "Rename foreign key \"Bike_riderId_fkey\" to \"Bike_userId_fkey\" on \"Bike\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Bike_userId_fkey",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Bike_riderId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_riderId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Bike_riderId_fkey\" on \"Bike\""
+        }
+      },
+      {
+        "description": "ensure constraint \"Bike_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_userId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Bike_userId_fkey\" on \"Bike\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename foreign key \"Bike_riderId_fkey\" to \"Bike_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Bike\" RENAME CONSTRAINT \"Bike_riderId_fkey\" TO \"Bike_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"Bike_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_userId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Bike_userId_fkey\" on \"Bike\""
+        }
+      },
+      {
+        "description": "verify constraint \"Bike_riderId_fkey\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_riderId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Bike_riderId_fkey\" on \"Bike\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "index.public.Bike.Bike_riderId_idx_966752c5.rename",
+    "label": "Rename index \"Bike_riderId_idx_966752c5\" to \"Bike_userId_idx_a489d58a\" on \"Bike\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Bike_userId_idx_a489d58a",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Bike_riderId_idx_966752c5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Bike_riderId_idx_966752c5\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "index \"Bike_riderId_idx_966752c5\""
+        }
+      },
+      {
+        "description": "ensure index \"Bike_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Bike_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Bike_userId_idx_a489d58a\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename index \"Bike_riderId_idx_966752c5\" to \"Bike_userId_idx_a489d58a\"",
+        "sql": "ALTER INDEX \"public\".\"Bike_riderId_idx_966752c5\" RENAME TO \"Bike_userId_idx_a489d58a\"",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Bike_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Bike_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "index \"Bike_userId_idx_a489d58a\""
+        }
+      },
+      {
+        "description": "verify index \"Bike_riderId_idx_966752c5\" no longer exists",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Bike_riderId_idx_966752c5\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Bike_riderId_idx_966752c5\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "renameColumn.NfcCard.riderId",
+    "label": "Rename column \"NfcCard\".\"riderId\" to \"userId\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "userId",
+        "table": "NfcCard"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"riderId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "NfcCard",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"riderId\" on \"NfcCard\""
+        }
+      },
+      {
+        "description": "ensure column \"userId\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "NfcCard",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"userId\" on \"NfcCard\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename column \"riderId\" to \"userId\"",
+        "sql": "ALTER TABLE \"public\".\"NfcCard\" RENAME COLUMN \"riderId\" TO \"userId\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"userId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "NfcCard",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"userId\" on \"NfcCard\""
+        }
+      },
+      {
+        "description": "verify column \"riderId\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "NfcCard",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"riderId\" on \"NfcCard\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.public.NfcCard.NfcCard_riderId_fkey.rename",
+    "label": "Rename foreign key \"NfcCard_riderId_fkey\" to \"NfcCard_userId_fkey\" on \"NfcCard\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "NfcCard_userId_fkey",
+        "table": "NfcCard"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"NfcCard_riderId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "NfcCard_riderId_fkey",
+          "public",
+          "\"public\".\"NfcCard\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"NfcCard_riderId_fkey\" on \"NfcCard\""
+        }
+      },
+      {
+        "description": "ensure constraint \"NfcCard_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "NfcCard_userId_fkey",
+          "public",
+          "\"public\".\"NfcCard\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"NfcCard_userId_fkey\" on \"NfcCard\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename foreign key \"NfcCard_riderId_fkey\" to \"NfcCard_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"NfcCard\" RENAME CONSTRAINT \"NfcCard_riderId_fkey\" TO \"NfcCard_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"NfcCard_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "NfcCard_userId_fkey",
+          "public",
+          "\"public\".\"NfcCard\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"NfcCard_userId_fkey\" on \"NfcCard\""
+        }
+      },
+      {
+        "description": "verify constraint \"NfcCard_riderId_fkey\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "NfcCard_riderId_fkey",
+          "public",
+          "\"public\".\"NfcCard\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"NfcCard_riderId_fkey\" on \"NfcCard\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "index.public.NfcCard.NfcCard_riderId_idx_966752c5.rename",
+    "label": "Rename index \"NfcCard_riderId_idx_966752c5\" to \"NfcCard_userId_idx_a489d58a\" on \"NfcCard\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "NfcCard_userId_idx_a489d58a",
+        "table": "NfcCard"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"NfcCard_riderId_idx_966752c5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"NfcCard_riderId_idx_966752c5\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "index \"NfcCard_riderId_idx_966752c5\""
+        }
+      },
+      {
+        "description": "ensure index \"NfcCard_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"NfcCard_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"NfcCard_userId_idx_a489d58a\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename index \"NfcCard_riderId_idx_966752c5\" to \"NfcCard_userId_idx_a489d58a\"",
+        "sql": "ALTER INDEX \"public\".\"NfcCard_riderId_idx_966752c5\" RENAME TO \"NfcCard_userId_idx_a489d58a\"",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"NfcCard_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"NfcCard_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "index \"NfcCard_userId_idx_a489d58a\""
+        }
+      },
+      {
+        "description": "verify index \"NfcCard_riderId_idx_966752c5\" no longer exists",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"NfcCard_riderId_idx_966752c5\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"NfcCard_riderId_idx_966752c5\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "renameColumn.SwapTransaction.riderId",
+    "label": "Rename column \"SwapTransaction\".\"riderId\" to \"userId\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "userId",
+        "table": "SwapTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"riderId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "SwapTransaction",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"riderId\" on \"SwapTransaction\""
+        }
+      },
+      {
+        "description": "ensure column \"userId\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "SwapTransaction",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"userId\" on \"SwapTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename column \"riderId\" to \"userId\"",
+        "sql": "ALTER TABLE \"public\".\"SwapTransaction\" RENAME COLUMN \"riderId\" TO \"userId\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"userId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "SwapTransaction",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"userId\" on \"SwapTransaction\""
+        }
+      },
+      {
+        "description": "verify column \"riderId\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "SwapTransaction",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"riderId\" on \"SwapTransaction\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.public.SwapTransaction.SwapTransaction_riderId_fkey.rename",
+    "label": "Rename foreign key \"SwapTransaction_riderId_fkey\" to \"SwapTransaction_userId_fkey\" on \"SwapTransaction\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "SwapTransaction_userId_fkey",
+        "table": "SwapTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"SwapTransaction_riderId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "SwapTransaction_riderId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"SwapTransaction_riderId_fkey\" on \"SwapTransaction\""
+        }
+      },
+      {
+        "description": "ensure constraint \"SwapTransaction_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "SwapTransaction_userId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"SwapTransaction_userId_fkey\" on \"SwapTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename foreign key \"SwapTransaction_riderId_fkey\" to \"SwapTransaction_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"SwapTransaction\" RENAME CONSTRAINT \"SwapTransaction_riderId_fkey\" TO \"SwapTransaction_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"SwapTransaction_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "SwapTransaction_userId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"SwapTransaction_userId_fkey\" on \"SwapTransaction\""
+        }
+      },
+      {
+        "description": "verify constraint \"SwapTransaction_riderId_fkey\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "SwapTransaction_riderId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"SwapTransaction_riderId_fkey\" on \"SwapTransaction\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "index.public.SwapTransaction.SwapTransaction_riderId_idx_966752c5.rename",
+    "label": "Rename index \"SwapTransaction_riderId_idx_966752c5\" to \"SwapTransaction_userId_idx_a489d58a\" on \"SwapTransaction\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "SwapTransaction_userId_idx_a489d58a",
+        "table": "SwapTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"SwapTransaction_riderId_idx_966752c5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SwapTransaction_riderId_idx_966752c5\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "index \"SwapTransaction_riderId_idx_966752c5\""
+        }
+      },
+      {
+        "description": "ensure index \"SwapTransaction_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SwapTransaction_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"SwapTransaction_userId_idx_a489d58a\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename index \"SwapTransaction_riderId_idx_966752c5\" to \"SwapTransaction_userId_idx_a489d58a\"",
+        "sql": "ALTER INDEX \"public\".\"SwapTransaction_riderId_idx_966752c5\" RENAME TO \"SwapTransaction_userId_idx_a489d58a\"",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"SwapTransaction_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SwapTransaction_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "index \"SwapTransaction_userId_idx_a489d58a\""
+        }
+      },
+      {
+        "description": "verify index \"SwapTransaction_riderId_idx_966752c5\" no longer exists",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"SwapTransaction_riderId_idx_966752c5\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"SwapTransaction_riderId_idx_966752c5\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "renameColumn.Wallet.riderId",
+    "label": "Rename column \"Wallet\".\"riderId\" to \"userId\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "userId",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"riderId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"riderId\" on \"Wallet\""
+        }
+      },
+      {
+        "description": "ensure column \"userId\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"userId\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename column \"riderId\" to \"userId\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\" RENAME COLUMN \"riderId\" TO \"userId\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"userId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"userId\" on \"Wallet\""
+        }
+      },
+      {
+        "description": "verify column \"riderId\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "riderId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"riderId\" on \"Wallet\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.public.Wallet.Wallet_riderId_key.rename",
+    "label": "Rename unique constraint \"Wallet_riderId_key\" to \"Wallet_userId_key\" on \"Wallet\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "Wallet_userId_key",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Wallet_riderId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_riderId_key",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Wallet_riderId_key\" on \"Wallet\""
+        }
+      },
+      {
+        "description": "ensure constraint \"Wallet_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_key",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Wallet_userId_key\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename unique constraint \"Wallet_riderId_key\" to \"Wallet_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\" RENAME CONSTRAINT \"Wallet_riderId_key\" TO \"Wallet_userId_key\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"Wallet_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_key",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Wallet_userId_key\" on \"Wallet\""
+        }
+      },
+      {
+        "description": "verify constraint \"Wallet_riderId_key\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_riderId_key",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Wallet_riderId_key\" on \"Wallet\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.public.Wallet.Wallet_riderId_fkey.rename",
+    "label": "Rename foreign key \"Wallet_riderId_fkey\" to \"Wallet_userId_fkey\" on \"Wallet\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Wallet_userId_fkey",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Wallet_riderId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_riderId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Wallet_riderId_fkey\" on \"Wallet\""
+        }
+      },
+      {
+        "description": "ensure constraint \"Wallet_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Wallet_userId_fkey\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename foreign key \"Wallet_riderId_fkey\" to \"Wallet_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\" RENAME CONSTRAINT \"Wallet_riderId_fkey\" TO \"Wallet_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"Wallet_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Wallet_userId_fkey\" on \"Wallet\""
+        }
+      },
+      {
+        "description": "verify constraint \"Wallet_riderId_fkey\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_riderId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Wallet_riderId_fkey\" on \"Wallet\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "dropConstraint.Bike.Bike_userId_fkey",
+    "label": "Drop constraint \"Bike_userId_fkey\" on \"Bike\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Bike_userId_fkey",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Bike_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_userId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Bike_userId_fkey\" on \"Bike\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"Bike_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Bike\" DROP CONSTRAINT \"Bike_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"Bike_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_userId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Bike_userId_fkey\" on \"Bike\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "dropConstraint.NfcCard.NfcCard_userId_fkey",
+    "label": "Drop constraint \"NfcCard_userId_fkey\" on \"NfcCard\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "NfcCard_userId_fkey",
+        "table": "NfcCard"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"NfcCard_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "NfcCard_userId_fkey",
+          "public",
+          "\"public\".\"NfcCard\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"NfcCard_userId_fkey\" on \"NfcCard\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"NfcCard_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"NfcCard\" DROP CONSTRAINT \"NfcCard_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"NfcCard_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "NfcCard_userId_fkey",
+          "public",
+          "\"public\".\"NfcCard\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"NfcCard_userId_fkey\" on \"NfcCard\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "dropConstraint.SwapTransaction.SwapTransaction_userId_fkey",
+    "label": "Drop constraint \"SwapTransaction_userId_fkey\" on \"SwapTransaction\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "SwapTransaction_userId_fkey",
+        "table": "SwapTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"SwapTransaction_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "SwapTransaction_userId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"SwapTransaction_userId_fkey\" on \"SwapTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"SwapTransaction_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"SwapTransaction\" DROP CONSTRAINT \"SwapTransaction_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"SwapTransaction_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "SwapTransaction_userId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"SwapTransaction_userId_fkey\" on \"SwapTransaction\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "dropConstraint.Wallet.Wallet_userId_fkey",
+    "label": "Drop constraint \"Wallet_userId_fkey\" on \"Wallet\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Wallet_userId_fkey",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Wallet_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Wallet_userId_fkey\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"Wallet_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\" DROP CONSTRAINT \"Wallet_userId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"Wallet_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Wallet_userId_fkey\" on \"Wallet\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "dropTable.Rider",
+    "label": "Drop table \"Rider\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Rider"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Rider\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Rider\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"Rider\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"Rider\"",
+        "sql": "DROP TABLE \"public\".\"Rider\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Rider\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Rider\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"Rider\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "column.public.User.kycStatus",
+    "label": "Add column \"kycStatus\" to \"User\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "kycStatus",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"kycStatus\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "kycStatus"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"kycStatus\" on \"User\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"kycStatus\"",
+        "sql": "ALTER TABLE \"public\".\"User\" ADD COLUMN \"kycStatus\" text DEFAULT 'pending' NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"kycStatus\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "kycStatus"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"kycStatus\" on \"User\""
+        }
+      },
+      {
+        "description": "verify column \"kycStatus\" has type \"text\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "kycStatus",
+          "text"
+        ]
+      },
+      {
+        "description": "verify column \"kycStatus\" is NOT NULL",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "kycStatus",
+          "NO"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.User.ownerId",
+    "label": "Add column \"ownerId\" to \"User\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "ownerId",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"ownerId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "ownerId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"ownerId\" on \"User\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"ownerId\"",
+        "sql": "ALTER TABLE \"public\".\"User\" ADD COLUMN \"ownerId\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"ownerId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "ownerId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"ownerId\" on \"User\""
+        }
+      },
+      {
+        "description": "verify column \"ownerId\" has type \"integer\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "ownerId",
+          "integer"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.dropNotNull.Station.createdAt",
+    "label": "Drop NOT NULL on \"Station\".\"createdAt\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "createdAt",
+        "table": "Station"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"createdAt\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "createdAt"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"createdAt\" on \"Station\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"createdAt\"",
+        "sql": "ALTER TABLE \"public\".\"Station\" ALTER COLUMN \"createdAt\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"createdAt\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "createdAt",
+          "YES"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.dropNotNull.Station.updatedAt",
+    "label": "Drop NOT NULL on \"Station\".\"updatedAt\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "updatedAt",
+        "table": "Station"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"updatedAt\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "updatedAt"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"updatedAt\" on \"Station\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"updatedAt\"",
+        "sql": "ALTER TABLE \"public\".\"Station\" ALTER COLUMN \"updatedAt\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"updatedAt\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "updatedAt",
+          "YES"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.User.User_ownerId_idx_e2d0c1ef",
+    "label": "Create index \"User_ownerId_idx_e2d0c1ef\" on \"User\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "User_ownerId_idx_e2d0c1ef",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"User_ownerId_idx_e2d0c1ef\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"User_ownerId_idx_e2d0c1ef\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"User_ownerId_idx_e2d0c1ef\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"User_ownerId_idx_e2d0c1ef\"",
+        "sql": "CREATE INDEX \"User_ownerId_idx_e2d0c1ef\" ON \"public\".\"User\" (\"ownerId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"User_ownerId_idx_e2d0c1ef\" exists on \"User\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"User_ownerId_idx_e2d0c1ef\"",
+          "i",
+          "I",
+          "\"public\".\"User\"",
+          "btree",
+          "[\"ownerId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Bike.Bike_userId_fkey",
+    "label": "Add foreign key \"Bike_userId_fkey\" on \"Bike\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Bike_userId_fkey",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Bike_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_userId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Bike_userId_fkey\" on \"Bike\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Bike_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Bike\"\nADD CONSTRAINT \"Bike_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Bike_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Bike_userId_fkey",
+          "public",
+          "\"public\".\"Bike\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.NfcCard.NfcCard_userId_fkey",
+    "label": "Add foreign key \"NfcCard_userId_fkey\" on \"NfcCard\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "NfcCard_userId_fkey",
+        "table": "NfcCard"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"NfcCard_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "NfcCard_userId_fkey",
+          "public",
+          "\"public\".\"NfcCard\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"NfcCard_userId_fkey\" on \"NfcCard\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"NfcCard_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"NfcCard\"\nADD CONSTRAINT \"NfcCard_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"NfcCard_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "NfcCard_userId_fkey",
+          "public",
+          "\"public\".\"NfcCard\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.SwapTransaction.SwapTransaction_userId_fkey",
+    "label": "Add foreign key \"SwapTransaction_userId_fkey\" on \"SwapTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "SwapTransaction_userId_fkey",
+        "table": "SwapTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"SwapTransaction_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "SwapTransaction_userId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"SwapTransaction_userId_fkey\" on \"SwapTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"SwapTransaction_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"SwapTransaction\"\nADD CONSTRAINT \"SwapTransaction_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"SwapTransaction_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "SwapTransaction_userId_fkey",
+          "public",
+          "\"public\".\"SwapTransaction\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.User.User_ownerId_fkey",
+    "label": "Add foreign key \"User_ownerId_fkey\" on \"User\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "User_ownerId_fkey",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"User_ownerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "User_ownerId_fkey",
+          "public",
+          "\"public\".\"User\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"User_ownerId_fkey\" on \"User\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"User_ownerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"User\"\nADD CONSTRAINT \"User_ownerId_fkey\"\nFOREIGN KEY (\"ownerId\")\nREFERENCES \"public\".\"Owner\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"User_ownerId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "User_ownerId_fkey",
+          "public",
+          "\"public\".\"User\"",
+          "f",
+          "[\"ownerId\"]",
+          "\"public\".\"Owner\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Wallet.Wallet_userId_fkey",
+    "label": "Add foreign key \"Wallet_userId_fkey\" on \"Wallet\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Wallet_userId_fkey",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Wallet_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Wallet_userId_fkey\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Wallet_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\"\nADD CONSTRAINT \"Wallet_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Wallet_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

@@ -21,7 +21,6 @@ export function configureSwagger(app: INestApplication) {
     .addTag('Bikes')
     .addTag('Cards', 'NFC cards')
     .addTag('Owners')
-    .addTag('Riders')
     .addTag('Roles')
     .addTag('Stations')
     .addTag('Swaps', 'Swap transactions and assignment workflow')

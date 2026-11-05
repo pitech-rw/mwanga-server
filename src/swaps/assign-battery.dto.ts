@@ -6,7 +6,7 @@ export class AssignBatteryDto {
   swapperId: number;
 
   @IsNumber()
-  riderId: number;
+  userId: number;
 
   @IsNumber()
   stationId: number;

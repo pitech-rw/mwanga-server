@@ -2,7 +2,7 @@ import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateWalletDto {
   @IsNumber()
-  riderId: number;
+  userId: number;
 
   @IsOptional()
   @IsNumber()

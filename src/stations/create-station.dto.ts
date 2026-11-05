@@ -3,11 +3,6 @@ import { IsNumber, IsOptional, IsString, MaxLength, Min, MinLength } from 'class
 export class CreateStationDto {
   @IsString()
   @MinLength(2)
-  @MaxLength(40)
-  code: string;
-
-  @IsString()
-  @MinLength(2)
   @MaxLength(120)
   name: string;
 

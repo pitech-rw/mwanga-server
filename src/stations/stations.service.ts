@@ -10,11 +10,13 @@ export class StationsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(): Promise<Station[]> {
-    return this.prisma.db.orm.public.Station.orderBy((station) => station.createdAt.desc()).all();
+    return this.prisma.db.orm.public.Station.include('operators')
+      .orderBy((station) => station.createdAt.desc())
+      .all();
   }
 
   async findOne(id: number): Promise<Station> {
-    const station = await this.prisma.db.orm.public.Station.first({ id });
+    const station = await this.prisma.db.orm.public.Station.include('operators').first({ id });
 
     if (!station) {
       throw new NotFoundException(`Station with id ${id} not found`);

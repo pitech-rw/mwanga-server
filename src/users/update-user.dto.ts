@@ -1,4 +1,15 @@
-import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 import { USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 
 export class UpdateUserDto {
@@ -62,4 +73,11 @@ export class UpdateUserDto {
   @IsString()
   @MaxLength(40)
   kycStatus?: string;
+
+  /** Set or clear station operator assignment (swapper only); pass null to unassign */
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsInt()
+  @Min(1)
+  stationId?: number | null;
 }

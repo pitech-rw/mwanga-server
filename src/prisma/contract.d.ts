@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'dbaada04e4657d1d020911f2eb6b903d0677301f687ea8c25fd239e860f6ff4d'>;
+  StorageHashBase<'845eee9a84e4cefaf95628063270ae7039fbf858daa2760a332c8653e9d09692'>;
 export type ExecutionHash =
   ExecutionHashBase<'5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f'>;
 export type ProfileHash =
@@ -525,9 +525,10 @@ export namespace Models {
     status: FieldOutputTypes['public']['Station']['status'];
     updatedAt: FieldOutputTypes['public']['Station']['updatedAt'];
     batteries: public_Battery[];
+    operators: public_User[];
     transactions: public_SwapTransaction[];
     violations: public_Violation[];
-    readonly [RelationKeys]?: 'batteries' | 'transactions' | 'violations';
+    readonly [RelationKeys]?: 'batteries' | 'operators' | 'transactions' | 'violations';
   };
   export type public_SwapTransaction = {
     assignedAt: FieldOutputTypes['public']['SwapTransaction']['assignedAt'];
@@ -589,10 +590,12 @@ export namespace Models {
     passwordHash: FieldOutputTypes['public']['User']['passwordHash'];
     phone: FieldOutputTypes['public']['User']['phone'];
     roleId: FieldOutputTypes['public']['User']['roleId'];
+    stationId: FieldOutputTypes['public']['User']['stationId'];
     type: FieldOutputTypes['public']['User']['type'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     username: FieldOutputTypes['public']['User']['username'];
     assignedBikes: public_Bike[];
+    assignedStation: public_Station | null;
     nfcCards: public_NfcCard[];
     offendingViolations: public_Violation[];
     reportedViolations: public_Violation[];
@@ -602,6 +605,7 @@ export namespace Models {
     wallet: public_Wallet | null;
     readonly [RelationKeys]?:
       | 'assignedBikes'
+      | 'assignedStation'
       | 'nfcCards'
       | 'offendingViolations'
       | 'reportedViolations'
@@ -1842,6 +1846,12 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly stationId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly type: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -1876,6 +1886,12 @@ type ContractBase = Omit<
                   readonly columns: readonly ['roleId'];
                   readonly unique: false;
                 },
+                {
+                  readonly name: 'User_stationId_idx_0626a60c';
+                  readonly prefix: 'User_stationId_idx';
+                  readonly columns: readonly ['stationId'];
+                  readonly unique: false;
+                },
               ];
               foreignKeys: readonly [
                 {
@@ -1887,6 +1903,18 @@ type ContractBase = Omit<
                   readonly target: {
                     readonly namespaceId: 'public' & NamespaceId;
                     readonly tableName: 'Role';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['stationId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Station';
                     readonly columns: readonly ['id'];
                   };
                 },
@@ -2889,6 +2917,14 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['stationId'];
                 };
               };
+              readonly operators: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['stationId'];
+                };
+              };
               readonly transactions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -3264,6 +3300,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
+              readonly stationId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly type: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -3288,6 +3328,18 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly assignedStation: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Station';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['stationId'];
+                  readonly targetFields: readonly ['id'];
                 };
               };
               readonly nfcCards: {
@@ -3385,6 +3437,7 @@ type ContractBase = Omit<
                 readonly passwordHash: { readonly column: 'passwordHash' };
                 readonly phone: { readonly column: 'phone' };
                 readonly roleId: { readonly column: 'roleId' };
+                readonly stationId: { readonly column: 'stationId' };
                 readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly username: { readonly column: 'username' };

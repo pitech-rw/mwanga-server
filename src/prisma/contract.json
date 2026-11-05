@@ -1305,6 +1305,21 @@
                   "namespace": "public"
                 }
               },
+              "operators": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "stationId"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
               "transactions": {
                 "cardinality": "1:N",
                 "on": {
@@ -1909,6 +1924,13 @@
                   "kind": "scalar"
                 }
               },
+              "stationId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "type": {
                 "nullable": false,
                 "type": {
@@ -1953,6 +1975,22 @@
                 },
                 "to": {
                   "model": "Bike",
+                  "namespace": "public"
+                }
+              },
+              "assignedStation": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "stationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Station",
                   "namespace": "public"
                 }
               },
@@ -2107,6 +2145,9 @@
                 },
                 "roleId": {
                   "column": "roleId"
+                },
+                "stationId": {
+                  "column": "stationId"
                 },
                 "type": {
                   "column": "type"
@@ -3861,6 +3902,11 @@
                   "dataType": "pg/int4",
                   "nullable": false
                 },
+                "stationId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
                 "type": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -3905,6 +3951,25 @@
                     "namespaceId": "public",
                     "tableName": "Role"
                   }
+                },
+                {
+                  "index": {
+                    "name": "User_stationId_idx_0626a60c"
+                  },
+                  "source": {
+                    "columns": [
+                      "stationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Station"
+                  }
                 }
               ],
               "indexes": [
@@ -3914,6 +3979,14 @@
                   ],
                   "name": "User_roleId_idx_ffccc9a4",
                   "prefix": "User_roleId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "stationId"
+                  ],
+                  "name": "User_stationId_idx_0626a60c",
+                  "prefix": "User_stationId_idx",
                   "unique": false
                 }
               ],
@@ -4323,7 +4396,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "dbaada04e4657d1d020911f2eb6b903d0677301f687ea8c25fd239e860f6ff4d"
+    "storageHash": "845eee9a84e4cefaf95628063270ae7039fbf858daa2760a332c8653e9d09692"
   },
   "execution": {
     "executionHash": "5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f",

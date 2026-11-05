@@ -4,6 +4,7 @@ import type { SwapStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
+import { requireRiderUser } from './require-rider-user.js';
 import { requireSwapper } from './require-swapper.js';
 import { statusTimestampsForTransition } from './swap-status-timestamps.js';
 import type { CompleteSwapDto } from './complete-swap.dto.js';
@@ -22,7 +23,7 @@ export class AssignmentService {
   constructor(private readonly prisma: PrismaService) {}
 
   private swapQuery() {
-    return this.prisma.db.orm.public.SwapTransaction.include('rider')
+    return this.prisma.db.orm.public.SwapTransaction.include('user')
       .include('bike')
       .include('station')
       .include('card')
@@ -35,14 +36,7 @@ export class AssignmentService {
   async assignBattery(dto: AssignBatteryDto) {
     await requireSwapper(this.prisma, dto.swapperId);
 
-    const rider = await this.prisma.db.orm.public.Rider.where({ id: dto.riderId })
-      .include('wallet')
-      .include('cards')
-      .first();
-
-    if (!rider) {
-      throw new NotFoundException(`Rider with id ${dto.riderId} not found`);
-    }
+    const rider = await requireRiderUser(this.prisma, dto.userId);
 
     const bike = await this.prisma.db.orm.public.Bike.where({ id: dto.bikeId })
       .include('currentBattery')
@@ -58,11 +52,7 @@ export class AssignmentService {
       throw new NotFoundException(`Station with id ${dto.stationId} not found`);
     }
 
-    if (rider.status !== 'active') {
-      throw new BadRequestException('Rider is not active and cannot receive a battery assignment');
-    }
-
-    const activeCard = rider.cards.find((card) => card.status === 'active');
+    const activeCard = rider.nfcCards.find((card) => card.status === 'active');
     if (!activeCard) {
       throw new BadRequestException('Rider has no active NFC card for this swap');
     }
@@ -81,7 +71,7 @@ export class AssignmentService {
     const assignedAt = new Date();
 
     const swap = await this.prisma.db.transaction(async (tx) => {
-      const created = await tx.orm.public.SwapTransaction.include('rider')
+      const created = await tx.orm.public.SwapTransaction.include('user')
         .include('bike')
         .include('station')
         .include('card')
@@ -89,7 +79,7 @@ export class AssignmentService {
         .include('oldBattery')
         .include('newBattery')
         .create({
-          riderId: rider.id,
+          userId: rider.id,
           bikeId: bike.id,
           stationId: station.id,
           cardId: activeCard.id,
@@ -121,7 +111,7 @@ export class AssignmentService {
         details: `Battery ${availableBattery.serialNumber} assigned to rider ${rider.id} at station ${station.code}`,
       });
 
-      const recorded = await tx.orm.public.SwapTransaction.include('rider')
+      const recorded = await tx.orm.public.SwapTransaction.include('user')
         .include('bike')
         .include('station')
         .include('card')
@@ -141,7 +131,7 @@ export class AssignmentService {
     return {
       assignment: {
         swapId: swap.id,
-        riderId: rider.id,
+        userId: rider.id,
         bikeId: bike.id,
         stationId: station.id,
         batteryId: availableBattery.id,
@@ -184,7 +174,7 @@ export class AssignmentService {
       }
 
       if (action === 'completed' && loaded.paymentStatus !== 'captured') {
-        const riderWallet = await tx.orm.public.Wallet.where({ riderId: loaded.riderId }).first();
+        const riderWallet = await tx.orm.public.Wallet.where({ userId: loaded.userId }).first();
 
         if (!riderWallet) {
           throw new BadRequestException('Rider wallet not found for payment capture');
@@ -209,7 +199,7 @@ export class AssignmentService {
       }
 
       const updatedSwap = await tx.orm.public.SwapTransaction.where({ id: swapId })
-        .include('rider')
+        .include('user')
         .include('bike')
         .include('station')
         .include('card')
@@ -241,7 +231,7 @@ export class AssignmentService {
           swapTransactionId: swapId,
           eventType: 'swap_completed',
           amount: updatedSwap.fee,
-          description: `Swap completed for rider ${updatedSwap.riderId} at station ${updatedSwap.stationId}`,
+          description: `Swap completed for rider ${updatedSwap.userId} at station ${updatedSwap.stationId}`,
         });
 
         await this.transferCustody(tx, updatedSwap);
@@ -252,14 +242,14 @@ export class AssignmentService {
           swapTransactionId: swapId,
           eventType: action === 'failed' ? 'swap_failed' : 'swap_cancelled',
           amount: updatedSwap.fee,
-          description: `Swap ${action} for rider ${updatedSwap.riderId}`,
+          description: `Swap ${action} for rider ${updatedSwap.userId}`,
         });
 
         await this.releaseIssuedBattery(tx, updatedSwap);
       }
 
       const settled = await tx.orm.public.SwapTransaction.where({ id: swapId })
-        .include('rider')
+        .include('user')
         .include('bike')
         .include('station')
         .include('card')

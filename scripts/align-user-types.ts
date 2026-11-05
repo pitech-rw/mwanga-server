@@ -11,6 +11,7 @@ async function main() {
     const legacyType = user.type as string;
 
     if (legacyType === 'customer') {
+      // anyone with the customer type is a rider
       await db.orm.public.User.where({ id: user.id }).update({ type: 'rider' });
       console.log(`User ${user.id}: customer → rider`);
     }

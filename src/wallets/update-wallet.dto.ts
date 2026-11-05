@@ -3,7 +3,7 @@ import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 export class UpdateWalletDto {
   @IsOptional()
   @IsNumber()
-  riderId?: number;
+  userId?: number;
 
   @IsOptional()
   @IsNumber()

@@ -28,16 +28,8 @@
       "model": "NfcCard",
       "namespace": "public"
     },
-    "Owner": {
-      "model": "Owner",
-      "namespace": "public"
-    },
     "Permission": {
       "model": "Permission",
-      "namespace": "public"
-    },
-    "Rider": {
-      "model": "Rider",
       "namespace": "public"
     },
     "Role": {
@@ -753,24 +745,10 @@
                   "kind": "scalar"
                 }
               },
-              "ownerId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "plateNumber": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "riderId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -797,6 +775,13 @@
                     "precision": 3
                   }
                 }
+              },
+              "userId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
               }
             },
             "relations": {
@@ -816,38 +801,6 @@
                   "namespace": "public"
                 }
               },
-              "owner": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "ownerId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Owner",
-                  "namespace": "public"
-                }
-              },
-              "rider": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "riderId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Rider",
-                  "namespace": "public"
-                }
-              },
               "transactions": {
                 "cardinality": "1:N",
                 "on": {
@@ -860,6 +813,22 @@
                 },
                 "to": {
                   "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
                   "namespace": "public"
                 }
               }
@@ -884,14 +853,8 @@
                 "model": {
                   "column": "model"
                 },
-                "ownerId": {
-                  "column": "ownerId"
-                },
                 "plateNumber": {
                   "column": "plateNumber"
-                },
-                "riderId": {
-                  "column": "riderId"
                 },
                 "serialNumber": {
                   "column": "serialNumber"
@@ -901,6 +864,9 @@
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
                 }
               },
               "namespaceId": "public",
@@ -1021,13 +987,6 @@
                   "kind": "scalar"
                 }
               },
-              "riderId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "serialNumber": {
                 "nullable": false,
                 "type": {
@@ -1065,25 +1024,16 @@
                     "precision": 3
                   }
                 }
+              },
+              "userId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
               }
             },
             "relations": {
-              "rider": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "riderId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Rider",
-                  "namespace": "public"
-                }
-              },
               "transactions": {
                 "cardinality": "1:N",
                 "on": {
@@ -1098,6 +1048,22 @@
                   "model": "SwapTransaction",
                   "namespace": "public"
                 }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -1107,9 +1073,6 @@
                 },
                 "id": {
                   "column": "id"
-                },
-                "riderId": {
-                  "column": "riderId"
                 },
                 "serialNumber": {
                   "column": "serialNumber"
@@ -1125,128 +1088,13 @@
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
                 }
               },
               "namespaceId": "public",
               "table": "NfcCard"
-            }
-          },
-          "Owner": {
-            "fields": {
-              "createdAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              },
-              "email": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "name": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "phone": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "status": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "updatedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              }
-            },
-            "relations": {
-              "bikes": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "ownerId"
-                  ]
-                },
-                "to": {
-                  "model": "Bike",
-                  "namespace": "public"
-                }
-              },
-              "riders": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "ownerId"
-                  ]
-                },
-                "to": {
-                  "model": "Rider",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "createdAt": {
-                  "column": "createdAt"
-                },
-                "email": {
-                  "column": "email"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "name": {
-                  "column": "name"
-                },
-                "phone": {
-                  "column": "phone"
-                },
-                "status": {
-                  "column": "status"
-                },
-                "updatedAt": {
-                  "column": "updatedAt"
-                }
-              },
-              "namespaceId": "public",
-              "table": "Owner"
             }
           },
           "Permission": {
@@ -1305,191 +1153,6 @@
               },
               "namespaceId": "public",
               "table": "Permission"
-            }
-          },
-          "Rider": {
-            "fields": {
-              "createdAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              },
-              "fullName": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "idNumber": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "kycStatus": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "ownerId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "phone": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "status": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "updatedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              }
-            },
-            "relations": {
-              "bikes": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "riderId"
-                  ]
-                },
-                "to": {
-                  "model": "Bike",
-                  "namespace": "public"
-                }
-              },
-              "cards": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "riderId"
-                  ]
-                },
-                "to": {
-                  "model": "NfcCard",
-                  "namespace": "public"
-                }
-              },
-              "owner": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "ownerId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Owner",
-                  "namespace": "public"
-                }
-              },
-              "transactions": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "riderId"
-                  ]
-                },
-                "to": {
-                  "model": "SwapTransaction",
-                  "namespace": "public"
-                }
-              },
-              "wallet": {
-                "cardinality": "1:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "riderId"
-                  ]
-                },
-                "to": {
-                  "model": "Wallet",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "createdAt": {
-                  "column": "createdAt"
-                },
-                "fullName": {
-                  "column": "fullName"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "idNumber": {
-                  "column": "idNumber"
-                },
-                "kycStatus": {
-                  "column": "kycStatus"
-                },
-                "ownerId": {
-                  "column": "ownerId"
-                },
-                "phone": {
-                  "column": "phone"
-                },
-                "status": {
-                  "column": "status"
-                },
-                "updatedAt": {
-                  "column": "updatedAt"
-                }
-              },
-              "namespaceId": "public",
-              "table": "Rider"
             }
           },
           "Role": {
@@ -1639,6 +1302,21 @@
                 },
                 "to": {
                   "model": "Battery",
+                  "namespace": "public"
+                }
+              },
+              "operators": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "stationId"
+                  ]
+                },
+                "to": {
+                  "model": "User",
                   "namespace": "public"
                 }
               },
@@ -1852,13 +1530,6 @@
                   "plane": "domain"
                 }
               },
-              "riderId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "stationId": {
                 "nullable": false,
                 "type": {
@@ -1894,6 +1565,13 @@
                   "typeParams": {
                     "precision": 3
                   }
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
                 }
               },
               "walletBalanceAfter": {
@@ -2018,22 +1696,6 @@
                   "namespace": "public"
                 }
               },
-              "rider": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "riderId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Rider",
-                  "namespace": "public"
-                }
-              },
               "station": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -2056,6 +1718,22 @@
                 "on": {
                   "localFields": [
                     "swapperId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "userId"
                   ],
                   "targetFields": [
                     "id"
@@ -2117,9 +1795,6 @@
                 "paymentStatus": {
                   "column": "paymentStatus"
                 },
-                "riderId": {
-                  "column": "riderId"
-                },
                 "stationId": {
                   "column": "stationId"
                 },
@@ -2131,6 +1806,9 @@
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
                 },
                 "walletBalanceAfter": {
                   "column": "walletBalanceAfter"
@@ -2194,6 +1872,13 @@
                   "kind": "scalar"
                 }
               },
+              "kycStatus": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "lastLoginAt": {
                 "nullable": true,
                 "type": {
@@ -2239,6 +1924,13 @@
                   "kind": "scalar"
                 }
               },
+              "stationId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "type": {
                 "nullable": false,
                 "type": {
@@ -2271,6 +1963,52 @@
               }
             },
             "relations": {
+              "assignedBikes": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Bike",
+                  "namespace": "public"
+                }
+              },
+              "assignedStation": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "stationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Station",
+                  "namespace": "public"
+                }
+              },
+              "nfcCards": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "NfcCard",
+                  "namespace": "public"
+                }
+              },
               "offendingViolations": {
                 "cardinality": "1:N",
                 "on": {
@@ -2298,6 +2036,21 @@
                 },
                 "to": {
                   "model": "Violation",
+                  "namespace": "public"
+                }
+              },
+              "riderSwaps": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
                   "namespace": "public"
                 }
               },
@@ -2331,6 +2084,22 @@
                   "model": "SwapTransaction",
                   "namespace": "public"
                 }
+              },
+              "wallet": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Wallet",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -2356,6 +2125,9 @@
                 "isActive": {
                   "column": "isActive"
                 },
+                "kycStatus": {
+                  "column": "kycStatus"
+                },
                 "lastLoginAt": {
                   "column": "lastLoginAt"
                 },
@@ -2373,6 +2145,9 @@
                 },
                 "roleId": {
                   "column": "roleId"
+                },
+                "stationId": {
+                  "column": "stationId"
                 },
                 "type": {
                   "column": "type"
@@ -2636,13 +2411,6 @@
                   "kind": "scalar"
                 }
               },
-              "riderId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -2652,22 +2420,29 @@
                     "precision": 3
                   }
                 }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
               }
             },
             "relations": {
-              "rider": {
+              "user": {
                 "cardinality": "N:1",
                 "nullable": false,
                 "on": {
                   "localFields": [
-                    "riderId"
+                    "userId"
                   ],
                   "targetFields": [
                     "id"
                   ]
                 },
                 "to": {
-                  "model": "Rider",
+                  "model": "User",
                   "namespace": "public"
                 }
               }
@@ -2686,11 +2461,11 @@
                 "id": {
                   "column": "id"
                 },
-                "riderId": {
-                  "column": "riderId"
-                },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
                 }
               },
               "namespaceId": "public",
@@ -3140,20 +2915,10 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
-                "ownerId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
-                },
                 "plateNumber": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
-                },
-                "riderId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
                 },
                 "serialNumber": {
                   "codecId": "pg/text@1",
@@ -3176,16 +2941,21 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
                 }
               },
               "foreignKeys": [
                 {
                   "index": {
-                    "name": "Bike_ownerId_idx_e2d0c1ef"
+                    "name": "Bike_userId_idx_a489d58a"
                   },
                   "source": {
                     "columns": [
-                      "ownerId"
+                      "userId"
                     ],
                     "namespaceId": "public",
                     "tableName": "Bike"
@@ -3195,26 +2965,7 @@
                       "id"
                     ],
                     "namespaceId": "public",
-                    "tableName": "Owner"
-                  }
-                },
-                {
-                  "index": {
-                    "name": "Bike_riderId_idx_966752c5"
-                  },
-                  "source": {
-                    "columns": [
-                      "riderId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Bike"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Rider"
+                    "tableName": "User"
                   }
                 },
                 {
@@ -3242,18 +2993,10 @@
               "indexes": [
                 {
                   "columns": [
-                    "ownerId"
+                    "userId"
                   ],
-                  "name": "Bike_ownerId_idx_e2d0c1ef",
-                  "prefix": "Bike_ownerId_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
-                    "riderId"
-                  ],
-                  "name": "Bike_riderId_idx_966752c5",
-                  "prefix": "Bike_riderId_idx",
+                  "name": "Bike_userId_idx_a489d58a",
+                  "prefix": "Bike_userId_idx",
                   "unique": false
                 }
               ],
@@ -3394,11 +3137,6 @@
                   },
                   "nullable": false
                 },
-                "riderId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
-                },
                 "serialNumber": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -3430,16 +3168,21 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
                 }
               },
               "foreignKeys": [
                 {
                   "index": {
-                    "name": "NfcCard_riderId_idx_966752c5"
+                    "name": "NfcCard_userId_idx_a489d58a"
                   },
                   "source": {
                     "columns": [
-                      "riderId"
+                      "userId"
                     ],
                     "namespaceId": "public",
                     "tableName": "NfcCard"
@@ -3449,17 +3192,17 @@
                       "id"
                     ],
                     "namespaceId": "public",
-                    "tableName": "Rider"
+                    "tableName": "User"
                   }
                 }
               ],
               "indexes": [
                 {
                   "columns": [
-                    "riderId"
+                    "userId"
                   ],
-                  "name": "NfcCard_riderId_idx_966752c5",
-                  "prefix": "NfcCard_riderId_idx",
+                  "name": "NfcCard_userId_idx_a489d58a",
+                  "prefix": "NfcCard_userId_idx",
                   "unique": false
                 }
               ],
@@ -3477,77 +3220,6 @@
                 {
                   "columns": [
                     "serialNumber"
-                  ]
-                }
-              ]
-            },
-            "Owner": {
-              "columns": {
-                "createdAt": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "dataType": "pg/timestamptz",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nullable": false,
-                  "typeParams": {
-                    "precision": 3
-                  }
-                },
-                "email": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": true
-                },
-                "id": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "default": {
-                    "expression": "autoincrement()",
-                    "kind": "function"
-                  },
-                  "nullable": false
-                },
-                "name": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": false
-                },
-                "phone": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": true
-                },
-                "status": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "default": {
-                    "kind": "literal",
-                    "value": "active"
-                  },
-                  "nullable": false
-                },
-                "updatedAt": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "dataType": "pg/timestamptz",
-                  "nullable": false,
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              },
-              "foreignKeys": [],
-              "indexes": [],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "email"
                   ]
                 }
               ]
@@ -3615,125 +3287,6 @@
                   "columns": [
                     "roleId",
                     "name"
-                  ]
-                }
-              ]
-            },
-            "Rider": {
-              "columns": {
-                "createdAt": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "dataType": "pg/timestamptz",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nullable": false,
-                  "typeParams": {
-                    "precision": 3
-                  }
-                },
-                "fullName": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": false
-                },
-                "id": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "default": {
-                    "expression": "autoincrement()",
-                    "kind": "function"
-                  },
-                  "nullable": false
-                },
-                "idNumber": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": true
-                },
-                "kycStatus": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "default": {
-                    "kind": "literal",
-                    "value": "pending"
-                  },
-                  "nullable": false
-                },
-                "ownerId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
-                },
-                "phone": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": false
-                },
-                "status": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "default": {
-                    "kind": "literal",
-                    "value": "active"
-                  },
-                  "nullable": false
-                },
-                "updatedAt": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "dataType": "pg/timestamptz",
-                  "nullable": false,
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              },
-              "foreignKeys": [
-                {
-                  "index": {
-                    "name": "Rider_ownerId_idx_e2d0c1ef"
-                  },
-                  "source": {
-                    "columns": [
-                      "ownerId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Rider"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Owner"
-                  }
-                }
-              ],
-              "indexes": [
-                {
-                  "columns": [
-                    "ownerId"
-                  ],
-                  "name": "Rider_ownerId_idx_e2d0c1ef",
-                  "prefix": "Rider_ownerId_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "phone"
-                  ]
-                },
-                {
-                  "columns": [
-                    "idNumber"
                   ]
                 }
               ]
@@ -3996,11 +3549,6 @@
                     "plane": "storage"
                   }
                 },
-                "riderId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": false
-                },
                 "stationId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
@@ -4034,6 +3582,11 @@
                     "precision": 3
                   }
                 },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
                 "walletBalanceAfter": {
                   "codecId": "pg/numeric@1",
                   "dataType": "pg/numeric",
@@ -4051,11 +3604,11 @@
               "foreignKeys": [
                 {
                   "index": {
-                    "name": "SwapTransaction_riderId_idx_966752c5"
+                    "name": "SwapTransaction_userId_idx_a489d58a"
                   },
                   "source": {
                     "columns": [
-                      "riderId"
+                      "userId"
                     ],
                     "namespaceId": "public",
                     "tableName": "SwapTransaction"
@@ -4065,7 +3618,7 @@
                       "id"
                     ],
                     "namespaceId": "public",
-                    "tableName": "Rider"
+                    "tableName": "User"
                   }
                 },
                 {
@@ -4218,14 +3771,6 @@
                 },
                 {
                   "columns": [
-                    "riderId"
-                  ],
-                  "name": "SwapTransaction_riderId_idx_966752c5",
-                  "prefix": "SwapTransaction_riderId_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
                     "stationId"
                   ],
                   "name": "SwapTransaction_stationId_idx_0626a60c",
@@ -4238,6 +3783,14 @@
                   ],
                   "name": "SwapTransaction_swapperId_idx_db16cbd2",
                   "prefix": "SwapTransaction_swapperId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "SwapTransaction_userId_idx_a489d58a",
+                  "prefix": "SwapTransaction_userId_idx",
                   "unique": false
                 }
               ],
@@ -4307,6 +3860,15 @@
                   },
                   "nullable": false
                 },
+                "kycStatus": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "pending"
+                  },
+                  "nullable": false
+                },
                 "lastLoginAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
@@ -4339,6 +3901,11 @@
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "nullable": false
+                },
+                "stationId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
                 },
                 "type": {
                   "codecId": "pg/text@1",
@@ -4384,6 +3951,25 @@
                     "namespaceId": "public",
                     "tableName": "Role"
                   }
+                },
+                {
+                  "index": {
+                    "name": "User_stationId_idx_0626a60c"
+                  },
+                  "source": {
+                    "columns": [
+                      "stationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Station"
+                  }
                 }
               ],
               "indexes": [
@@ -4393,6 +3979,14 @@
                   ],
                   "name": "User_roleId_idx_ffccc9a4",
                   "prefix": "User_roleId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "stationId"
+                  ],
+                  "name": "User_stationId_idx_0626a60c",
+                  "prefix": "User_stationId_idx",
                   "unique": false
                 }
               ],
@@ -4684,11 +4278,6 @@
                   },
                   "nullable": false
                 },
-                "riderId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": false
-                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
@@ -4696,18 +4285,23 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
                 }
               },
               "foreignKeys": [
                 {
                   "index": {
                     "unique": [
-                      "riderId"
+                      "userId"
                     ]
                   },
                   "source": {
                     "columns": [
-                      "riderId"
+                      "userId"
                     ],
                     "namespaceId": "public",
                     "tableName": "Wallet"
@@ -4717,7 +4311,7 @@
                       "id"
                     ],
                     "namespaceId": "public",
-                    "tableName": "Rider"
+                    "tableName": "User"
                   }
                 }
               ],
@@ -4730,7 +4324,7 @@
               "uniques": [
                 {
                   "columns": [
-                    "riderId"
+                    "userId"
                   ]
                 }
               ]
@@ -4802,10 +4396,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "b240f2c1b156aecbc97b8f755475abc633292de0a54f294d61352a18fb112340"
+    "storageHash": "845eee9a84e4cefaf95628063270ae7039fbf858daa2760a332c8653e9d09692"
   },
   "execution": {
-    "executionHash": "54229bc246e797a786c4be401e6bc0e8ed65fa588fd83336c8b390a53dc43ef2",
+    "executionHash": "5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f",
     "mutations": {
       "defaults": [
         {
@@ -4867,48 +4461,6 @@
           },
           "ref": {
             "entry": "NfcCard",
-            "field": "updatedAt",
-            "namespace": "public"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "timestampNow",
-            "kind": "generator",
-            "params": {
-              "precision": 3
-            }
-          },
-          "onUpdate": {
-            "id": "timestampNow",
-            "kind": "generator",
-            "params": {
-              "precision": 3
-            }
-          },
-          "ref": {
-            "entry": "Owner",
-            "field": "updatedAt",
-            "namespace": "public"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "timestampNow",
-            "kind": "generator",
-            "params": {
-              "precision": 3
-            }
-          },
-          "onUpdate": {
-            "id": "timestampNow",
-            "kind": "generator",
-            "params": {
-              "precision": 3
-            }
-          },
-          "ref": {
-            "entry": "Rider",
             "field": "updatedAt",
             "namespace": "public"
           }

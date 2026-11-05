@@ -10,7 +10,7 @@ export class CardsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private cardQuery() {
-    return this.prisma.db.orm.public.NfcCard.include('rider');
+    return this.prisma.db.orm.public.NfcCard.include('user');
   }
 
   async findAll() {
@@ -29,12 +29,12 @@ export class CardsService {
 
   async create(data: CreateCardDto): Promise<NfcCard> {
     try {
-      return await this.prisma.db.orm.public.NfcCard.include('rider').create({
+      return await this.prisma.db.orm.public.NfcCard.include('user').create({
         token: data.token,
         serialNumber: data.serialNumber,
         type: data.type,
         status: data.status ?? 'active',
-        riderId: data.riderId,
+        userId: data.userId,
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -50,14 +50,14 @@ export class CardsService {
 
     try {
       const card = await this.prisma.db.orm.public.NfcCard.where({ id })
-        .include('rider')
+        .include('user')
         .update(
           withoutUndefined({
             token: data.token,
             serialNumber: data.serialNumber,
             type: data.type,
             status: data.status,
-            riderId: data.riderId,
+            userId: data.userId,
           }),
         );
 

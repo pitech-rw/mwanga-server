@@ -2,10 +2,12 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   MaxLength,
   MinLength,
+  Min,
 } from 'class-validator';
 import { USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 
@@ -60,4 +62,15 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  kycStatus?: string;
+
+  /** Station operator assignment; only valid when type is swapper */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  stationId?: number;
 }

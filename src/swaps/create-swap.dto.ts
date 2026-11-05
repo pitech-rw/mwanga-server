@@ -2,7 +2,7 @@ import { IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateSwapDto {
   @IsNumber()
-  riderId: number;
+  userId: number;
 
   @IsNumber()
   bikeId: number;

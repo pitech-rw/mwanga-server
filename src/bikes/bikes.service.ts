@@ -10,7 +10,7 @@ export class BikesService {
   constructor(private readonly prisma: PrismaService) {}
 
   private bikeQuery() {
-    return this.prisma.db.orm.public.Bike.include('owner').include('rider').include('currentBattery');
+    return this.prisma.db.orm.public.Bike.include('user').include('currentBattery');
   }
 
   async findAll() {
@@ -29,8 +29,7 @@ export class BikesService {
 
   async create(data: CreateBikeDto): Promise<Bike> {
     try {
-      return await this.prisma.db.orm.public.Bike.include('owner')
-        .include('rider')
+      return await this.prisma.db.orm.public.Bike.include('user')
         .include('currentBattery')
         .create({
           plateNumber: data.plateNumber,
@@ -39,8 +38,7 @@ export class BikesService {
           model: data.model,
           image: data.image,
           status: data.status ?? 'active',
-          ownerId: data.ownerId,
-          riderId: data.riderId,
+          userId: data.userId,
           currentBatteryId: data.currentBatteryId,
         });
     } catch (error) {
@@ -59,8 +57,7 @@ export class BikesService {
 
     try {
       const bike = await this.prisma.db.orm.public.Bike.where({ id })
-        .include('owner')
-        .include('rider')
+        .include('user')
         .include('currentBattery')
         .update(
           withoutUndefined({
@@ -70,8 +67,7 @@ export class BikesService {
             model: data.model,
             image: data.image,
             status: data.status,
-            ownerId: data.ownerId,
-            riderId: data.riderId,
+            userId: data.userId,
             currentBatteryId: data.currentBatteryId,
           }),
         );

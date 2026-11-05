@@ -7,6 +7,7 @@ import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { SafeUser, UserType } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateUserDto } from './create-user.dto.js';
+import { resolveSwapperStationId } from './swapper-station-assignment.js';
 import { UpdateUserDto } from './update-user.dto.js';
 
 @Injectable()
@@ -14,7 +15,7 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   private userQuery() {
-    return this.prisma.db.orm.public.User.include('role');
+    return this.prisma.db.orm.public.User.include('role').include('assignedStation');
   }
 
   async findAll(): Promise<SafeUser[]> {
@@ -35,9 +36,13 @@ export class UsersService {
   async create(data: CreateUserDto): Promise<SafeUser> {
     const roleId = await resolveRoleIdForType(this.prisma, data.type as UserTypeName);
     const passwordHash = await hashPassword(data.password);
+    const stationId = await resolveSwapperStationId(this.prisma, {
+      type: data.type as UserTypeName,
+      stationId: data.stationId ?? null,
+    });
 
     try {
-      const user = await this.prisma.db.orm.public.User.include('role').create({
+      const user = await this.userQuery().create({
         username: data.username,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -48,8 +53,10 @@ export class UsersService {
         nationalId: data.nationalId,
         type: data.type as UserType,
         roleId,
+        kycStatus: data.kycStatus ?? 'pending',
         isActive: data.isActive ?? true,
         passwordHash,
+        stationId: stationId ?? null,
       });
       return sanitizeUser(user);
     } catch (error) {
@@ -64,11 +71,25 @@ export class UsersService {
   }
 
   async update(id: number, data: UpdateUserDto): Promise<SafeUser> {
-    await this.findOne(id);
+    const existing = await this.prisma.db.orm.public.User.first({ id });
+    if (!existing) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
 
     let roleId: number | undefined;
+    const nextType = (data.type ?? existing.type) as UserTypeName;
     if (data.type !== undefined) {
       roleId = await resolveRoleIdForType(this.prisma, data.type as UserTypeName);
+    }
+
+    let stationId: number | null | undefined;
+    if (data.type !== undefined && data.type !== 'swapper') {
+      stationId = null;
+    } else if (data.stationId !== undefined) {
+      stationId = await resolveSwapperStationId(this.prisma, {
+        type: nextType,
+        stationId: data.stationId,
+      });
     }
 
     let passwordHash: string | undefined;
@@ -91,8 +112,10 @@ export class UsersService {
             nationalId: data.nationalId,
             type: data.type as UserType | undefined,
             roleId,
+            kycStatus: data.kycStatus,
             isActive: data.isActive,
             passwordHash,
+            stationId,
           }),
         );
 

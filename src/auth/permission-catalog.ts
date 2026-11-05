@@ -23,11 +23,13 @@ export const PERMISSIONS = {
     write: 'roles:write',
     delete: 'roles:delete',
   },
+  // riders have been deprecated, but we keep the permissions for backwards compatibility
   riders: {
     read: 'riders:read',
     write: 'riders:write',
     delete: 'riders:delete',
   },
+  // deprecated: fleet is single-tenant (Mwanga); permissions kept for seeded roles
   owners: {
     read: 'owners:read',
     write: 'owners:write',

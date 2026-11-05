@@ -10,7 +10,7 @@ export class WalletsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private walletQuery() {
-    return this.prisma.db.orm.public.Wallet.include('rider');
+    return this.prisma.db.orm.public.Wallet.include('user');
   }
 
   async findAll() {
@@ -29,14 +29,14 @@ export class WalletsService {
 
   async create(data: CreateWalletDto): Promise<Wallet> {
     try {
-      return await this.prisma.db.orm.public.Wallet.include('rider').create({
-        riderId: data.riderId,
+      return await this.prisma.db.orm.public.Wallet.include('user').create({
+        userId: data.userId,
         balance: asNumeric(data.balance ?? 0),
         currency: data.currency,
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A wallet already exists for this rider');
+        throw new BadRequestException('A wallet already exists for this user');
       }
 
       throw error;
@@ -48,10 +48,10 @@ export class WalletsService {
 
     try {
       const wallet = await this.prisma.db.orm.public.Wallet.where({ id })
-        .include('rider')
+        .include('user')
         .update(
           withoutUndefined({
-            riderId: data.riderId,
+            userId: data.userId,
             balance: data.balance === undefined ? undefined : asNumeric(data.balance),
             currency: data.currency,
           }),
@@ -64,7 +64,7 @@ export class WalletsService {
       return wallet;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A wallet already exists for this rider');
+        throw new BadRequestException('A wallet already exists for this user');
       }
 
       throw error;

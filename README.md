@@ -70,6 +70,22 @@ How to make changes to the model
 0. edit src/prisma/contract.prisma
 1. npm run contract:emit
 2. npm run migration:plan -- --name commit-message
+
+   If you see `MIGRATION.PLAN_ORIGIN_UNKNOWN`, `migration plan` is offline and needs a starting contract. Either set the `db` ref to the tip of the migration graph (hash from `npx prisma migration list`, usually the `to` of the latest folder under `migrations/app/`), then plan again:
+
+   ```bash
+   npx prisma migration ref set db <hash-prefix>
+   npm run migration:plan -- --name your-change
+   ```
+
+   Or pass `--from` once:
+
+   ```bash
+   npm run migration:plan -- --name your-change --from 6d58290
+   ```
+
+   Commit `migrations/app/refs/db.json` when the ref changes.
+
 3. Review migrations/app/<timestamp>_<name> (DDL preview in plan output; check ops.json / migration.ts)
 4. npm run db:migrate:show then npm run db:migrate
 5. npm run db:verify and npm run migration:status

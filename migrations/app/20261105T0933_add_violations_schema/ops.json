@@ -1,0 +1,399 @@
+[
+  {
+    "id": "table.Violation",
+    "label": "Create table \"Violation\"",
+    "summary": "Creates table \"Violation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Violation\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Violation\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"Violation\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Violation\"",
+        "sql": "CREATE TABLE \"public\".\"Violation\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"image\" text,\n  \"occurredAt\" timestamptz(3) NOT NULL,\n  \"offenderId\" int4 NOT NULL,\n  \"reason\" text NOT NULL,\n  \"reporterId\" int4 NOT NULL,\n  \"severity\" text DEFAULT 'medium' NOT NULL,\n  \"stationId\" int4,\n  \"status\" text DEFAULT 'open' NOT NULL,\n  \"title\" text NOT NULL,\n  \"trackId\" text NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Violation_severity_check_48ba1e43\" CHECK (\"severity\" IN ('low', 'medium', 'high', 'critical')),\n  CONSTRAINT \"Violation_status_check_e9b2e4e8\" CHECK (\"status\" IN ('open', 'under_review', 'resolved', 'dismissed'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Violation\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"Violation\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"Violation\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.Violation.Violation_trackId_key",
+    "label": "Add unique constraint on \"Violation\" (trackId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "Violation_trackId_key",
+        "table": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Violation_trackId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Violation_trackId_key",
+          "public",
+          "\"public\".\"Violation\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Violation_trackId_key\" on \"Violation\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"Violation_trackId_key\"",
+        "sql": "ALTER TABLE \"public\".\"Violation\" ADD CONSTRAINT \"Violation_trackId_key\" UNIQUE (\"trackId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"Violation_trackId_key\" exists on (trackId)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "Violation_trackId_key",
+          "public",
+          "\"public\".\"Violation\"",
+          "u",
+          "[\"trackId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Violation.Violation_offenderId_idx_a054d9b8",
+    "label": "Create index \"Violation_offenderId_idx_a054d9b8\" on \"Violation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Violation_offenderId_idx_a054d9b8",
+        "table": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Violation_offenderId_idx_a054d9b8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Violation_offenderId_idx_a054d9b8\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Violation_offenderId_idx_a054d9b8\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Violation_offenderId_idx_a054d9b8\"",
+        "sql": "CREATE INDEX \"Violation_offenderId_idx_a054d9b8\" ON \"public\".\"Violation\" (\"offenderId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Violation_offenderId_idx_a054d9b8\" exists on \"Violation\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Violation_offenderId_idx_a054d9b8\"",
+          "i",
+          "I",
+          "\"public\".\"Violation\"",
+          "btree",
+          "[\"offenderId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Violation.Violation_reporterId_idx_aa245831",
+    "label": "Create index \"Violation_reporterId_idx_aa245831\" on \"Violation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Violation_reporterId_idx_aa245831",
+        "table": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Violation_reporterId_idx_aa245831\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Violation_reporterId_idx_aa245831\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Violation_reporterId_idx_aa245831\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Violation_reporterId_idx_aa245831\"",
+        "sql": "CREATE INDEX \"Violation_reporterId_idx_aa245831\" ON \"public\".\"Violation\" (\"reporterId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Violation_reporterId_idx_aa245831\" exists on \"Violation\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Violation_reporterId_idx_aa245831\"",
+          "i",
+          "I",
+          "\"public\".\"Violation\"",
+          "btree",
+          "[\"reporterId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Violation.Violation_stationId_idx_0626a60c",
+    "label": "Create index \"Violation_stationId_idx_0626a60c\" on \"Violation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Violation_stationId_idx_0626a60c",
+        "table": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Violation_stationId_idx_0626a60c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Violation_stationId_idx_0626a60c\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Violation_stationId_idx_0626a60c\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Violation_stationId_idx_0626a60c\"",
+        "sql": "CREATE INDEX \"Violation_stationId_idx_0626a60c\" ON \"public\".\"Violation\" (\"stationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Violation_stationId_idx_0626a60c\" exists on \"Violation\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Violation_stationId_idx_0626a60c\"",
+          "i",
+          "I",
+          "\"public\".\"Violation\"",
+          "btree",
+          "[\"stationId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Violation.Violation_stationId_fkey",
+    "label": "Add foreign key \"Violation_stationId_fkey\" on \"Violation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Violation_stationId_fkey",
+        "table": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Violation_stationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Violation_stationId_fkey",
+          "public",
+          "\"public\".\"Violation\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Violation_stationId_fkey\" on \"Violation\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Violation_stationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Violation\"\nADD CONSTRAINT \"Violation_stationId_fkey\"\nFOREIGN KEY (\"stationId\")\nREFERENCES \"public\".\"Station\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Violation_stationId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Violation_stationId_fkey",
+          "public",
+          "\"public\".\"Violation\"",
+          "f",
+          "[\"stationId\"]",
+          "\"public\".\"Station\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Violation.Violation_reporterId_fkey",
+    "label": "Add foreign key \"Violation_reporterId_fkey\" on \"Violation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Violation_reporterId_fkey",
+        "table": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Violation_reporterId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Violation_reporterId_fkey",
+          "public",
+          "\"public\".\"Violation\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Violation_reporterId_fkey\" on \"Violation\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Violation_reporterId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Violation\"\nADD CONSTRAINT \"Violation_reporterId_fkey\"\nFOREIGN KEY (\"reporterId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Violation_reporterId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Violation_reporterId_fkey",
+          "public",
+          "\"public\".\"Violation\"",
+          "f",
+          "[\"reporterId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Violation.Violation_offenderId_fkey",
+    "label": "Add foreign key \"Violation_offenderId_fkey\" on \"Violation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Violation_offenderId_fkey",
+        "table": "Violation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Violation_offenderId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Violation_offenderId_fkey",
+          "public",
+          "\"public\".\"Violation\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Violation_offenderId_fkey\" on \"Violation\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Violation_offenderId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Violation\"\nADD CONSTRAINT \"Violation_offenderId_fkey\"\nFOREIGN KEY (\"offenderId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Violation_offenderId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Violation_offenderId_fkey",
+          "public",
+          "\"public\".\"Violation\"",
+          "f",
+          "[\"offenderId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

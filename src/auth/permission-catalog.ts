@@ -65,6 +65,11 @@ export const PERMISSIONS = {
     delete: 'swaps:delete',
     override: 'swaps:override',
   },
+  violations: {
+    read: 'violations:read',
+    write: 'violations:write',
+    delete: 'violations:delete',
+  },
 } as const;
 
 export type PermissionName =
@@ -78,7 +83,8 @@ export type PermissionName =
   | (typeof PERMISSIONS.batteries)[keyof typeof PERMISSIONS.batteries]
   | (typeof PERMISSIONS.stations)[keyof typeof PERMISSIONS.stations]
   | (typeof PERMISSIONS.wallets)[keyof typeof PERMISSIONS.wallets]
-  | (typeof PERMISSIONS.swaps)[keyof typeof PERMISSIONS.swaps];
+  | (typeof PERMISSIONS.swaps)[keyof typeof PERMISSIONS.swaps]
+  | (typeof PERMISSIONS.violations)[keyof typeof PERMISSIONS.violations];
 
 const readPermissions = [
   PERMISSIONS.users.read,
@@ -91,6 +97,7 @@ const readPermissions = [
   PERMISSIONS.stations.read,
   PERMISSIONS.wallets.read,
   PERMISSIONS.swaps.read,
+  PERMISSIONS.violations.read,
 ] as const;
 
 const crmWritePermissions = [
@@ -101,6 +108,7 @@ const crmWritePermissions = [
   PERMISSIONS.batteries.write,
   PERMISSIONS.stations.write,
   PERMISSIONS.wallets.write,
+  PERMISSIONS.violations.write,
 ] as const;
 
 /**
@@ -129,6 +137,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.wallets.delete,
     PERMISSIONS.swaps.write,
     PERMISSIONS.swaps.delete,
+    PERMISSIONS.violations.delete,
   ],
 
   /** Station swap executive app */
@@ -141,6 +150,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.batteries.read,
     PERMISSIONS.stations.read,
     PERMISSIONS.wallets.read,
+    PERMISSIONS.violations.read,
+    PERMISSIONS.violations.write,
   ],
 
   /** Field agent: rider/card registration (no station swap workflow) */
@@ -153,6 +164,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.batteries.read,
     PERMISSIONS.stations.read,
     PERMISSIONS.wallets.read,
+    PERMISSIONS.violations.read,
+    PERMISSIONS.violations.write,
   ],
 
   /**

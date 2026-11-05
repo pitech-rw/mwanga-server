@@ -16,6 +16,7 @@ import { RolesModule } from './roles/roles.module.js';
 import { StationsModule } from './stations/stations.module.js';
 import { SwapsModule } from './swaps/swaps.module.js';
 import { UsersModule } from './users/users.module.js';
+import { ViolationsModule } from './violations/violations.module.js';
 import { WalletsModule } from './wallets/wallets.module.js';
 
 @Module({
@@ -35,6 +36,7 @@ import { WalletsModule } from './wallets/wallets.module.js';
     BatteriesModule,
     WalletsModule,
     SwapsModule,
+    ViolationsModule,
   ],
   controllers: [AppController],
   providers: [

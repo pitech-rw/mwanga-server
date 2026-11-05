@@ -29,7 +29,9 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @onCreate(now()) @onUpdate(now())
 
-  swapsAsSwapper SwapTransaction[]
+  swapsAsSwapper       SwapTransaction[]
+  reportedViolations   Violation[]       @relation("ViolationReporter")
+  offendingViolations  Violation[]       @relation("ViolationOffender")
 }
 
 model Role {
@@ -69,6 +71,20 @@ enum PaymentStatus {
 enum ReadingDirection {
   in
   out
+}
+
+enum ViolationStatus {
+  open
+  under_review
+  resolved
+  dismissed
+}
+
+enum ViolationSeverity {
+  low
+  medium
+  high
+  critical
 }
 
 model Owner {
@@ -135,6 +151,7 @@ model Station {
 
   batteries   Battery[]
   transactions SwapTransaction[]
+  violations  Violation[]
 }
 
 model Battery {
@@ -260,4 +277,24 @@ model AuditLog {
   createdAt       DateTime @default(now())
 
   swapTransaction SwapTransaction? @relation(fields: [swapTransactionId], references: [id])
+}
+
+model Violation {
+  id          Int               @id @default(autoincrement())
+  trackId     String            @unique
+  title       String
+  reason      String
+  image       String?
+  status      ViolationStatus   @default(open)
+  severity    ViolationSeverity @default(medium)
+  occurredAt  DateTime
+  stationId   Int?
+  reporterId  Int
+  offenderId  Int
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @onCreate(now()) @onUpdate(now())
+
+  station  Station? @relation(fields: [stationId], references: [id])
+  reporter User     @relation("ViolationReporter", fields: [reporterId], references: [id])
+  offender User     @relation("ViolationOffender", fields: [offenderId], references: [id])
 }

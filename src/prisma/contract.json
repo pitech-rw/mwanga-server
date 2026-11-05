@@ -56,6 +56,10 @@
       "model": "User",
       "namespace": "public"
     },
+    "Violation": {
+      "model": "Violation",
+      "namespace": "public"
+    },
     "Wallet": {
       "model": "Wallet",
       "namespace": "public"
@@ -166,6 +170,48 @@
               {
                 "name": "viewer",
                 "value": "viewer"
+              }
+            ]
+          },
+          "ViolationSeverity": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "low",
+                "value": "low"
+              },
+              {
+                "name": "medium",
+                "value": "medium"
+              },
+              {
+                "name": "high",
+                "value": "high"
+              },
+              {
+                "name": "critical",
+                "value": "critical"
+              }
+            ]
+          },
+          "ViolationStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "open",
+                "value": "open"
+              },
+              {
+                "name": "under_review",
+                "value": "under_review"
+              },
+              {
+                "name": "resolved",
+                "value": "resolved"
+              },
+              {
+                "name": "dismissed",
+                "value": "dismissed"
               }
             ]
           }
@@ -1610,6 +1656,21 @@
                   "model": "SwapTransaction",
                   "namespace": "public"
                 }
+              },
+              "violations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "stationId"
+                  ]
+                },
+                "to": {
+                  "model": "Violation",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -2210,6 +2271,36 @@
               }
             },
             "relations": {
+              "offendingViolations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "offenderId"
+                  ]
+                },
+                "to": {
+                  "model": "Violation",
+                  "namespace": "public"
+                }
+              },
+              "reportedViolations": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "reporterId"
+                  ]
+                },
+                "to": {
+                  "model": "Violation",
+                  "namespace": "public"
+                }
+              },
               "role": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -2295,6 +2386,217 @@
               },
               "namespaceId": "public",
               "table": "User"
+            }
+          },
+          "Violation": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "image": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "occurredAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "offenderId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "reason": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "reporterId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "severity": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ViolationSeverity",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "stationId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "ViolationStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "title": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "trackId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {
+              "offender": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "offenderId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "reporter": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "reporterId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "station": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "stationId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Station",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "image": {
+                  "column": "image"
+                },
+                "occurredAt": {
+                  "column": "occurredAt"
+                },
+                "offenderId": {
+                  "column": "offenderId"
+                },
+                "reason": {
+                  "column": "reason"
+                },
+                "reporterId": {
+                  "column": "reporterId"
+                },
+                "severity": {
+                  "column": "severity"
+                },
+                "stationId": {
+                  "column": "stationId"
+                },
+                "status": {
+                  "column": "status"
+                },
+                "title": {
+                  "column": "title"
+                },
+                "trackId": {
+                  "column": "trackId"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "Violation"
             }
           },
           "Wallet": {
@@ -4122,6 +4424,221 @@
                 }
               ]
             },
+            "Violation": {
+              "checks": [
+                {
+                  "expression": "\"severity\" IN ('low', 'medium', 'high', 'critical')",
+                  "name": "Violation_severity_check_48ba1e43",
+                  "prefix": "Violation_severity_check"
+                },
+                {
+                  "expression": "\"status\" IN ('open', 'under_review', 'resolved', 'dismissed')",
+                  "name": "Violation_status_check_e9b2e4e8",
+                  "prefix": "Violation_status_check"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "image": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "occurredAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "offenderId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "reason": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "reporterId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "severity": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "medium"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ViolationSeverity",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "stationId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "open"
+                  },
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "ViolationStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "title": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "trackId": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "Violation_stationId_idx_0626a60c"
+                  },
+                  "source": {
+                    "columns": [
+                      "stationId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Violation"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Station"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "Violation_reporterId_idx_aa245831"
+                  },
+                  "source": {
+                    "columns": [
+                      "reporterId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Violation"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "Violation_offenderId_idx_a054d9b8"
+                  },
+                  "source": {
+                    "columns": [
+                      "offenderId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Violation"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "offenderId"
+                  ],
+                  "name": "Violation_offenderId_idx_a054d9b8",
+                  "prefix": "Violation_offenderId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "reporterId"
+                  ],
+                  "name": "Violation_reporterId_idx_aa245831",
+                  "prefix": "Violation_reporterId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "stationId"
+                  ],
+                  "name": "Violation_stationId_idx_0626a60c",
+                  "prefix": "Violation_stationId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "trackId"
+                  ]
+                }
+              ]
+            },
             "Wallet": {
               "columns": {
                 "balance": {
@@ -4260,6 +4777,24 @@
                 "rider",
                 "viewer"
               ]
+            },
+            "ViolationSeverity": {
+              "kind": "valueSet",
+              "values": [
+                "low",
+                "medium",
+                "high",
+                "critical"
+              ]
+            },
+            "ViolationStatus": {
+              "kind": "valueSet",
+              "values": [
+                "open",
+                "under_review",
+                "resolved",
+                "dismissed"
+              ]
             }
           }
         },
@@ -4267,10 +4802,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "6d58290afa308a8abbee6e13f4c7cd58b37b5f43523116b2595f892a311507a0"
+    "storageHash": "6ae4dc14ddac2242bf7cb495eed3117b40677de634aaf73fbcc5a7dadede469c"
   },
   "execution": {
-    "executionHash": "8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab",
+    "executionHash": "54229bc246e797a786c4be401e6bc0e8ed65fa588fd83336c8b390a53dc43ef2",
     "mutations": {
       "defaults": [
         {
@@ -4437,6 +4972,27 @@
           },
           "ref": {
             "entry": "User",
+            "field": "updatedAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "ref": {
+            "entry": "Violation",
             "field": "updatedAt",
             "namespace": "public"
           }

@@ -18,3 +18,6 @@ export type BatteryReading = Scalars<Models.public_BatteryReading>;
 export type ReadingDirection = Models.public_BatteryReading['direction'];
 export type SwapStatus = Models.public_SwapTransaction['status'];
 export type PaymentStatus = Models.public_SwapTransaction['paymentStatus'];
+export type Violation = Scalars<Models.public_Violation>;
+export type ViolationStatus = Models.public_Violation['status'];
+export type ViolationSeverity = Models.public_Violation['severity'];

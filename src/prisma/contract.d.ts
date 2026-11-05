@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'6d58290afa308a8abbee6e13f4c7cd58b37b5f43523116b2595f892a311507a0'>;
+  StorageHashBase<'6ae4dc14ddac2242bf7cb495eed3117b40677de634aaf73fbcc5a7dadede469c'>;
 export type ExecutionHash =
-  ExecutionHashBase<'8c90f68b165001de1c7eb40dbfc498f316b356013164c1c129d77ff1b8d2abab'>;
+  ExecutionHashBase<'54229bc246e797a786c4be401e6bc0e8ed65fa588fd83336c8b390a53dc43ef2'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -315,6 +315,16 @@ type FieldTypeOverrides = {
             'admin' | 'office' | 'office_manager' | 'swapper' | 'agent' | 'rider' | 'viewer';
         };
       };
+      readonly Violation: {
+        readonly severity: {
+          readonly output: 'low' | 'medium' | 'high' | 'critical';
+          readonly input: 'low' | 'medium' | 'high' | 'critical';
+        };
+        readonly status: {
+          readonly output: 'open' | 'under_review' | 'resolved' | 'dismissed';
+          readonly input: 'open' | 'under_review' | 'resolved' | 'dismissed';
+        };
+      };
     };
   };
 };
@@ -371,6 +381,16 @@ type ColumnTypeOverrides = {
           'admin' | 'office' | 'office_manager' | 'swapper' | 'agent' | 'rider' | 'viewer';
         readonly input:
           'admin' | 'office' | 'office_manager' | 'swapper' | 'agent' | 'rider' | 'viewer';
+      };
+    };
+    readonly Violation: {
+      readonly severity: {
+        readonly output: 'low' | 'medium' | 'high' | 'critical';
+        readonly input: 'low' | 'medium' | 'high' | 'critical';
+      };
+      readonly status: {
+        readonly output: 'open' | 'under_review' | 'resolved' | 'dismissed';
+        readonly input: 'open' | 'under_review' | 'resolved' | 'dismissed';
       };
     };
   };
@@ -537,7 +557,8 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['Station']['updatedAt'];
     batteries: public_Battery[];
     transactions: public_SwapTransaction[];
-    readonly [RelationKeys]?: 'batteries' | 'transactions';
+    violations: public_Violation[];
+    readonly [RelationKeys]?: 'batteries' | 'transactions' | 'violations';
   };
   export type public_SwapTransaction = {
     assignedAt: FieldOutputTypes['public']['SwapTransaction']['assignedAt'];
@@ -601,9 +622,31 @@ export namespace Models {
     type: FieldOutputTypes['public']['User']['type'];
     updatedAt: FieldOutputTypes['public']['User']['updatedAt'];
     username: FieldOutputTypes['public']['User']['username'];
+    offendingViolations: public_Violation[];
+    reportedViolations: public_Violation[];
     role: public_Role;
     swapsAsSwapper: public_SwapTransaction[];
-    readonly [RelationKeys]?: 'role' | 'swapsAsSwapper';
+    readonly [RelationKeys]?:
+      'offendingViolations' | 'reportedViolations' | 'role' | 'swapsAsSwapper';
+  };
+  export type public_Violation = {
+    createdAt: FieldOutputTypes['public']['Violation']['createdAt'];
+    id: FieldOutputTypes['public']['Violation']['id'];
+    image: FieldOutputTypes['public']['Violation']['image'];
+    occurredAt: FieldOutputTypes['public']['Violation']['occurredAt'];
+    offenderId: FieldOutputTypes['public']['Violation']['offenderId'];
+    reason: FieldOutputTypes['public']['Violation']['reason'];
+    reporterId: FieldOutputTypes['public']['Violation']['reporterId'];
+    severity: FieldOutputTypes['public']['Violation']['severity'];
+    stationId: FieldOutputTypes['public']['Violation']['stationId'];
+    status: FieldOutputTypes['public']['Violation']['status'];
+    title: FieldOutputTypes['public']['Violation']['title'];
+    trackId: FieldOutputTypes['public']['Violation']['trackId'];
+    updatedAt: FieldOutputTypes['public']['Violation']['updatedAt'];
+    offender: public_User;
+    reporter: public_User;
+    station: public_Station | null;
+    readonly [RelationKeys]?: 'offender' | 'reporter' | 'station';
   };
   export type public_Wallet = {
     balance: FieldOutputTypes['public']['Wallet']['balance'];
@@ -632,6 +675,7 @@ export declare const models: {
     Station: Models.public_Station;
     SwapTransaction: Models.public_SwapTransaction;
     User: Models.public_User;
+    Violation: Models.public_Violation;
     Wallet: Models.public_Wallet;
   };
 };
@@ -2044,6 +2088,164 @@ type ContractBase = Omit<
                 },
               ];
             };
+            readonly Violation: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly image: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly occurredAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly offenderId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly reason: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly reporterId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly severity: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'medium'>;
+                  };
+                  readonly many: false;
+                };
+                readonly stationId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'open'>;
+                  };
+                  readonly many: false;
+                };
+                readonly title: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly trackId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['trackId'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'Violation_offenderId_idx_a054d9b8';
+                  readonly prefix: 'Violation_offenderId_idx';
+                  readonly columns: readonly ['offenderId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Violation_reporterId_idx_aa245831';
+                  readonly prefix: 'Violation_reporterId_idx';
+                  readonly columns: readonly ['reporterId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Violation_stationId_idx_0626a60c';
+                  readonly prefix: 'Violation_stationId_idx';
+                  readonly columns: readonly ['stationId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Violation';
+                    readonly columns: readonly ['stationId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Station';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Violation';
+                    readonly columns: readonly ['reporterId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Violation';
+                    readonly columns: readonly ['offenderId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly Wallet: {
               columns: {
                 readonly balance: {
@@ -2152,6 +2354,14 @@ type ContractBase = Omit<
                 'viewer',
               ];
             };
+            readonly ViolationSeverity: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['low', 'medium', 'high', 'critical'];
+            };
+            readonly ViolationStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['open', 'under_review', 'resolved', 'dismissed'];
+            };
           };
         };
       };
@@ -2188,6 +2398,7 @@ type ContractBase = Omit<
       readonly model: 'SwapTransaction';
     };
     readonly User: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+    readonly Violation: { readonly namespace: 'public' & NamespaceId; readonly model: 'Violation' };
     readonly Wallet: { readonly namespace: 'public' & NamespaceId; readonly model: 'Wallet' };
   };
   readonly domain: {
@@ -3103,6 +3314,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['stationId'];
                 };
               };
+              readonly violations: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Violation';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['stationId'];
+                };
+              };
             };
             readonly storage: {
               readonly table: 'Station';
@@ -3473,6 +3695,28 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly offendingViolations: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Violation';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['offenderId'];
+                };
+              };
+              readonly reportedViolations: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Violation';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['reporterId'];
+                };
+              };
               readonly role: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Role' };
                 readonly cardinality: 'N:1';
@@ -3514,6 +3758,125 @@ type ContractBase = Omit<
                 readonly type: { readonly column: 'type' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
                 readonly username: { readonly column: 'username' };
+              };
+            };
+          };
+          readonly Violation: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly image: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly occurredAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly offenderId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly reason: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly reporterId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly severity: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly stationId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly title: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly trackId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: {
+              readonly offender: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['offenderId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly reporter: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['reporterId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly station: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Station';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['stationId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'Violation';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly id: { readonly column: 'id' };
+                readonly image: { readonly column: 'image' };
+                readonly occurredAt: { readonly column: 'occurredAt' };
+                readonly offenderId: { readonly column: 'offenderId' };
+                readonly reason: { readonly column: 'reason' };
+                readonly reporterId: { readonly column: 'reporterId' };
+                readonly severity: { readonly column: 'severity' };
+                readonly stationId: { readonly column: 'stationId' };
+                readonly status: { readonly column: 'status' };
+                readonly title: { readonly column: 'title' };
+                readonly trackId: { readonly column: 'trackId' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
               };
             };
           };
@@ -3626,6 +3989,24 @@ type ContractBase = Omit<
               { readonly name: 'viewer'; readonly value: 'viewer' },
             ];
           };
+          readonly ViolationSeverity: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'low'; readonly value: 'low' },
+              { readonly name: 'medium'; readonly value: 'medium' },
+              { readonly name: 'high'; readonly value: 'high' },
+              { readonly name: 'critical'; readonly value: 'critical' },
+            ];
+          };
+          readonly ViolationStatus: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'open'; readonly value: 'open' },
+              { readonly name: 'under_review'; readonly value: 'under_review' },
+              { readonly name: 'resolved'; readonly value: 'resolved' },
+              { readonly name: 'dismissed'; readonly value: 'dismissed' },
+            ];
+          };
         };
         readonly enumMemberTypes?: {
           readonly PaymentStatus: readonly [
@@ -3656,6 +4037,18 @@ type ContractBase = Omit<
             { readonly name: 'agent'; readonly value: 'agent' },
             { readonly name: 'rider'; readonly value: 'rider' },
             { readonly name: 'viewer'; readonly value: 'viewer' },
+          ];
+          readonly ViolationSeverity: readonly [
+            { readonly name: 'low'; readonly value: 'low' },
+            { readonly name: 'medium'; readonly value: 'medium' },
+            { readonly name: 'high'; readonly value: 'high' },
+            { readonly name: 'critical'; readonly value: 'critical' },
+          ];
+          readonly ViolationStatus: readonly [
+            { readonly name: 'open'; readonly value: 'open' },
+            { readonly name: 'under_review'; readonly value: 'under_review' },
+            { readonly name: 'resolved'; readonly value: 'resolved' },
+            { readonly name: 'dismissed'; readonly value: 'dismissed' },
           ];
         };
       };
@@ -3825,6 +4218,23 @@ type ContractBase = Omit<
           };
           readonly ref: {
             readonly entry: 'User';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly onUpdate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'Violation';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

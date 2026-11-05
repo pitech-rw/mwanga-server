@@ -32,7 +32,7 @@ export class WalletsService {
       return await this.prisma.db.orm.public.Wallet.include('rider').create({
         riderId: data.riderId,
         balance: asNumeric(data.balance ?? 0),
-        currency: data.currency ?? 'KES',
+        currency: data.currency,
       });
     } catch (error) {
       if (isUniqueViolation(error)) {

@@ -146,8 +146,8 @@ model Station {
   longitude Float?
   status    String   @default("active")
   capacity  Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @onCreate(now()) @onUpdate(now())
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @onCreate(now()) @onUpdate(now())
 
   batteries   Battery[]
   transactions SwapTransaction[]

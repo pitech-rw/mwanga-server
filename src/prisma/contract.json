@@ -1571,7 +1571,7 @@
                 }
               },
               "createdAt": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar",
@@ -1616,7 +1616,7 @@
                 }
               },
               "updatedAt": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar",
@@ -3793,7 +3793,7 @@
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nullable": false,
+                  "nullable": true,
                   "typeParams": {
                     "precision": 3
                   }
@@ -3834,7 +3834,7 @@
                 "updatedAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
-                  "nullable": false,
+                  "nullable": true,
                   "typeParams": {
                     "precision": 3
                   }
@@ -4802,7 +4802,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "6ae4dc14ddac2242bf7cb495eed3117b40677de634aaf73fbcc5a7dadede469c"
+    "storageHash": "b240f2c1b156aecbc97b8f755475abc633292de0a54f294d61352a18fb112340"
   },
   "execution": {
     "executionHash": "54229bc246e797a786c4be401e6bc0e8ed65fa588fd83336c8b390a53dc43ef2",

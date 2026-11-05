@@ -25,13 +25,11 @@ model User {
   type         UserType
   roleId       Int
   role         Role      @relation(fields: [roleId], references: [id])
-  ownerId      Int?
   kycStatus    String    @default("pending")
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @onCreate(now()) @onUpdate(now())
 
-  owner               Owner?            @relation(fields: [ownerId], references: [id])
   wallet              Wallet?
   nfcCards            NfcCard[]
   assignedBikes       Bike[]
@@ -94,19 +92,6 @@ enum ViolationSeverity {
   critical
 }
 
-model Owner {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phone     String?
-  email     String?  @unique
-  status    String   @default("active")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @onCreate(now()) @onUpdate(now())
-
-  users User[]
-  bikes Bike[]
-}
-
 model Bike {
   id               Int      @id @default(autoincrement())
   plateNumber      String   @unique
@@ -115,13 +100,11 @@ model Bike {
   model            String
   image            String?
   status           String   @default("active")
-  ownerId          Int?
   userId           Int?
   currentBatteryId  Int?     @unique
   createdAt        DateTime @default(now())
   updatedAt        DateTime @onCreate(now()) @onUpdate(now())
 
-  owner         Owner?           @relation(fields: [ownerId], references: [id])
   user          User?            @relation(fields: [userId], references: [id])
   currentBattery Battery?        @relation("CurrentBattery", fields: [currentBatteryId], references: [id])
   transactions  SwapTransaction[]

@@ -891,6 +891,56 @@
     ]
   },
   {
+    "id": "dropConstraint.Bike.Bike_ownerId_fkey",
+    "label": "Drop constraint \"Bike_ownerId_fkey\" on \"Bike\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Bike_ownerId_fkey",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Bike_ownerId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_ownerId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"Bike_ownerId_fkey\" on \"Bike\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"Bike_ownerId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Bike\" DROP CONSTRAINT \"Bike_ownerId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"Bike_ownerId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Bike_ownerId_fkey",
+          "public",
+          "\"public\".\"Bike\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Bike_ownerId_fkey\" on \"Bike\""
+        }
+      }
+    ]
+  },
+  {
     "id": "dropConstraint.Bike.Bike_userId_fkey",
     "label": "Drop constraint \"Bike_userId_fkey\" on \"Bike\"",
     "operationClass": "widening",
@@ -1091,6 +1141,103 @@
     ]
   },
   {
+    "id": "dropIndex.Bike.Bike_ownerId_idx_e2d0c1ef",
+    "label": "Drop index \"Bike_ownerId_idx_e2d0c1ef\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Bike_ownerId_idx_e2d0c1ef",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Bike_ownerId_idx_e2d0c1ef\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Bike_ownerId_idx_e2d0c1ef\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "index \"Bike_ownerId_idx_e2d0c1ef\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop index \"Bike_ownerId_idx_e2d0c1ef\"",
+        "sql": "DROP INDEX \"public\".\"Bike_ownerId_idx_e2d0c1ef\"",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Bike_ownerId_idx_e2d0c1ef\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Bike_ownerId_idx_e2d0c1ef\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Bike_ownerId_idx_e2d0c1ef\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "dropColumn.Bike.ownerId",
+    "label": "Drop column \"ownerId\" from \"Bike\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "ownerId",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"ownerId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "ownerId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"ownerId\" on \"Bike\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop column \"ownerId\"",
+        "sql": "ALTER TABLE \"public\".\"Bike\" DROP COLUMN \"ownerId\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"ownerId\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "ownerId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"ownerId\" on \"Bike\""
+        }
+      }
+    ]
+  },
+  {
     "id": "dropTable.Rider",
     "label": "Drop table \"Rider\"",
     "operationClass": "destructive",
@@ -1131,6 +1278,51 @@
         "expectation": {
           "expects": "absent",
           "object": "table \"Rider\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "dropTable.Owner",
+    "label": "Drop table \"Owner\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Owner"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Owner\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Owner\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"Owner\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop table \"Owner\"",
+        "sql": "DROP TABLE \"public\".\"Owner\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Owner\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Owner\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"Owner\""
         }
       }
     ]
@@ -1201,66 +1393,6 @@
           "User",
           "kycStatus",
           "NO"
-        ]
-      }
-    ]
-  },
-  {
-    "id": "column.public.User.ownerId",
-    "label": "Add column \"ownerId\" to \"User\"",
-    "operationClass": "additive",
-    "target": {
-      "id": "postgres",
-      "details": {
-        "schema": "public",
-        "objectType": "column",
-        "name": "ownerId",
-        "table": "User"
-      }
-    },
-    "precheck": [
-      {
-        "description": "ensure column \"ownerId\" is missing",
-        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
-        "params": [
-          "public",
-          "User",
-          "ownerId"
-        ],
-        "expectation": {
-          "expects": "absent",
-          "object": "column \"ownerId\" on \"User\""
-        }
-      }
-    ],
-    "execute": [
-      {
-        "description": "add column \"ownerId\"",
-        "sql": "ALTER TABLE \"public\".\"User\" ADD COLUMN \"ownerId\" int4"
-      }
-    ],
-    "postcheck": [
-      {
-        "description": "verify column \"ownerId\" exists",
-        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
-        "params": [
-          "public",
-          "User",
-          "ownerId"
-        ],
-        "expectation": {
-          "expects": "present",
-          "object": "column \"ownerId\" on \"User\""
-        }
-      },
-      {
-        "description": "verify column \"ownerId\" has type \"integer\"",
-        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
-        "params": [
-          "public",
-          "User",
-          "ownerId",
-          "integer"
         ]
       }
     ]
@@ -1355,54 +1487,6 @@
           "Station",
           "updatedAt",
           "YES"
-        ]
-      }
-    ]
-  },
-  {
-    "id": "index.User.User_ownerId_idx_e2d0c1ef",
-    "label": "Create index \"User_ownerId_idx_e2d0c1ef\" on \"User\"",
-    "operationClass": "additive",
-    "target": {
-      "id": "postgres",
-      "details": {
-        "schema": "public",
-        "objectType": "index",
-        "name": "User_ownerId_idx_e2d0c1ef",
-        "table": "User"
-      }
-    },
-    "precheck": [
-      {
-        "description": "ensure index \"User_ownerId_idx_e2d0c1ef\" does not exist",
-        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
-        "params": [
-          "\"public\".\"User_ownerId_idx_e2d0c1ef\""
-        ],
-        "expectation": {
-          "expects": "absent",
-          "object": "index \"User_ownerId_idx_e2d0c1ef\""
-        }
-      }
-    ],
-    "execute": [
-      {
-        "description": "create index \"User_ownerId_idx_e2d0c1ef\"",
-        "sql": "CREATE INDEX \"User_ownerId_idx_e2d0c1ef\" ON \"public\".\"User\" (\"ownerId\")",
-        "params": []
-      }
-    ],
-    "postcheck": [
-      {
-        "description": "verify index \"User_ownerId_idx_e2d0c1ef\" exists on \"User\" with the planned definition",
-        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
-        "params": [
-          "\"public\".\"User_ownerId_idx_e2d0c1ef\"",
-          "i",
-          "I",
-          "\"public\".\"User\"",
-          "btree",
-          "[\"ownerId\"]"
         ]
       }
     ]
@@ -1556,58 +1640,6 @@
           "f",
           "[\"userId\"]",
           "\"public\".\"User\"",
-          "[\"id\"]",
-          "a",
-          "a"
-        ]
-      }
-    ]
-  },
-  {
-    "id": "foreignKey.User.User_ownerId_fkey",
-    "label": "Add foreign key \"User_ownerId_fkey\" on \"User\"",
-    "operationClass": "additive",
-    "target": {
-      "id": "postgres",
-      "details": {
-        "schema": "public",
-        "objectType": "foreignKey",
-        "name": "User_ownerId_fkey",
-        "table": "User"
-      }
-    },
-    "precheck": [
-      {
-        "description": "ensure FK \"User_ownerId_fkey\" does not exist",
-        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
-        "params": [
-          "User_ownerId_fkey",
-          "public",
-          "\"public\".\"User\""
-        ],
-        "expectation": {
-          "expects": "absent",
-          "object": "FK \"User_ownerId_fkey\" on \"User\""
-        }
-      }
-    ],
-    "execute": [
-      {
-        "description": "add FK \"User_ownerId_fkey\"",
-        "sql": "ALTER TABLE \"public\".\"User\"\nADD CONSTRAINT \"User_ownerId_fkey\"\nFOREIGN KEY (\"ownerId\")\nREFERENCES \"public\".\"Owner\" (\"id\")"
-      }
-    ],
-    "postcheck": [
-      {
-        "description": "verify FK \"User_ownerId_fkey\" exists with the planned columns, referenced table and actions",
-        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
-        "params": [
-          "User_ownerId_fkey",
-          "public",
-          "\"public\".\"User\"",
-          "f",
-          "[\"ownerId\"]",
-          "\"public\".\"Owner\"",
           "[\"id\"]",
           "a",
           "a"

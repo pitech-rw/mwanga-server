@@ -49,7 +49,7 @@ Permission strings use `{resource}:{action}` and are stored on each `Role` in th
 | Resource | Permissions |
 |----------|-------------|
 | system | `system:admin` (bypasses all checks) |
-| users, roles, owners, bikes, cards, batteries, stations, wallets | `{resource}:read`, `:write`, `:delete` |
+| users, roles, bikes, cards, batteries, stations, wallets | `{resource}:read`, `:write`, `:delete` |
 | swaps | `swaps:read`, `swaps:operate` (assign + complete), `swaps:write`, `swaps:delete`, `swaps:override` (manual assignment override) |
 
 Default roles (synced with `npm run seed:permissions`):

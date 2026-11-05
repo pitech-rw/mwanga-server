@@ -35,9 +35,6 @@ export class UpdateBikeDto {
   status?: string;
 
   @IsOptional()
-  ownerId?: number;
-
-  @IsOptional()
   userId?: number;
 
   @IsOptional()

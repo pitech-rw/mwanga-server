@@ -29,6 +29,7 @@ export const PERMISSIONS = {
     write: 'riders:write',
     delete: 'riders:delete',
   },
+  // deprecated: fleet is single-tenant (Mwanga); permissions kept for seeded roles
   owners: {
     read: 'owners:read',
     write: 'owners:write',

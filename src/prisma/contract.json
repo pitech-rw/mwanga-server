@@ -28,10 +28,6 @@
       "model": "NfcCard",
       "namespace": "public"
     },
-    "Owner": {
-      "model": "Owner",
-      "namespace": "public"
-    },
     "Permission": {
       "model": "Permission",
       "namespace": "public"
@@ -749,13 +745,6 @@
                   "kind": "scalar"
                 }
               },
-              "ownerId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "plateNumber": {
                 "nullable": false,
                 "type": {
@@ -812,22 +801,6 @@
                   "namespace": "public"
                 }
               },
-              "owner": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "ownerId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Owner",
-                  "namespace": "public"
-                }
-              },
               "transactions": {
                 "cardinality": "1:N",
                 "on": {
@@ -879,9 +852,6 @@
                 },
                 "model": {
                   "column": "model"
-                },
-                "ownerId": {
-                  "column": "ownerId"
                 },
                 "plateNumber": {
                   "column": "plateNumber"
@@ -1125,124 +1095,6 @@
               },
               "namespaceId": "public",
               "table": "NfcCard"
-            }
-          },
-          "Owner": {
-            "fields": {
-              "createdAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              },
-              "email": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
-              "name": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "phone": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "status": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "updatedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              }
-            },
-            "relations": {
-              "bikes": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "ownerId"
-                  ]
-                },
-                "to": {
-                  "model": "Bike",
-                  "namespace": "public"
-                }
-              },
-              "users": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "ownerId"
-                  ]
-                },
-                "to": {
-                  "model": "User",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "createdAt": {
-                  "column": "createdAt"
-                },
-                "email": {
-                  "column": "email"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "name": {
-                  "column": "name"
-                },
-                "phone": {
-                  "column": "phone"
-                },
-                "status": {
-                  "column": "status"
-                },
-                "updatedAt": {
-                  "column": "updatedAt"
-                }
-              },
-              "namespaceId": "public",
-              "table": "Owner"
             }
           },
           "Permission": {
@@ -2036,13 +1888,6 @@
                   "kind": "scalar"
                 }
               },
-              "ownerId": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              },
               "passwordHash": {
                 "nullable": true,
                 "type": {
@@ -2138,22 +1983,6 @@
                 },
                 "to": {
                   "model": "Violation",
-                  "namespace": "public"
-                }
-              },
-              "owner": {
-                "cardinality": "N:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "ownerId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "Owner",
                   "namespace": "public"
                 }
               },
@@ -2269,9 +2098,6 @@
                 },
                 "nationalId": {
                   "column": "nationalId"
-                },
-                "ownerId": {
-                  "column": "ownerId"
                 },
                 "passwordHash": {
                   "column": "passwordHash"
@@ -3048,11 +2874,6 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
-                "ownerId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
-                },
                 "plateNumber": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -3087,25 +2908,6 @@
                 }
               },
               "foreignKeys": [
-                {
-                  "index": {
-                    "name": "Bike_ownerId_idx_e2d0c1ef"
-                  },
-                  "source": {
-                    "columns": [
-                      "ownerId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Bike"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Owner"
-                  }
-                },
                 {
                   "index": {
                     "name": "Bike_userId_idx_a489d58a"
@@ -3148,14 +2950,6 @@
                 }
               ],
               "indexes": [
-                {
-                  "columns": [
-                    "ownerId"
-                  ],
-                  "name": "Bike_ownerId_idx_e2d0c1ef",
-                  "prefix": "Bike_ownerId_idx",
-                  "unique": false
-                },
                 {
                   "columns": [
                     "userId"
@@ -3385,77 +3179,6 @@
                 {
                   "columns": [
                     "serialNumber"
-                  ]
-                }
-              ]
-            },
-            "Owner": {
-              "columns": {
-                "createdAt": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "dataType": "pg/timestamptz",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nullable": false,
-                  "typeParams": {
-                    "precision": 3
-                  }
-                },
-                "email": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": true
-                },
-                "id": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "default": {
-                    "expression": "autoincrement()",
-                    "kind": "function"
-                  },
-                  "nullable": false
-                },
-                "name": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": false
-                },
-                "phone": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "nullable": true
-                },
-                "status": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "default": {
-                    "kind": "literal",
-                    "value": "active"
-                  },
-                  "nullable": false
-                },
-                "updatedAt": {
-                  "codecId": "pg/timestamptz-date@1",
-                  "dataType": "pg/timestamptz",
-                  "nullable": false,
-                  "typeParams": {
-                    "precision": 3
-                  }
-                }
-              },
-              "foreignKeys": [],
-              "indexes": [],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "email"
                   ]
                 }
               ]
@@ -4123,11 +3846,6 @@
                   "dataType": "pg/text",
                   "nullable": true
                 },
-                "ownerId": {
-                  "codecId": "pg/int4@1",
-                  "dataType": "pg/int4",
-                  "nullable": true
-                },
                 "passwordHash": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -4187,36 +3905,9 @@
                     "namespaceId": "public",
                     "tableName": "Role"
                   }
-                },
-                {
-                  "index": {
-                    "name": "User_ownerId_idx_e2d0c1ef"
-                  },
-                  "source": {
-                    "columns": [
-                      "ownerId"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "User"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "Owner"
-                  }
                 }
               ],
               "indexes": [
-                {
-                  "columns": [
-                    "ownerId"
-                  ],
-                  "name": "User_ownerId_idx_e2d0c1ef",
-                  "prefix": "User_ownerId_idx",
-                  "unique": false
-                },
                 {
                   "columns": [
                     "roleId"
@@ -4632,10 +4323,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4d309f1c3e7b717bde9f7648c8d77ae7779916eb145f8e188d978bc485fdb7de"
+    "storageHash": "dbaada04e4657d1d020911f2eb6b903d0677301f687ea8c25fd239e860f6ff4d"
   },
   "execution": {
-    "executionHash": "d6d605fdf1c0d091c133bdae71506f5a9fc9dabd97c863f80eb7bdfd32cfbd61",
+    "executionHash": "5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f",
     "mutations": {
       "defaults": [
         {
@@ -4697,27 +4388,6 @@
           },
           "ref": {
             "entry": "NfcCard",
-            "field": "updatedAt",
-            "namespace": "public"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "timestampNow",
-            "kind": "generator",
-            "params": {
-              "precision": 3
-            }
-          },
-          "onUpdate": {
-            "id": "timestampNow",
-            "kind": "generator",
-            "params": {
-              "precision": 3
-            }
-          },
-          "ref": {
-            "entry": "Owner",
             "field": "updatedAt",
             "namespace": "public"
           }

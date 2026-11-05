@@ -1,13 +1,4 @@
-import {
-  IsBoolean,
-  IsEmail,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 
 export class UpdateUserDto {
@@ -66,10 +57,6 @@ export class UpdateUserDto {
   @MinLength(8)
   @MaxLength(128)
   password?: string;
-
-  @IsOptional()
-  @IsInt()
-  ownerId?: number;
 
   @IsOptional()
   @IsString()

@@ -38,6 +38,14 @@ export class StationsController {
     return this.stationsService.findAll();
   }
 
+  @Get('next-code')
+  @RequirePermissions(PERMISSIONS.stations.read)
+  @ApiOperation({ summary: 'Preview the next auto-assigned station code' })
+  @ApiOkResponse({ description: 'Next station code (assigned again on create)' })
+  previewNextCode(): Promise<{ code: string }> {
+    return this.stationsService.previewNextCode();
+  }
+
   @Get(':id')
   @RequirePermissions(PERMISSIONS.stations.read)
   @ApiOperation({ summary: 'Get station by ID' })

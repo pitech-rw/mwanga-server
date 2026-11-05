@@ -3,7 +3,10 @@ import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Station } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateStationDto } from './create-station.dto.js';
+import { formatStationCode, nextStationSequenceFromCodes } from './station-code.js';
 import { UpdateStationDto } from './update-station.dto.js';
+
+const CREATE_CODE_MAX_ATTEMPTS = 5;
 
 @Injectable()
 export class StationsService {
@@ -25,23 +28,38 @@ export class StationsService {
     return station;
   }
 
-  async create(data: CreateStationDto): Promise<Station> {
-    try {
-      return await this.prisma.db.orm.public.Station.create({
-        code: data.code,
-        name: data.name,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        status: data.status ?? 'active',
-        capacity: data.capacity ?? 0,
-      });
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw new BadRequestException('A station with this code already exists');
-      }
+  async previewNextCode(): Promise<{ code: string }> {
+    const code = await this.allocateNextStationCode();
+    return { code };
+  }
 
-      throw error;
+  async create(data: CreateStationDto): Promise<Station> {
+    for (let attempt = 0; attempt < CREATE_CODE_MAX_ATTEMPTS; attempt++) {
+      const code = await this.allocateNextStationCode();
+
+      try {
+        return await this.prisma.db.orm.public.Station.create({
+          code,
+          name: data.name,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          status: data.status ?? 'active',
+          capacity: data.capacity ?? 0,
+        });
+      } catch (error) {
+        if (isUniqueViolation(error) && attempt < CREATE_CODE_MAX_ATTEMPTS - 1) {
+          continue;
+        }
+
+        if (isUniqueViolation(error)) {
+          throw new BadRequestException('Could not assign a unique station code; try again');
+        }
+
+        throw error;
+      }
     }
+
+    throw new BadRequestException('Could not assign a unique station code; try again');
   }
 
   async update(id: number, data: UpdateStationDto): Promise<Station> {
@@ -50,7 +68,6 @@ export class StationsService {
     try {
       const station = await this.prisma.db.orm.public.Station.where({ id }).update(
         withoutUndefined({
-          code: data.code,
           name: data.name,
           latitude: data.latitude,
           longitude: data.longitude,
@@ -83,5 +100,20 @@ export class StationsService {
     }
 
     return station;
+  }
+
+  private async allocateNextStationCode(): Promise<string> {
+    const stations = await this.prisma.db.orm.public.Station.all();
+
+    try {
+      const sequence = nextStationSequenceFromCodes(stations.map((station) => station.code));
+      return formatStationCode(sequence);
+    } catch (error) {
+      if (error instanceof RangeError) {
+        throw new BadRequestException(error.message);
+      }
+
+      throw error;
+    }
   }
 }

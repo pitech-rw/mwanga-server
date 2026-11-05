@@ -4,12 +4,6 @@ export class UpdateStationDto {
   @IsOptional()
   @IsString()
   @MinLength(2)
-  @MaxLength(40)
-  code?: string;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(2)
   @MaxLength(120)
   name?: string;
 

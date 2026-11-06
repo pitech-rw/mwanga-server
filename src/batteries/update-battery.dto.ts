@@ -57,5 +57,15 @@ export class UpdateBatteryDto {
 
   @IsOptional()
   @IsNumber()
-  stationId?: number;
+  stationId?: number | null;
+
+  /**
+   * When set, assigns this battery as the bike's current pack and clears any station
+   * assignment. Omit both `bikeId` and `stationId` to leave location unchanged.
+   * Do not send a non-null `bikeId` and non-null `stationId` in the same request.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  bikeId?: number | null;
 }

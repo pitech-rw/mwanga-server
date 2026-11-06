@@ -19,6 +19,9 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { ReadScopeContext } from '../auth/read-scope.js';
 import { PERMISSIONS, USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { SafeUser, UserType } from '../prisma/types.js';
@@ -33,6 +36,10 @@ import { UsersService } from './users.service.js';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  private readCtx(user: AuthenticatedUser): ReadScopeContext {
+    return { user, isAdminBypass: user.adminBypass };
+  }
+
   @Get()
   @RequirePermissions(PERMISSIONS.users.read)
   @ApiOperation({ summary: 'List users' })
@@ -43,8 +50,12 @@ export class UsersController {
     description: 'Filter by user type (e.g. rider)',
   })
   @ApiOkResponse({ description: 'Users matching the filter, or all users when type is omitted' })
-  findAll(@Query() query: ListUsersQueryDto): Promise<SafeUser[]> {
+  findAll(
+    @Query() query: ListUsersQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<SafeUser[]> {
     return this.usersService.findAll(
+      this.readCtx(user),
       query.type !== undefined ? { type: query.type as UserType } : undefined,
     );
   }
@@ -55,8 +66,8 @@ export class UsersController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'User record' })
   @ApiNotFoundResponse({ description: 'User not found' })
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<SafeUser> {
-    return this.usersService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<SafeUser> {
+    return this.usersService.findOne(id, this.readCtx(user));
   }
 
   @Post()
@@ -76,8 +87,9 @@ export class UsersController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<SafeUser> {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(id, updateUserDto, this.readCtx(user));
   }
 
   @Delete(':id')
@@ -86,7 +98,7 @@ export class UsersController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted user' })
   @ApiNotFoundResponse({ description: 'User not found' })
-  remove(@Param('id', ParseIntPipe) id: number): Promise<SafeUser> {
-    return this.usersService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<SafeUser> {
+    return this.usersService.remove(id, this.readCtx(user));
   }
 }

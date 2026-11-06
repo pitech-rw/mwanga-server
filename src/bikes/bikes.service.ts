@@ -1,4 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { bikeReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
+import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Bike } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -13,17 +16,60 @@ export class BikesService {
     return this.prisma.db.orm.public.Bike.include('user').include('currentBattery');
   }
 
-  async findAll() {
-    return this.bikeQuery().orderBy((bike) => bike.createdAt.desc()).all();
+  async findAll(ctx: ReadScopeContext) {
+    const scope = bikeReadScope(ctx);
+    const ordered = this.bikeQuery().orderBy((bike) => bike.createdAt.desc());
+
+    if (scope.mode === 'unrestricted') {
+      return ordered.all();
+    }
+
+    if (scope.mode === 'agent') {
+      return ordered.where({ userId: scope.userId }).all();
+    }
+
+    const own = await this.bikeQuery().where({ userId: scope.userId }).all();
+    const seenIds = await bikeIdsSeenAtStation(this.prisma, scope.stationId);
+    const byId = new Map(own.map((bike) => [bike.id, bike]));
+
+    for (const bikeId of seenIds) {
+      if (!byId.has(bikeId)) {
+        const row = await this.bikeQuery().first({ id: bikeId });
+        if (row) {
+          byId.set(bikeId, row);
+        }
+      }
+    }
+
+    return [...byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, ctx: ReadScopeContext) {
     const bike = await this.bikeQuery().first({ id });
 
     if (!bike) {
       throw new NotFoundException(`Bike with id ${id} not found`);
     }
 
+    const scope = bikeReadScope(ctx);
+    if (scope.mode === 'unrestricted') {
+      return bike;
+    }
+    if (scope.mode === 'agent') {
+      if (bike.userId !== scope.userId) {
+        denyOrNotFoundForScopedRead(ctx, 'not_owner');
+      }
+      return bike;
+    }
+
+    if (bike.userId === scope.userId) {
+      return bike;
+    }
+
+    const seenIds = await bikeIdsSeenAtStation(this.prisma, scope.stationId);
+    if (!seenIds.includes(bike.id)) {
+      denyOrNotFoundForScopedRead(ctx, 'wrong_station');
+    }
     return bike;
   }
 
@@ -52,8 +98,8 @@ export class BikesService {
     }
   }
 
-  async update(id: number, data: UpdateBikeDto): Promise<Bike> {
-    await this.findOne(id);
+  async update(id: number, data: UpdateBikeDto, ctx: ReadScopeContext): Promise<Bike> {
+    await this.findOne(id, ctx);
 
     try {
       const bike = await this.prisma.db.orm.public.Bike.where({ id })
@@ -89,8 +135,8 @@ export class BikesService {
     }
   }
 
-  async remove(id: number): Promise<Bike> {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext): Promise<Bike> {
+    await this.findOne(id, ctx);
 
     const bike = await this.prisma.db.orm.public.Bike.where({ id }).delete();
 

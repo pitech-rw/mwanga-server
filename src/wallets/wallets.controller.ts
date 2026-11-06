@@ -17,6 +17,9 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { ReadScopeContext } from '../auth/read-scope.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { Wallet } from '../prisma/types.js';
@@ -30,12 +33,16 @@ import { WalletsService } from './wallets.service.js';
 export class WalletsController {
   constructor(private readonly walletsService: WalletsService) {}
 
+  private readCtx(user: AuthenticatedUser): ReadScopeContext {
+    return { user, isAdminBypass: user.adminBypass };
+  }
+
   @Get()
   @RequirePermissions(PERMISSIONS.wallets.read)
   @ApiOperation({ summary: 'List all rider wallets' })
   @ApiOkResponse({ description: 'All wallets' })
-  findAll(): Promise<Wallet[]> {
-    return this.walletsService.findAll();
+  findAll(@CurrentUser() user: AuthenticatedUser): Promise<Wallet[]> {
+    return this.walletsService.findAll(this.readCtx(user));
   }
 
   @Get(':id')
@@ -44,8 +51,8 @@ export class WalletsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Wallet record' })
   @ApiNotFoundResponse({ description: 'Wallet not found' })
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<Wallet> {
-    return this.walletsService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<Wallet> {
+    return this.walletsService.findOne(id, this.readCtx(user));
   }
 
   @Post()
@@ -65,8 +72,9 @@ export class WalletsController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateWalletDto: UpdateWalletDto,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<Wallet> {
-    return this.walletsService.update(id, updateWalletDto);
+    return this.walletsService.update(id, updateWalletDto, this.readCtx(user));
   }
 
   @Delete(':id')
@@ -75,7 +83,7 @@ export class WalletsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted wallet' })
   @ApiNotFoundResponse({ description: 'Wallet not found' })
-  remove(@Param('id', ParseIntPipe) id: number): Promise<Wallet> {
-    return this.walletsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<Wallet> {
+    return this.walletsService.remove(id, this.readCtx(user));
   }
 }

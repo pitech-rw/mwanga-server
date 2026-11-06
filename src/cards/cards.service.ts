@@ -1,4 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { cardReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
+import { cardIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { NfcCard } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -13,17 +16,60 @@ export class CardsService {
     return this.prisma.db.orm.public.NfcCard.include('user');
   }
 
-  async findAll() {
-    return this.cardQuery().orderBy((card) => card.createdAt.desc()).all();
+  async findAll(ctx: ReadScopeContext) {
+    const scope = cardReadScope(ctx);
+    const ordered = this.cardQuery().orderBy((card) => card.createdAt.desc());
+
+    if (scope.mode === 'unrestricted') {
+      return ordered.all();
+    }
+
+    if (scope.mode === 'agent') {
+      return ordered.where({ userId: scope.userId }).all();
+    }
+
+    const own = await this.cardQuery().where({ userId: scope.userId }).all();
+    const seenIds = await cardIdsSeenAtStation(this.prisma, scope.stationId);
+    const byId = new Map(own.map((c) => [c.id, c]));
+
+    for (const cardId of seenIds) {
+      if (!byId.has(cardId)) {
+        const row = await this.cardQuery().first({ id: cardId });
+        if (row) {
+          byId.set(cardId, row);
+        }
+      }
+    }
+
+    return [...byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, ctx: ReadScopeContext) {
     const card = await this.cardQuery().first({ id });
 
     if (!card) {
       throw new NotFoundException(`NFC card with id ${id} not found`);
     }
 
+    const scope = cardReadScope(ctx);
+    if (scope.mode === 'unrestricted') {
+      return card;
+    }
+    if (scope.mode === 'agent') {
+      if (card.userId !== scope.userId) {
+        denyOrNotFoundForScopedRead(ctx, 'not_owner');
+      }
+      return card;
+    }
+
+    if (card.userId === scope.userId) {
+      return card;
+    }
+
+    const seenIds = await cardIdsSeenAtStation(this.prisma, scope.stationId);
+    if (!seenIds.includes(card.id)) {
+      denyOrNotFoundForScopedRead(ctx, 'wrong_station');
+    }
     return card;
   }
 
@@ -45,8 +91,8 @@ export class CardsService {
     }
   }
 
-  async update(id: number, data: UpdateCardDto): Promise<NfcCard> {
-    await this.findOne(id);
+  async update(id: number, data: UpdateCardDto, ctx: ReadScopeContext): Promise<NfcCard> {
+    await this.findOne(id, ctx);
 
     try {
       const card = await this.prisma.db.orm.public.NfcCard.where({ id })
@@ -76,8 +122,8 @@ export class CardsService {
     }
   }
 
-  async remove(id: number): Promise<NfcCard> {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext): Promise<NfcCard> {
+    await this.findOne(id, ctx);
 
     const card = await this.prisma.db.orm.public.NfcCard.where({ id }).delete();
 

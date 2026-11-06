@@ -18,6 +18,9 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { SwapTransaction } from '../prisma/types.js';
@@ -44,6 +47,10 @@ export class SwapsController {
     private readonly swapsService: SwapsService,
     private readonly assignmentService: AssignmentService,
   ) {}
+
+  private readCtx(user: AuthenticatedUser): ReadScopeContext {
+    return { user, isAdminBypass: user.adminBypass };
+  }
 
   @Post('assign')
   @RequirePermissions(PERMISSIONS.swaps.operate)
@@ -86,8 +93,8 @@ export class SwapsController {
   @RequirePermissions(PERMISSIONS.swaps.read)
   @ApiOperation({ summary: 'List all swap transactions' })
   @ApiOkResponse({ description: 'All swaps' })
-  findAll(): Promise<SwapTransaction[]> {
-    return this.swapsService.findAll();
+  findAll(@CurrentUser() user: AuthenticatedUser): Promise<SwapTransaction[]> {
+    return this.swapsService.findAll(this.readCtx(user));
   }
 
   @Get(':id')
@@ -96,8 +103,11 @@ export class SwapsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Swap record' })
   @ApiNotFoundResponse({ description: 'Swap not found' })
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<SwapTransaction> {
-    return this.swapsService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<SwapTransaction> {
+    return this.swapsService.findOne(id, this.readCtx(user));
   }
 
   @Post()
@@ -117,8 +127,9 @@ export class SwapsController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateSwapDto: UpdateSwapDto,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<SwapTransaction> {
-    return this.swapsService.update(id, updateSwapDto);
+    return this.swapsService.update(id, updateSwapDto, this.readCtx(user));
   }
 
   @Delete(':id')
@@ -127,7 +138,7 @@ export class SwapsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted swap' })
   @ApiNotFoundResponse({ description: 'Swap not found' })
-  remove(@Param('id', ParseIntPipe) id: number): Promise<SwapTransaction> {
-    return this.swapsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<SwapTransaction> {
+    return this.swapsService.remove(id, this.readCtx(user));
   }
 }

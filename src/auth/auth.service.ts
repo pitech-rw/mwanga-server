@@ -132,12 +132,16 @@ export class AuthService {
     return buildMeProfile(user, [...permissionNames], view);
   }
 
-  private async signToken(user: User): Promise<string> {
+  private async signToken(user: UserWithRole): Promise<string> {
+    const permissionNames = await this.permissionsService.getPermissionNamesForRole(user.roleId);
+
     const payload: JwtPayload = {
       sub: user.id,
       username: user.username,
       type: user.type,
       roleId: user.roleId,
+      stationId: user.stationId ?? null,
+      adminBypass: this.permissionsService.hasAdminBypass(permissionNames),
     };
 
     return this.jwtService.signAsync(payload);

@@ -172,7 +172,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
 
   /**
    * End-user with User.type=rider (e.g. rider mobile app).
-   * Global list endpoints still return all rows until own-data scoping is added in services.
+   * List/detail responses are scoped to their own user id in services (see read-scope.ts).
    */
   rider: [
     PERMISSIONS.swaps.read,

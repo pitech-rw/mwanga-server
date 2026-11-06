@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { denyOrNotFoundForScopedRead, violationReadScope } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
-import type { ViolationSeverity, ViolationStatus } from '../prisma/types.js';
+import type { Violation, ViolationSeverity, ViolationStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateViolationDto } from './create-violation.dto.js';
 import { UpdateViolationDto } from './update-violation.dto.js';
@@ -15,15 +17,57 @@ export class ViolationsService {
       .include('station');
   }
 
-  async findAll() {
-    return this.violationQuery().orderBy((violation) => violation.createdAt.desc()).all();
+  private mergeViolationsById(rows: Violation[]): Violation[] {
+    const byId = new Map<number, Violation>();
+    for (const row of rows) {
+      byId.set(row.id, row);
+    }
+    return [...byId.values()].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
-  async findOne(id: number) {
+  async findAll(ctx: ReadScopeContext): Promise<Violation[]> {
+    const scope = violationReadScope(ctx);
+
+    if (scope.mode === 'unrestricted') {
+      return this.violationQuery().orderBy((violation) => violation.createdAt.desc()).all();
+    }
+
+    if (scope.mode === 'participant') {
+      const asReporter = await this.violationQuery().where({ reporterId: scope.userId }).all();
+      const asOffender = await this.violationQuery().where({ offenderId: scope.userId }).all();
+      return this.mergeViolationsById([...asReporter, ...asOffender]);
+    }
+
+    const atStation = await this.violationQuery().where({ stationId: scope.stationId }).all();
+    const asReporter = await this.violationQuery().where({ reporterId: scope.userId }).all();
+    const asOffender = await this.violationQuery().where({ offenderId: scope.userId }).all();
+    return this.mergeViolationsById([...atStation, ...asReporter, ...asOffender]);
+  }
+
+  async findOne(id: number, ctx: ReadScopeContext) {
     const violation = await this.violationQuery().first({ id });
 
     if (!violation) {
       throw new NotFoundException(`Violation with id ${id} not found`);
+    }
+
+    const scope = violationReadScope(ctx);
+    if (scope.mode === 'unrestricted') {
+      return violation;
+    }
+
+    if (scope.mode === 'participant') {
+      if (violation.reporterId !== scope.userId && violation.offenderId !== scope.userId) {
+        denyOrNotFoundForScopedRead(ctx, 'not_participant');
+      }
+      return violation;
+    }
+
+    const atTheirStation = violation.stationId != null && violation.stationId === scope.stationId;
+    const involved =
+      violation.reporterId === scope.userId || violation.offenderId === scope.userId;
+    if (!atTheirStation && !involved) {
+      denyOrNotFoundForScopedRead(ctx, 'wrong_station');
     }
 
     return violation;
@@ -75,8 +119,8 @@ export class ViolationsService {
     }
   }
 
-  async update(id: number, data: UpdateViolationDto) {
-    await this.findOne(id);
+  async update(id: number, data: UpdateViolationDto, ctx: ReadScopeContext) {
+    await this.findOne(id, ctx);
 
     if (data.reporterId !== undefined) {
       await this.assertUserExists(data.reporterId, 'Reporter');
@@ -124,8 +168,8 @@ export class ViolationsService {
     }
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext) {
+    await this.findOne(id, ctx);
 
     const violation = await this.prisma.db.orm.public.Violation.where({ id }).delete();
 

@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { assertCanReadUserId, isUnrestrictedRead } from '../auth/read-scope.js';
 import type { UserTypeName } from '../auth/permission-catalog.js';
 import { resolveRoleIdForType } from '../auth/user-type-alignment.js';
 import { hashPassword } from '../auth/password.js';
@@ -18,13 +20,26 @@ export class UsersService {
     return this.prisma.db.orm.public.User.include('role').include('assignedStation');
   }
 
-  async findAll(filters?: { type?: UserType }): Promise<SafeUser[]> {
-    const base = filters?.type !== undefined ? this.userQuery().where({ type: filters.type }) : this.userQuery();
+  async findAll(ctx: ReadScopeContext, filters?: { type?: UserType }): Promise<SafeUser[]> {
+    if (!isUnrestrictedRead(ctx)) {
+      const self = await this.userQuery().first({ id: ctx.user.sub });
+
+      if (!self) {
+        throw new NotFoundException(`User with id ${ctx.user.sub} not found`);
+      }
+
+      return [sanitizeUser(self)];
+    }
+
+    const base =
+      filters?.type !== undefined ? this.userQuery().where({ type: filters.type }) : this.userQuery();
     const users = await base.orderBy((user) => user.createdAt.desc()).all();
     return users.map((user) => sanitizeUser(user));
   }
 
-  async findOne(id: number): Promise<SafeUser> {
+  async findOne(id: number, ctx: ReadScopeContext): Promise<SafeUser> {
+    assertCanReadUserId(ctx, id);
+
     const user = await this.userQuery().first({ id });
 
     if (!user) {
@@ -71,7 +86,9 @@ export class UsersService {
     }
   }
 
-  async update(id: number, data: UpdateUserDto): Promise<SafeUser> {
+  async update(id: number, data: UpdateUserDto, ctx: ReadScopeContext): Promise<SafeUser> {
+    await this.findOne(id, ctx);
+
     const existing = await this.prisma.db.orm.public.User.first({ id });
     if (!existing) {
       throw new NotFoundException(`User with id ${id} not found`);
@@ -136,8 +153,8 @@ export class UsersService {
     }
   }
 
-  async remove(id: number): Promise<SafeUser> {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext): Promise<SafeUser> {
+    await this.findOne(id, ctx);
 
     const user = await this.prisma.db.orm.public.User.where({ id }).delete();
 

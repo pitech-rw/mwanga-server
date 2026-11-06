@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { batteryReadFilter } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Battery } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -15,14 +17,26 @@ export class BatteriesService {
     return this.prisma.db.orm.public.Battery.include('station').include('bike');
   }
 
-  async findAll() {
-    return this.batteryQuery().orderBy((battery) => battery.createdAt.desc()).all();
+  async findAll(ctx: ReadScopeContext) {
+    const filter = batteryReadFilter(ctx);
+    const ordered = this.batteryQuery().orderBy((battery) => battery.createdAt.desc());
+
+    if (filter.unrestricted) {
+      return ordered.all();
+    }
+
+    return ordered.where({ stationId: filter.stationId }).all();
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, ctx: ReadScopeContext) {
     const battery = await this.batteryQuery().first({ id });
 
     if (!battery) {
+      throw new NotFoundException(`Battery with id ${id} not found`);
+    }
+
+    const filter = batteryReadFilter(ctx);
+    if (!filter.unrestricted && battery.stationId !== filter.stationId) {
       throw new NotFoundException(`Battery with id ${id} not found`);
     }
 
@@ -53,8 +67,8 @@ export class BatteriesService {
     }
   }
 
-  async update(id: number, data: UpdateBatteryDto): Promise<Battery> {
-    await this.findOne(id);
+  async update(id: number, data: UpdateBatteryDto, ctx: ReadScopeContext): Promise<Battery> {
+    await this.findOne(id, ctx);
 
     const bikePresent = data.bikeId !== undefined;
     const stationPresent = data.stationId !== undefined;
@@ -220,8 +234,8 @@ export class BatteriesService {
     return battery;
   }
 
-  async remove(id: number): Promise<Battery> {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext): Promise<Battery> {
+    await this.findOne(id, ctx);
 
     const battery = await this.prisma.db.orm.public.Battery.where({ id }).delete();
 

@@ -17,6 +17,9 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { ReadScopeContext } from '../auth/read-scope.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { Role } from '../prisma/types.js';
@@ -30,12 +33,16 @@ import { RolesService } from './roles.service.js';
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
+  private readCtx(user: AuthenticatedUser): ReadScopeContext {
+    return { user, isAdminBypass: user.adminBypass };
+  }
+
   @Get()
   @RequirePermissions(PERMISSIONS.roles.read)
   @ApiOperation({ summary: 'List all roles' })
   @ApiOkResponse({ description: 'All roles' })
-  findAll(): Promise<Role[]> {
-    return this.rolesService.findAll();
+  findAll(@CurrentUser() user: AuthenticatedUser): Promise<Role[]> {
+    return this.rolesService.findAll(this.readCtx(user));
   }
 
   @Get(':id')
@@ -44,8 +51,8 @@ export class RolesController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Role record' })
   @ApiNotFoundResponse({ description: 'Role not found' })
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<Role> {
-    return this.rolesService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<Role> {
+    return this.rolesService.findOne(id, this.readCtx(user));
   }
 
   @Post()
@@ -65,8 +72,9 @@ export class RolesController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRoleDto: UpdateRoleDto,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<Role> {
-    return this.rolesService.update(id, updateRoleDto);
+    return this.rolesService.update(id, updateRoleDto, this.readCtx(user));
   }
 
   @Delete(':id')
@@ -75,7 +83,7 @@ export class RolesController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted role' })
   @ApiNotFoundResponse({ description: 'Role not found' })
-  remove(@Param('id', ParseIntPipe) id: number): Promise<Role> {
-    return this.rolesService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<Role> {
+    return this.rolesService.remove(id, this.readCtx(user));
   }
 }

@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { denyOrNotFoundForScopedRead, walletReadFilter } from '../auth/read-scope.js';
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Wallet } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -13,15 +15,27 @@ export class WalletsService {
     return this.prisma.db.orm.public.Wallet.include('user');
   }
 
-  async findAll() {
-    return this.walletQuery().orderBy((wallet) => wallet.createdAt.desc()).all();
+  async findAll(ctx: ReadScopeContext) {
+    const filter = walletReadFilter(ctx);
+    const ordered = this.walletQuery().orderBy((wallet) => wallet.createdAt.desc());
+
+    if (filter.unrestricted) {
+      return ordered.all();
+    }
+
+    return ordered.where({ userId: filter.userId }).all();
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, ctx: ReadScopeContext) {
     const wallet = await this.walletQuery().first({ id });
 
     if (!wallet) {
       throw new NotFoundException(`Wallet with id ${id} not found`);
+    }
+
+    const filter = walletReadFilter(ctx);
+    if (!filter.unrestricted && wallet.userId !== filter.userId) {
+      denyOrNotFoundForScopedRead(ctx, 'not_owner');
     }
 
     return wallet;
@@ -43,8 +57,8 @@ export class WalletsService {
     }
   }
 
-  async update(id: number, data: UpdateWalletDto): Promise<Wallet> {
-    await this.findOne(id);
+  async update(id: number, data: UpdateWalletDto, ctx: ReadScopeContext): Promise<Wallet> {
+    await this.findOne(id, ctx);
 
     try {
       const wallet = await this.prisma.db.orm.public.Wallet.where({ id })
@@ -71,8 +85,8 @@ export class WalletsService {
     }
   }
 
-  async remove(id: number): Promise<Wallet> {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext): Promise<Wallet> {
+    await this.findOne(id, ctx);
 
     const wallet = await this.prisma.db.orm.public.Wallet.where({ id }).delete();
 

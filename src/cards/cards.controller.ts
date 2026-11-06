@@ -17,6 +17,9 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { ReadScopeContext } from '../auth/read-scope.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { NfcCard } from '../prisma/types.js';
@@ -30,12 +33,16 @@ import { UpdateCardDto } from './update-card.dto.js';
 export class CardsController {
   constructor(private readonly cardsService: CardsService) {}
 
+  private readCtx(user: AuthenticatedUser): ReadScopeContext {
+    return { user, isAdminBypass: user.adminBypass };
+  }
+
   @Get()
   @RequirePermissions(PERMISSIONS.cards.read)
   @ApiOperation({ summary: 'List all NFC cards' })
   @ApiOkResponse({ description: 'All cards' })
-  findAll(): Promise<NfcCard[]> {
-    return this.cardsService.findAll();
+  findAll(@CurrentUser() user: AuthenticatedUser): Promise<NfcCard[]> {
+    return this.cardsService.findAll(this.readCtx(user));
   }
 
   @Get(':id')
@@ -44,8 +51,8 @@ export class CardsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Card record' })
   @ApiNotFoundResponse({ description: 'Card not found' })
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<NfcCard> {
-    return this.cardsService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<NfcCard> {
+    return this.cardsService.findOne(id, this.readCtx(user));
   }
 
   @Post()
@@ -65,8 +72,9 @@ export class CardsController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCardDto: UpdateCardDto,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<NfcCard> {
-    return this.cardsService.update(id, updateCardDto);
+    return this.cardsService.update(id, updateCardDto, this.readCtx(user));
   }
 
   @Delete(':id')
@@ -75,7 +83,7 @@ export class CardsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted card' })
   @ApiNotFoundResponse({ description: 'Card not found' })
-  remove(@Param('id', ParseIntPipe) id: number): Promise<NfcCard> {
-    return this.cardsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<NfcCard> {
+    return this.cardsService.remove(id, this.readCtx(user));
   }
 }

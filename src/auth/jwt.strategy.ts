@@ -4,12 +4,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma.service.js';
 import type { JwtPayload } from './auth.types.js';
+import { PermissionsService } from './permissions.service.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly permissionsService: PermissionsService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -25,11 +27,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
+    const rolePermissions = await this.permissionsService.getPermissionNamesForRole(user.roleId);
+
     return {
       sub: user.id,
       username: user.username,
       type: user.type,
       roleId: user.roleId,
-    };
+      stationId: user.stationId ?? null,
+      adminBypass: this.permissionsService.hasAdminBypass(rolePermissions),
+    } satisfies JwtPayload;
   }
 }

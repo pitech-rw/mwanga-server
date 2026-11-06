@@ -17,6 +17,9 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { ReadScopeContext } from '../auth/read-scope.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { Violation } from '../prisma/types.js';
@@ -30,12 +33,16 @@ import { ViolationsService } from './violations.service.js';
 export class ViolationsController {
   constructor(private readonly violationsService: ViolationsService) {}
 
+  private readCtx(user: AuthenticatedUser): ReadScopeContext {
+    return { user, isAdminBypass: user.adminBypass };
+  }
+
   @Get()
   @RequirePermissions(PERMISSIONS.violations.read)
   @ApiOperation({ summary: 'List all violations' })
   @ApiOkResponse({ description: 'All violations' })
-  findAll() {
-    return this.violationsService.findAll();
+  findAll(@CurrentUser() user: AuthenticatedUser): Promise<Violation[]> {
+    return this.violationsService.findAll(this.readCtx(user));
   }
 
   @Get(':id')
@@ -44,8 +51,8 @@ export class ViolationsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Violation record' })
   @ApiNotFoundResponse({ description: 'Violation not found' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.violationsService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser) {
+    return this.violationsService.findOne(id, this.readCtx(user));
   }
 
   @Post()
@@ -65,8 +72,9 @@ export class ViolationsController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateViolationDto: UpdateViolationDto,
+    @CurrentUser() user: AuthenticatedUser,
   ): Promise<Violation> {
-    return this.violationsService.update(id, updateViolationDto);
+    return this.violationsService.update(id, updateViolationDto, this.readCtx(user));
   }
 
   @Delete(':id')
@@ -75,7 +83,7 @@ export class ViolationsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Deleted violation' })
   @ApiNotFoundResponse({ description: 'Violation not found' })
-  remove(@Param('id', ParseIntPipe) id: number): Promise<Violation> {
-    return this.violationsService.remove(id);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<Violation> {
+    return this.violationsService.remove(id, this.readCtx(user));
   }
 }

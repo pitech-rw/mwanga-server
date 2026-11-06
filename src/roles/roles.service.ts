@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { assertCanReadRoles } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Role } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -9,11 +11,15 @@ import { UpdateRoleDto } from './update-role.dto.js';
 export class RolesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<Role[]> {
+  async findAll(ctx: ReadScopeContext): Promise<Role[]> {
+    assertCanReadRoles(ctx);
+
     return this.prisma.db.orm.public.Role.orderBy((role) => role.id.asc()).all();
   }
 
-  async findOne(id: number): Promise<Role> {
+  async findOne(id: number, ctx: ReadScopeContext): Promise<Role> {
+    assertCanReadRoles(ctx);
+
     const role = await this.prisma.db.orm.public.Role.first({ id });
 
     if (!role) {
@@ -37,8 +43,8 @@ export class RolesService {
     }
   }
 
-  async update(id: number, data: UpdateRoleDto): Promise<Role> {
-    await this.findOne(id);
+  async update(id: number, data: UpdateRoleDto, ctx: ReadScopeContext): Promise<Role> {
+    await this.findOne(id, ctx);
 
     try {
       const role = await this.prisma.db.orm.public.Role.where({ id }).update(
@@ -61,8 +67,8 @@ export class RolesService {
     }
   }
 
-  async remove(id: number): Promise<Role> {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext): Promise<Role> {
+    await this.findOne(id, ctx);
 
     const role = await this.prisma.db.orm.public.Role.where({ id }).delete();
 

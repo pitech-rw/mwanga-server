@@ -61,10 +61,24 @@ Default roles (synced with `npm run seed:permissions`):
 | `office_manager` | Office + user admin + destructive CRM/swap admin |
 | `swapper` | Station executive workflow + read-only context |
 | `agent` | Field agent: rider/card registration (cannot operate swaps) |
-| `rider` | Rider self-service: swap history, wallet, stations (own-data scoping TBD) |
-| `viewer` | Read-only across resources |
+| `rider` | Rider self-service: own swaps and wallet; own user record; stations directory (full list for discovery) |
+| `viewer` | Read-only across resources (same row visibility as `office` / back-office dashboards) |
 
 Assign users a **`type`** matching their job; permissions come from the role with the same name. After changing the permission matrix, run `npm run seed:permissions`. To fix legacy rows where `type` ≠ `Role.name`, run `npm run align:user-types -- --sync-role-name`.
+
+### Read scoping (row-level)
+
+Coarse permissions (`*:read`) are enforced by `PermissionsGuard`. On top of that, **list and get-by-id handlers** apply row-level rules in `src/auth/read-scope.ts`:
+
+| User type | Scope (summary) |
+|-----------|------------------|
+| `admin` (`system:admin`) | Full data; JWT includes `adminBypass` |
+| `office`, `office_manager`, `viewer` | Full read on all resources below |
+| `rider` | Own `User` row; own swaps (`userId`); own wallet; full station list (read-only directory) |
+| `swapper` | Assigned station only (JWT includes `stationId`): that station, batteries at that station, swaps at that station; bikes/cards tied to swaps at that station or `userId` on the asset |
+| `agent` | Full station list (same as rider); bikes/cards assigned to them (`userId`); violations they reported or where they are offender |
+
+**Re-login** after changing `stationId` or role permissions so the JWT picks up `stationId` and `adminBypass`.
 
 How to make changes to the model
 0. edit src/prisma/contract.prisma

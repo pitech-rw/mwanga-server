@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { ReadScopeContext } from '../auth/read-scope.js';
+import { denyOrNotFoundForScopedRead, swapReadScope } from '../auth/read-scope.js';
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { PaymentStatus, SwapStatus, SwapTransaction } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -41,17 +43,41 @@ export class SwapsService {
       .include('readings');
   }
 
-  async findAll() {
-    return this.swapQuery().orderBy((swap) => swap.createdAt.desc()).all();
+  async findAll(ctx: ReadScopeContext) {
+    const scope = swapReadScope(ctx);
+    const ordered = this.swapQuery().orderBy((swap) => swap.createdAt.desc());
+
+    if (scope.mode === 'unrestricted') {
+      return ordered.all();
+    }
+
+    if (scope.mode === 'rider') {
+      return ordered.where({ userId: scope.userId }).all();
+    }
+
+    return ordered.where({ stationId: scope.stationId }).all();
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, ctx: ReadScopeContext) {
     const swap = await this.swapQuery().first({ id });
 
     if (!swap) {
       throw new NotFoundException(`Swap transaction with id ${id} not found`);
     }
 
+    const scope = swapReadScope(ctx);
+    if (scope.mode === 'unrestricted') {
+      return swap;
+    }
+    if (scope.mode === 'rider') {
+      if (swap.userId !== scope.userId) {
+        denyOrNotFoundForScopedRead(ctx, 'not_owner');
+      }
+      return swap;
+    }
+    if (swap.stationId !== scope.stationId) {
+      denyOrNotFoundForScopedRead(ctx, 'wrong_station');
+    }
     return swap;
   }
 
@@ -116,8 +142,8 @@ export class SwapsService {
     }
   }
 
-  async update(id: number, data: UpdateSwapDto): Promise<SwapTransaction> {
-    await this.findOne(id);
+  async update(id: number, data: UpdateSwapDto, ctx: ReadScopeContext): Promise<SwapTransaction> {
+    await this.findOne(id, ctx);
 
     const status = data.status ? swapStatusMap[data.status as keyof typeof swapStatusMap] : undefined;
     const paymentStatus = data.paymentStatus
@@ -204,8 +230,8 @@ export class SwapsService {
     }
   }
 
-  async remove(id: number): Promise<SwapTransaction> {
-    await this.findOne(id);
+  async remove(id: number, ctx: ReadScopeContext): Promise<SwapTransaction> {
+    await this.findOne(id, ctx);
 
     const swap = await this.prisma.db.orm.public.SwapTransaction.where({ id }).delete();
 

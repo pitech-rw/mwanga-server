@@ -16,8 +16,9 @@ export class CreateStationDto {
 
   @IsOptional()
   @IsString()
-  address?: string
-  
+  @MaxLength(500)
+  address?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(20)

@@ -41,6 +41,7 @@ export class StationsService {
         return await this.prisma.db.orm.public.Station.create({
           code,
           name: data.name,
+          address: data.address,
           latitude: data.latitude,
           longitude: data.longitude,
           status: data.status ?? 'active',
@@ -69,6 +70,7 @@ export class StationsService {
       const station = await this.prisma.db.orm.public.Station.where({ id }).update(
         withoutUndefined({
           name: data.name,
+          address: data.address,
           latitude: data.latitude,
           longitude: data.longitude,
           status: data.status,

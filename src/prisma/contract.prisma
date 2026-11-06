@@ -117,6 +117,7 @@ model Station {
   id        Int      @id @default(autoincrement())
   code      String   @unique
   name      String
+  address   String?
   latitude  Float?
   longitude Float?
   status    String   @default("active")

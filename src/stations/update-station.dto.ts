@@ -8,6 +8,11 @@ export class UpdateStationDto {
   name?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  address?: string;
+
+  @IsOptional()
   @IsNumber()
   latitude?: number;
 

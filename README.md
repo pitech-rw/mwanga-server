@@ -87,8 +87,9 @@ How to make changes to the model
    Commit `migrations/app/refs/db.json` when the ref changes.
 
 3. Review migrations/app/<timestamp>_<name> (DDL preview in plan output; check ops.json / migration.ts)
-4. npm run db:migrate:show then npm run db:migrate
-5. npm run db:verify and npm run migration:status
+4. npm run db:migrate:show
+5. npm run db:migrate
+6. npm run db:verify and npm run migration:status
 
 
 

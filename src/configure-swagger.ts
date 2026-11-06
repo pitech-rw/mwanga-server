@@ -24,7 +24,7 @@ export function configureSwagger(app: INestApplication) {
     .addTag('Stations')
     .addTag(
       'Swaps',
-      'Swap transactions and assignment workflow. **POST /swaps/lookup** confirms the incoming battery serial against the bike before **POST /swaps/assign**.',
+      'Swap transactions and assignment workflow. **GET /swaps/lookup** (or **POST /swaps/lookup**) confirms the incoming battery serial against the bike before **POST /swaps/assign**.',
     )
     .addTag('Users')
     .addTag('Wallets')

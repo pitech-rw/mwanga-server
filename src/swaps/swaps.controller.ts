@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -17,6 +18,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import type { ReadScopeContext } from '../auth/read-scope.js';
@@ -54,13 +56,49 @@ export class SwapsController {
     return { user, isAdminBypass: user.adminBypass };
   }
 
+  @Get('lookup')
+  @RequirePermissions(PERMISSIONS.swaps.operate)
+  @ApiOperation({
+    operationId: 'swapsLookupGet',
+    summary: 'Lookup incoming battery (confirm serial matches bike)',
+    description:
+      '`GET /swaps/lookup` — query params: **swapperId**, **stationId**, **bikeId**, **serialNumber**. Resolves the serial to a battery and verifies it is **`bikeId`’s current pack** (`bike.currentBatteryId`). Use before **`POST /swaps/assign`** when scanning the returned pack. Assign requires **`incomingBatterySerialNumber`** with the same value whenever the bike still has a mounted battery. **POST /swaps/lookup** is an alternative with the same fields in the JSON body.',
+  })
+  @ApiQuery({ name: 'swapperId', type: Number, example: 42 })
+  @ApiQuery({ name: 'stationId', type: Number, example: 3 })
+  @ApiQuery({ name: 'bikeId', type: Number, example: 7 })
+  @ApiQuery({ name: 'serialNumber', type: String, example: 'BAT-1042' })
+  @ApiOkResponse({
+    description: 'Serial matches the bike’s current battery',
+    schema: {
+      type: 'object',
+      required: ['confirmed', 'bikeId', 'stationId', 'incomingBattery'],
+      properties: {
+        confirmed: { type: 'boolean', example: true },
+        bikeId: { type: 'integer', example: 7 },
+        stationId: { type: 'integer', example: 3 },
+        incomingBattery: {
+          type: 'object',
+          description: 'Battery row including `station` and `bike` relations',
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Empty serial, or serial does not match the battery mounted on the bike',
+  })
+  @ApiNotFoundResponse({ description: 'Unknown bike id, station id, or battery serial' })
+  lookupIncomingBatteryGet(@Query() query: SwapLookupDto) {
+    return this.assignmentService.lookupIncomingBattery(query);
+  }
+
   @Post('lookup')
   @RequirePermissions(PERMISSIONS.swaps.operate)
   @ApiOperation({
-    operationId: 'swapsLookup',
-    summary: 'Lookup incoming battery (confirm serial matches bike)',
+    operationId: 'swapsLookupPost',
+    summary: 'Lookup incoming battery (POST body, same as GET /swaps/lookup)',
     description:
-      '`POST /swaps/lookup` — resolves **serialNumber** to a battery and verifies it is **`bikeId`’s current pack** (`bike.currentBatteryId`). Use before **`POST /swaps/assign`** when scanning the returned pack. Assign requires **`incomingBatterySerialNumber`** with the same value whenever the bike still has a mounted battery.',
+      'Same behavior as **GET /swaps/lookup** — use when query strings are awkward (e.g. very long serials).',
   })
   @ApiBody({ type: SwapLookupDto })
   @ApiOkResponse({
@@ -83,7 +121,7 @@ export class SwapsController {
     description: 'Empty serial, or serial does not match the battery mounted on the bike',
   })
   @ApiNotFoundResponse({ description: 'Unknown bike id, station id, or battery serial' })
-  lookupIncomingBattery(@Body() body: SwapLookupDto) {
+  lookupIncomingBatteryPost(@Body() body: SwapLookupDto) {
     return this.assignmentService.lookupIncomingBattery(body);
   }
 
@@ -92,7 +130,7 @@ export class SwapsController {
   @ApiOperation({
     summary: 'Start a swap by assigning a battery at a station',
     description:
-      'Creates a swap transaction and assigns an available battery for the rider, bike, and station. When the bike still has a pack mounted, send **`incomingBatterySerialNumber`** (same as **`POST /swaps/lookup`**).',
+      'Creates a swap transaction and assigns an available battery for the rider, bike, and station. When the bike still has a pack mounted, send **`incomingBatterySerialNumber`** (same value as **`GET /swaps/lookup`**).',
   })
   @ApiCreatedResponse({ description: 'Swap started with battery assignment' })
   @ApiBadRequestResponse({ description: 'Validation or business rule failure' })
@@ -133,6 +171,7 @@ export class SwapsController {
     return this.swapsService.findAll(this.readCtx(user));
   }
 
+  /** Registered after GET swaps/lookup so `lookup` is not parsed as a numeric id. */
   @Get(':id')
   @RequirePermissions(PERMISSIONS.swaps.read)
   @ApiOperation({ summary: 'Get swap transaction by ID' })

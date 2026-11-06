@@ -45,6 +45,23 @@ export class BatteriesController {
     return this.batteriesService.findAll(this.readCtx(user));
   }
 
+  @Get('serial/:serial')
+  @RequirePermissions(PERMISSIONS.batteries.read)
+  @ApiOperation({
+    summary: 'Get battery by serial number',
+    description:
+      'Resolves a unique `serialNumber` (URL-encoded). For station operators, visibility matches inventory: shelf packs at the assigned station, or a pack currently mounted on a bike they may read (same rules as bike list for swappers).',
+  })
+  @ApiParam({ name: 'serial', type: String, description: 'Battery serial (unique); encode special characters' })
+  @ApiOkResponse({ description: 'Battery record with station and bike relations' })
+  @ApiNotFoundResponse({ description: 'Battery not found or not visible to this caller' })
+  findOneBySerial(
+    @Param('serial') serial: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<Battery> {
+    return this.batteriesService.findOneBySerial(serial, this.readCtx(user));
+  }
+
   @Get(':id')
   @RequirePermissions(PERMISSIONS.batteries.read)
   @ApiOperation({ summary: 'Get battery by ID' })

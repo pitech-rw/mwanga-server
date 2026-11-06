@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateCardDto {
   @IsOptional()
@@ -25,5 +25,6 @@ export class UpdateCardDto {
   status?: string;
 
   @IsOptional()
-  userId?: number;
+  @IsInt()
+  userId?: number | null;
 }

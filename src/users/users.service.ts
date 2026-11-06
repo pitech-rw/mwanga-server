@@ -18,8 +18,9 @@ export class UsersService {
     return this.prisma.db.orm.public.User.include('role').include('assignedStation');
   }
 
-  async findAll(): Promise<SafeUser[]> {
-    const users = await this.userQuery().orderBy((user) => user.createdAt.desc()).all();
+  async findAll(filters?: { type?: UserType }): Promise<SafeUser[]> {
+    const base = filters?.type !== undefined ? this.userQuery().where({ type: filters.type }) : this.userQuery();
+    const users = await base.orderBy((user) => user.createdAt.desc()).all();
     return users.map((user) => sanitizeUser(user));
   }
 

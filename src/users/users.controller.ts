@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -15,12 +16,14 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { PERMISSIONS } from '../auth/permission-catalog.js';
+import { PERMISSIONS, USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
-import type { SafeUser } from '../prisma/types.js';
+import type { SafeUser, UserType } from '../prisma/types.js';
 import { CreateUserDto } from './create-user.dto.js';
+import { ListUsersQueryDto } from './list-users-query.dto.js';
 import { UpdateUserDto } from './update-user.dto.js';
 import { UsersService } from './users.service.js';
 
@@ -32,10 +35,18 @@ export class UsersController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.users.read)
-  @ApiOperation({ summary: 'List all users' })
-  @ApiOkResponse({ description: 'All users' })
-  findAll(): Promise<SafeUser[]> {
-    return this.usersService.findAll();
+  @ApiOperation({ summary: 'List users' })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: USER_TYPE_NAMES,
+    description: 'Filter by user type (e.g. rider)',
+  })
+  @ApiOkResponse({ description: 'Users matching the filter, or all users when type is omitted' })
+  findAll(@Query() query: ListUsersQueryDto): Promise<SafeUser[]> {
+    return this.usersService.findAll(
+      query.type !== undefined ? { type: query.type as UserType } : undefined,
+    );
   }
 
   @Get(':id')

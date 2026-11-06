@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateBikeDto {
   @IsOptional()
@@ -35,7 +35,8 @@ export class UpdateBikeDto {
   status?: string;
 
   @IsOptional()
-  userId?: number;
+  @IsInt()
+  userId?: number | null;
 
   @IsOptional()
   currentBatteryId?: number;

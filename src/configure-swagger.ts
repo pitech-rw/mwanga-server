@@ -22,7 +22,10 @@ export function configureSwagger(app: INestApplication) {
     .addTag('Cards', 'NFC cards')
     .addTag('Roles')
     .addTag('Stations')
-    .addTag('Swaps', 'Swap transactions and assignment workflow')
+    .addTag(
+      'Swaps',
+      'Swap transactions and assignment workflow. **POST /swaps/lookup** confirms the incoming battery serial against the bike before **POST /swaps/assign**.',
+    )
     .addTag('Users')
     .addTag('Wallets')
     .build();

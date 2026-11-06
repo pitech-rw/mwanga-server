@@ -11,6 +11,7 @@ import {
 import {
   ApiBearerAuth,
   ApiBadRequestResponse,
+  ApiBody,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -26,6 +27,7 @@ import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { SwapTransaction } from '../prisma/types.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
 import { AssignmentService } from './assignment.service.js';
+import { SwapLookupDto } from './swap-lookup.dto.js';
 import { CompleteSwapDto } from './complete-swap.dto.js';
 import { CreateSwapDto } from './create-swap.dto.js';
 import { UpdateSwapDto } from './update-swap.dto.js';
@@ -52,15 +54,49 @@ export class SwapsController {
     return { user, isAdminBypass: user.adminBypass };
   }
 
+  @Post('lookup')
+  @RequirePermissions(PERMISSIONS.swaps.operate)
+  @ApiOperation({
+    operationId: 'swapsLookup',
+    summary: 'Lookup incoming battery (confirm serial matches bike)',
+    description:
+      '`POST /swaps/lookup` — resolves **serialNumber** to a battery and verifies it is **`bikeId`’s current pack** (`bike.currentBatteryId`). Use before **`POST /swaps/assign`** when scanning the returned pack. Assign requires **`incomingBatterySerialNumber`** with the same value whenever the bike still has a mounted battery.',
+  })
+  @ApiBody({ type: SwapLookupDto })
+  @ApiOkResponse({
+    description: 'Serial matches the bike’s current battery',
+    schema: {
+      type: 'object',
+      required: ['confirmed', 'bikeId', 'stationId', 'incomingBattery'],
+      properties: {
+        confirmed: { type: 'boolean', example: true },
+        bikeId: { type: 'integer', example: 7 },
+        stationId: { type: 'integer', example: 3 },
+        incomingBattery: {
+          type: 'object',
+          description: 'Battery row including `station` and `bike` relations',
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Empty serial, or serial does not match the battery mounted on the bike',
+  })
+  @ApiNotFoundResponse({ description: 'Unknown bike id, station id, or battery serial' })
+  lookupIncomingBattery(@Body() body: SwapLookupDto) {
+    return this.assignmentService.lookupIncomingBattery(body);
+  }
+
   @Post('assign')
   @RequirePermissions(PERMISSIONS.swaps.operate)
   @ApiOperation({
     summary: 'Start a swap by assigning a battery at a station',
     description:
-      'Creates a swap transaction and assigns an available battery for the rider, bike, and station.',
+      'Creates a swap transaction and assigns an available battery for the rider, bike, and station. When the bike still has a pack mounted, send **`incomingBatterySerialNumber`** (same as **`POST /swaps/lookup`**).',
   })
   @ApiCreatedResponse({ description: 'Swap started with battery assignment' })
   @ApiBadRequestResponse({ description: 'Validation or business rule failure' })
+  @ApiBody({ type: AssignBatteryDto })
   assignBattery(@Body() assignBatteryDto: AssignBatteryDto) {
     return this.assignmentService.assignBattery(assignBatteryDto);
   }

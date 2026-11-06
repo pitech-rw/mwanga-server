@@ -3,6 +3,7 @@ import { asNumeric } from '../prisma/errors.js';
 import type { SwapStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
+import type { SwapLookupDto } from './swap-lookup.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
 import { requireRiderUser } from './require-rider-user.js';
 import { requireSwapper } from './require-swapper.js';
@@ -33,6 +34,56 @@ export class AssignmentService {
       .include('readings');
   }
 
+  /**
+   * Look up the pack on the bike by serial and verify it matches station + bike before assign.
+   */
+  async lookupIncomingBattery(dto: SwapLookupDto) {
+    await requireSwapper(this.prisma, dto.swapperId);
+
+    const station = await this.prisma.db.orm.public.Station.first({ id: dto.stationId });
+
+    if (!station) {
+      throw new NotFoundException(`Station with id ${dto.stationId} not found`);
+    }
+
+    const bike = await this.prisma.db.orm.public.Bike.where({ id: dto.bikeId })
+      .include('currentBattery')
+      .first();
+
+    if (!bike) {
+      throw new NotFoundException(`Bike with id ${dto.bikeId} not found`);
+    }
+
+    const normalizedSerial = dto.serialNumber.trim();
+    if (normalizedSerial === '') {
+      throw new BadRequestException('Incoming battery serial number is required');
+    }
+
+    const incoming = await this.prisma.db.orm.public.Battery.where({
+      serialNumber: normalizedSerial,
+    })
+      .include('station')
+      .include('bike')
+      .first();
+
+    if (!incoming) {
+      throw new NotFoundException('No battery found with this serial number');
+    }
+
+    if (incoming.id !== bike.currentBatteryId) {
+      throw new BadRequestException(
+        'This serial does not match the battery currently installed on the selected bike',
+      );
+    }
+
+    return {
+      confirmed: true as const,
+      bikeId: bike.id,
+      stationId: station.id,
+      incomingBattery: incoming,
+    };
+  }
+
   async assignBattery(dto: AssignBatteryDto) {
     await requireSwapper(this.prisma, dto.swapperId);
 
@@ -50,6 +101,21 @@ export class AssignmentService {
 
     if (!station) {
       throw new NotFoundException(`Station with id ${dto.stationId} not found`);
+    }
+
+    if (bike.currentBatteryId != null) {
+      const serial = dto.incomingBatterySerialNumber?.trim();
+      if (!serial) {
+        throw new BadRequestException(
+          'incomingBatterySerialNumber is required when the bike has a mounted battery',
+        );
+      }
+      await this.lookupIncomingBattery({
+        swapperId: dto.swapperId,
+        stationId: dto.stationId,
+        bikeId: dto.bikeId,
+        serialNumber: serial,
+      });
     }
 
     const activeCard = rider.nfcCards.find((card) => card.status === 'active');

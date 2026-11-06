@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'845eee9a84e4cefaf95628063270ae7039fbf858daa2760a332c8653e9d09692'>;
+  StorageHashBase<'e4963dfdb838382895ea3e8ea1f7b8bcab8165b9048315546429a53f3c7fd941'>;
 export type ExecutionHash =
   ExecutionHashBase<'5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f'>;
 export type ProfileHash =
@@ -515,6 +515,7 @@ export namespace Models {
     readonly [RelationKeys]?: 'permissions' | 'users';
   };
   export type public_Station = {
+    address: FieldOutputTypes['public']['Station']['address'];
     capacity: FieldOutputTypes['public']['Station']['capacity'];
     code: FieldOutputTypes['public']['Station']['code'];
     createdAt: FieldOutputTypes['public']['Station']['createdAt'];
@@ -1371,6 +1372,12 @@ type ContractBase = Omit<
             };
             readonly Station: {
               columns: {
+                readonly address: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly capacity: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
@@ -2860,6 +2867,10 @@ type ContractBase = Omit<
           };
           readonly Station: {
             readonly fields: {
+              readonly address: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly capacity: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -2952,6 +2963,7 @@ type ContractBase = Omit<
               readonly table: 'Station';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly address: { readonly column: 'address' };
                 readonly capacity: { readonly column: 'capacity' };
                 readonly code: { readonly column: 'code' };
                 readonly createdAt: { readonly column: 'createdAt' };

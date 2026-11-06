@@ -1219,6 +1219,13 @@
           },
           "Station": {
             "fields": {
+              "address": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "capacity": {
                 "nullable": false,
                 "type": {
@@ -1353,6 +1360,9 @@
             },
             "storage": {
               "fields": {
+                "address": {
+                  "column": "address"
+                },
                 "capacity": {
                   "column": "capacity"
                 },
@@ -3325,6 +3335,11 @@
             },
             "Station": {
               "columns": {
+                "address": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "capacity": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
@@ -4396,7 +4411,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "845eee9a84e4cefaf95628063270ae7039fbf858daa2760a332c8653e9d09692"
+    "storageHash": "e4963dfdb838382895ea3e8ea1f7b8bcab8165b9048315546429a53f3c7fd941"
   },
   "execution": {
     "executionHash": "5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f",

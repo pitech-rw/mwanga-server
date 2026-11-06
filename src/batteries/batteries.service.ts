@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
-import { batteryReadFilter } from '../auth/read-scope.js';
+import { batteryReadFilter, isUnrestrictedRead } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Battery } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -15,6 +16,40 @@ export class BatteriesService {
 
   private batteryQuery() {
     return this.prisma.db.orm.public.Battery.include('station').include('bike');
+  }
+
+  /**
+   * Swapper may read packs at their station or packs currently mounted on a bike they may read
+   * (aligned with bike read scope for station operators).
+   */
+  private async assertCanReadBattery(battery: Battery, ctx: ReadScopeContext): Promise<void> {
+    if (isUnrestrictedRead(ctx)) {
+      return;
+    }
+    if (ctx.user.type !== 'swapper') {
+      throw new ForbiddenException('Insufficient scope to read batteries');
+    }
+    if (ctx.user.stationId == null) {
+      throw new ForbiddenException('Swapper is not assigned to a station');
+    }
+    if (battery.stationId === ctx.user.stationId) {
+      return;
+    }
+    const bike =
+      (await this.prisma.db.orm.public.Bike.where({ currentBatteryId: battery.id })
+        .include('user')
+        .first()) ?? null;
+    if (!bike) {
+      throw new NotFoundException(`Battery with id ${battery.id} not found`);
+    }
+    if (bike.userId === ctx.user.sub) {
+      return;
+    }
+    const seenIds = await bikeIdsSeenAtStation(this.prisma, ctx.user.stationId);
+    if (seenIds.includes(bike.id)) {
+      return;
+    }
+    throw new NotFoundException(`Battery with id ${battery.id} not found`);
   }
 
   async findAll(ctx: ReadScopeContext) {
@@ -35,10 +70,27 @@ export class BatteriesService {
       throw new NotFoundException(`Battery with id ${id} not found`);
     }
 
-    const filter = batteryReadFilter(ctx);
-    if (!filter.unrestricted && battery.stationId !== filter.stationId) {
-      throw new NotFoundException(`Battery with id ${id} not found`);
+    await this.assertCanReadBattery(battery, ctx);
+
+    return battery;
+  }
+
+  async findOneBySerial(serialNumber: string, ctx: ReadScopeContext): Promise<Battery> {
+    const normalized = serialNumber.trim();
+    if (normalized === '') {
+      throw new BadRequestException('serialNumber query is required');
     }
+
+    // Confirm caller may use battery reads (swapper station / role gate)
+    batteryReadFilter(ctx);
+
+    const battery = await this.batteryQuery().first({ serialNumber: normalized });
+
+    if (!battery) {
+      throw new NotFoundException('No battery found with this serial number');
+    }
+
+    await this.assertCanReadBattery(battery, ctx);
 
     return battery;
   }

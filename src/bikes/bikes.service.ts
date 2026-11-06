@@ -67,7 +67,8 @@ export class BikesService {
             model: data.model,
             image: data.image,
             status: data.status,
-            userId: data.userId,
+            // Allow null to unassign the rider (withoutUndefined strips undefined only).
+            userId: data.userId === undefined ? undefined : data.userId,
             currentBatteryId: data.currentBatteryId,
           }),
         );

@@ -57,7 +57,8 @@ export class CardsService {
             serialNumber: data.serialNumber,
             type: data.type,
             status: data.status,
-            userId: data.userId,
+            // Allow null to unassign the rider (withoutUndefined strips undefined only).
+            userId: data.userId === undefined ? undefined : data.userId,
           }),
         );
 

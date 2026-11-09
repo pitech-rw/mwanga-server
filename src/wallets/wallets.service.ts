@@ -2,15 +2,18 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { denyOrNotFoundForScopedRead, walletReadScope } from '../auth/read-scope.js';
 import { resolveFleetOwnerIdForContext } from '../fleet/resolve-fleet.js';
-import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
-import type { Wallet } from '../prisma/types.js';
+import { LedgerService } from '../ledger/ledger.service.js';
+import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
+import type { LedgerTransaction, Wallet } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateWalletDto } from './create-wallet.dto.js';
-import { UpdateWalletDto } from './update-wallet.dto.js';
-
+import type { FloatCreditDto } from './float-credit.dto.js';
 @Injectable()
 export class WalletsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ledger: LedgerService,
+  ) {}
 
   private walletQuery() {
     return this.prisma.db.orm.public.Wallet.include('owner');
@@ -64,7 +67,7 @@ export class WalletsService {
     try {
       return await this.walletQuery().create({
         ownerId: data.ownerId,
-        balance: asNumeric(data.balance ?? 0),
+        balance: asNumeric(0),
         currency: data.currency,
       });
     } catch (error) {
@@ -76,39 +79,29 @@ export class WalletsService {
     }
   }
 
-  async update(id: number, data: UpdateWalletDto, ctx: ReadScopeContext): Promise<Wallet> {
+  async floatCredit(
+    id: number,
+    dto: FloatCreditDto,
+    ctx: ReadScopeContext,
+    actorUserId: number,
+  ): Promise<LedgerTransaction> {
     await this.findOne(id, ctx);
 
-    if (data.ownerId !== undefined) {
-      const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
-      if (!owner) {
-        throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
-      }
-    }
+    return this.prisma.db.transaction(async (tx) =>
+      this.ledger.creditFloatInTx(tx, {
+        walletId: id,
+        companyAccountId: dto.companyAccountId,
+        amount: dto.amount,
+        externalReference: dto.externalReference,
+        actorUserId,
+        description: dto.description,
+      }),
+    );
+  }
 
-    try {
-      const wallet = await this.prisma.db.orm.public.Wallet.where({ id })
-        .include('owner')
-        .update(
-          withoutUndefined({
-            ownerId: data.ownerId,
-            balance: data.balance === undefined ? undefined : asNumeric(data.balance),
-            currency: data.currency,
-          }),
-        );
-
-      if (!wallet) {
-        throw new NotFoundException(`Wallet with id ${id} not found`);
-      }
-
-      return wallet;
-    } catch (error) {
-      if (isUniqueViolation(error)) {
-        throw new BadRequestException('A wallet already exists for this owner');
-      }
-
-      throw error;
-    }
+  async listLedgerTransactions(id: number, ctx: ReadScopeContext) {
+    await this.findOne(id, ctx);
+    return this.ledger.listTransactionsForWallet(id);
   }
 
   async remove(id: number, ctx: ReadScopeContext): Promise<Wallet> {

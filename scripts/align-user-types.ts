@@ -1,7 +1,9 @@
 import 'dotenv/config';
 import { db } from '../src/prisma/db.js';
+import { requireDevMode } from './require-dev-mode.js';
 
 async function main() {
+  requireDevMode('align:user-types');
   await db.connect({ url: process.env['DATABASE_URL']! });
 
   const syncRoleName = process.argv.includes('--sync-role-name');

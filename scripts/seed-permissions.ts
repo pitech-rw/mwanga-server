@@ -2,8 +2,10 @@ import 'dotenv/config';
 import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS } from '../src/auth/permission-catalog.js';
 import { syncAllDefaultRolePermissions } from '../src/auth/sync-role-permissions.js';
 import { db } from '../src/prisma/db.js';
+import { requireDevMode } from './require-dev-mode.js';
 
 async function main() {
+  requireDevMode('seed:permissions');
   await db.connect({ url: process.env['DATABASE_URL']! });
   await syncAllDefaultRolePermissions(db);
 

@@ -1,0 +1,1250 @@
+[
+  {
+    "id": "table.CompanyAccount",
+    "label": "Create table \"CompanyAccount\"",
+    "summary": "Creates table \"CompanyAccount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "CompanyAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"CompanyAccount\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"CompanyAccount\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"CompanyAccount\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"CompanyAccount\"",
+        "sql": "CREATE TABLE \"public\".\"CompanyAccount\" (\n  \"accountNumber\" text,\n  \"balance\" numeric(10,2) DEFAULT '0.00'::numeric(10,2) NOT NULL,\n  \"bankName\" text,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text DEFAULT 'CDF' NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"CompanyAccount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"CompanyAccount\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"CompanyAccount\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.LedgerLine",
+    "label": "Create table \"LedgerLine\"",
+    "summary": "Creates table \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"LedgerLine\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"LedgerLine\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"LedgerLine\"",
+        "sql": "CREATE TABLE \"public\".\"LedgerLine\" (\n  \"amount\" numeric(10,2) NOT NULL,\n  \"companyAccountId\" int4,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"direction\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"revenueAccountId\" int4,\n  \"transactionId\" int4 NOT NULL,\n  \"walletId\" int4,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"LedgerLine_direction_check_6cfe4aa1\" CHECK (\"direction\" IN ('debit', 'credit'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"LedgerLine\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"LedgerLine\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.LedgerTransaction",
+    "label": "Create table \"LedgerTransaction\"",
+    "summary": "Creates table \"LedgerTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"LedgerTransaction\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"LedgerTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"LedgerTransaction\"",
+        "sql": "CREATE TABLE \"public\".\"LedgerTransaction\" (\n  \"actorUserId\" int4,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"externalReference\" text,\n  \"id\" SERIAL NOT NULL,\n  \"idempotencyKey\" text,\n  \"kind\" text NOT NULL,\n  \"swapTransactionId\" int4,\n  \"walletId\" int4,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"LedgerTransaction_kind_check_6b381fe0\" CHECK (\"kind\" IN ('float_topup', 'swap_fee', 'adjustment'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"LedgerTransaction\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"LedgerTransaction\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.RevenueAccount",
+    "label": "Create table \"RevenueAccount\"",
+    "summary": "Creates table \"RevenueAccount\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "RevenueAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"RevenueAccount\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"RevenueAccount\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"RevenueAccount\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"RevenueAccount\"",
+        "sql": "CREATE TABLE \"public\".\"RevenueAccount\" (\n  \"balance\" numeric(10,2) DEFAULT '0.00'::numeric(10,2) NOT NULL,\n  \"code\" text NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text DEFAULT 'CDF' NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"RevenueAccount\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"RevenueAccount\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"RevenueAccount\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "column.public.Wallet.userId",
+    "label": "Add column \"userId\" to \"Wallet\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "userId",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"userId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"userId\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"userId\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\" ADD COLUMN \"userId\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"userId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "userId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"userId\" on \"Wallet\""
+        }
+      },
+      {
+        "description": "verify column \"userId\" has type \"integer\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "userId",
+          "integer"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.CompanyAccount.CompanyAccount_accountNumber_key",
+    "label": "Add unique constraint on \"CompanyAccount\" (accountNumber)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "CompanyAccount_accountNumber_key",
+        "table": "CompanyAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"CompanyAccount_accountNumber_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "CompanyAccount_accountNumber_key",
+          "public",
+          "\"public\".\"CompanyAccount\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"CompanyAccount_accountNumber_key\" on \"CompanyAccount\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"CompanyAccount_accountNumber_key\"",
+        "sql": "ALTER TABLE \"public\".\"CompanyAccount\" ADD CONSTRAINT \"CompanyAccount_accountNumber_key\" UNIQUE (\"accountNumber\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"CompanyAccount_accountNumber_key\" exists on (accountNumber)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "CompanyAccount_accountNumber_key",
+          "public",
+          "\"public\".\"CompanyAccount\"",
+          "u",
+          "[\"accountNumber\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.LedgerTransaction.LedgerTransaction_externalReference_key",
+    "label": "Add unique constraint on \"LedgerTransaction\" (externalReference)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "LedgerTransaction_externalReference_key",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"LedgerTransaction_externalReference_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerTransaction_externalReference_key",
+          "public",
+          "\"public\".\"LedgerTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"LedgerTransaction_externalReference_key\" on \"LedgerTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"LedgerTransaction_externalReference_key\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerTransaction\" ADD CONSTRAINT \"LedgerTransaction_externalReference_key\" UNIQUE (\"externalReference\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"LedgerTransaction_externalReference_key\" exists on (externalReference)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "LedgerTransaction_externalReference_key",
+          "public",
+          "\"public\".\"LedgerTransaction\"",
+          "u",
+          "[\"externalReference\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.LedgerTransaction.LedgerTransaction_idempotencyKey_key",
+    "label": "Add unique constraint on \"LedgerTransaction\" (idempotencyKey)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "LedgerTransaction_idempotencyKey_key",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"LedgerTransaction_idempotencyKey_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerTransaction_idempotencyKey_key",
+          "public",
+          "\"public\".\"LedgerTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"LedgerTransaction_idempotencyKey_key\" on \"LedgerTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"LedgerTransaction_idempotencyKey_key\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerTransaction\" ADD CONSTRAINT \"LedgerTransaction_idempotencyKey_key\" UNIQUE (\"idempotencyKey\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"LedgerTransaction_idempotencyKey_key\" exists on (idempotencyKey)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "LedgerTransaction_idempotencyKey_key",
+          "public",
+          "\"public\".\"LedgerTransaction\"",
+          "u",
+          "[\"idempotencyKey\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.RevenueAccount.RevenueAccount_code_key",
+    "label": "Add unique constraint on \"RevenueAccount\" (code)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "RevenueAccount_code_key",
+        "table": "RevenueAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"RevenueAccount_code_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "RevenueAccount_code_key",
+          "public",
+          "\"public\".\"RevenueAccount\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"RevenueAccount_code_key\" on \"RevenueAccount\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"RevenueAccount_code_key\"",
+        "sql": "ALTER TABLE \"public\".\"RevenueAccount\" ADD CONSTRAINT \"RevenueAccount_code_key\" UNIQUE (\"code\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"RevenueAccount_code_key\" exists on (code)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "RevenueAccount_code_key",
+          "public",
+          "\"public\".\"RevenueAccount\"",
+          "u",
+          "[\"code\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.Wallet.Wallet_userId_key",
+    "label": "Add unique constraint on \"Wallet\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "Wallet_userId_key",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Wallet_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_key",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Wallet_userId_key\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"Wallet_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\" ADD CONSTRAINT \"Wallet_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"Wallet_userId_key\" exists on (userId)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "Wallet_userId_key",
+          "public",
+          "\"public\".\"Wallet\"",
+          "u",
+          "[\"userId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LedgerLine.LedgerLine_companyAccountId_idx_56d6e937",
+    "label": "Create index \"LedgerLine_companyAccountId_idx_56d6e937\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LedgerLine_companyAccountId_idx_56d6e937",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LedgerLine_companyAccountId_idx_56d6e937\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_companyAccountId_idx_56d6e937\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"LedgerLine_companyAccountId_idx_56d6e937\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LedgerLine_companyAccountId_idx_56d6e937\"",
+        "sql": "CREATE INDEX \"LedgerLine_companyAccountId_idx_56d6e937\" ON \"public\".\"LedgerLine\" (\"companyAccountId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LedgerLine_companyAccountId_idx_56d6e937\" exists on \"LedgerLine\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_companyAccountId_idx_56d6e937\"",
+          "i",
+          "I",
+          "\"public\".\"LedgerLine\"",
+          "btree",
+          "[\"companyAccountId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LedgerLine.LedgerLine_revenueAccountId_idx_c391c524",
+    "label": "Create index \"LedgerLine_revenueAccountId_idx_c391c524\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LedgerLine_revenueAccountId_idx_c391c524",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LedgerLine_revenueAccountId_idx_c391c524\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_revenueAccountId_idx_c391c524\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"LedgerLine_revenueAccountId_idx_c391c524\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LedgerLine_revenueAccountId_idx_c391c524\"",
+        "sql": "CREATE INDEX \"LedgerLine_revenueAccountId_idx_c391c524\" ON \"public\".\"LedgerLine\" (\"revenueAccountId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LedgerLine_revenueAccountId_idx_c391c524\" exists on \"LedgerLine\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_revenueAccountId_idx_c391c524\"",
+          "i",
+          "I",
+          "\"public\".\"LedgerLine\"",
+          "btree",
+          "[\"revenueAccountId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LedgerLine.LedgerLine_transactionId_idx_d3180832",
+    "label": "Create index \"LedgerLine_transactionId_idx_d3180832\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LedgerLine_transactionId_idx_d3180832",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LedgerLine_transactionId_idx_d3180832\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_transactionId_idx_d3180832\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"LedgerLine_transactionId_idx_d3180832\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LedgerLine_transactionId_idx_d3180832\"",
+        "sql": "CREATE INDEX \"LedgerLine_transactionId_idx_d3180832\" ON \"public\".\"LedgerLine\" (\"transactionId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LedgerLine_transactionId_idx_d3180832\" exists on \"LedgerLine\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_transactionId_idx_d3180832\"",
+          "i",
+          "I",
+          "\"public\".\"LedgerLine\"",
+          "btree",
+          "[\"transactionId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LedgerLine.LedgerLine_walletId_idx_2e003173",
+    "label": "Create index \"LedgerLine_walletId_idx_2e003173\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LedgerLine_walletId_idx_2e003173",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LedgerLine_walletId_idx_2e003173\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_walletId_idx_2e003173\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"LedgerLine_walletId_idx_2e003173\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LedgerLine_walletId_idx_2e003173\"",
+        "sql": "CREATE INDEX \"LedgerLine_walletId_idx_2e003173\" ON \"public\".\"LedgerLine\" (\"walletId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LedgerLine_walletId_idx_2e003173\" exists on \"LedgerLine\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerLine_walletId_idx_2e003173\"",
+          "i",
+          "I",
+          "\"public\".\"LedgerLine\"",
+          "btree",
+          "[\"walletId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LedgerTransaction.LedgerTransaction_actorUserId_idx_96dac96c",
+    "label": "Create index \"LedgerTransaction_actorUserId_idx_96dac96c\" on \"LedgerTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LedgerTransaction_actorUserId_idx_96dac96c",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LedgerTransaction_actorUserId_idx_96dac96c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction_actorUserId_idx_96dac96c\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"LedgerTransaction_actorUserId_idx_96dac96c\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LedgerTransaction_actorUserId_idx_96dac96c\"",
+        "sql": "CREATE INDEX \"LedgerTransaction_actorUserId_idx_96dac96c\" ON \"public\".\"LedgerTransaction\" (\"actorUserId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LedgerTransaction_actorUserId_idx_96dac96c\" exists on \"LedgerTransaction\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction_actorUserId_idx_96dac96c\"",
+          "i",
+          "I",
+          "\"public\".\"LedgerTransaction\"",
+          "btree",
+          "[\"actorUserId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LedgerTransaction.LedgerTransaction_swapTransactionId_idx_64f4df5e",
+    "label": "Create index \"LedgerTransaction_swapTransactionId_idx_64f4df5e\" on \"LedgerTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LedgerTransaction_swapTransactionId_idx_64f4df5e",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LedgerTransaction_swapTransactionId_idx_64f4df5e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction_swapTransactionId_idx_64f4df5e\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"LedgerTransaction_swapTransactionId_idx_64f4df5e\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LedgerTransaction_swapTransactionId_idx_64f4df5e\"",
+        "sql": "CREATE INDEX \"LedgerTransaction_swapTransactionId_idx_64f4df5e\" ON \"public\".\"LedgerTransaction\" (\"swapTransactionId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LedgerTransaction_swapTransactionId_idx_64f4df5e\" exists on \"LedgerTransaction\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction_swapTransactionId_idx_64f4df5e\"",
+          "i",
+          "I",
+          "\"public\".\"LedgerTransaction\"",
+          "btree",
+          "[\"swapTransactionId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.LedgerTransaction.LedgerTransaction_walletId_idx_2e003173",
+    "label": "Create index \"LedgerTransaction_walletId_idx_2e003173\" on \"LedgerTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "LedgerTransaction_walletId_idx_2e003173",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"LedgerTransaction_walletId_idx_2e003173\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction_walletId_idx_2e003173\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"LedgerTransaction_walletId_idx_2e003173\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"LedgerTransaction_walletId_idx_2e003173\"",
+        "sql": "CREATE INDEX \"LedgerTransaction_walletId_idx_2e003173\" ON \"public\".\"LedgerTransaction\" (\"walletId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"LedgerTransaction_walletId_idx_2e003173\" exists on \"LedgerTransaction\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"LedgerTransaction_walletId_idx_2e003173\"",
+          "i",
+          "I",
+          "\"public\".\"LedgerTransaction\"",
+          "btree",
+          "[\"walletId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LedgerLine.LedgerLine_transactionId_fkey",
+    "label": "Add foreign key \"LedgerLine_transactionId_fkey\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LedgerLine_transactionId_fkey",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LedgerLine_transactionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerLine_transactionId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"LedgerLine_transactionId_fkey\" on \"LedgerLine\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LedgerLine_transactionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerLine\"\nADD CONSTRAINT \"LedgerLine_transactionId_fkey\"\nFOREIGN KEY (\"transactionId\")\nREFERENCES \"public\".\"LedgerTransaction\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LedgerLine_transactionId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "LedgerLine_transactionId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\"",
+          "f",
+          "[\"transactionId\"]",
+          "\"public\".\"LedgerTransaction\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LedgerLine.LedgerLine_companyAccountId_fkey",
+    "label": "Add foreign key \"LedgerLine_companyAccountId_fkey\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LedgerLine_companyAccountId_fkey",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LedgerLine_companyAccountId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerLine_companyAccountId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"LedgerLine_companyAccountId_fkey\" on \"LedgerLine\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LedgerLine_companyAccountId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerLine\"\nADD CONSTRAINT \"LedgerLine_companyAccountId_fkey\"\nFOREIGN KEY (\"companyAccountId\")\nREFERENCES \"public\".\"CompanyAccount\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LedgerLine_companyAccountId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "LedgerLine_companyAccountId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\"",
+          "f",
+          "[\"companyAccountId\"]",
+          "\"public\".\"CompanyAccount\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LedgerLine.LedgerLine_walletId_fkey",
+    "label": "Add foreign key \"LedgerLine_walletId_fkey\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LedgerLine_walletId_fkey",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LedgerLine_walletId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerLine_walletId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"LedgerLine_walletId_fkey\" on \"LedgerLine\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LedgerLine_walletId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerLine\"\nADD CONSTRAINT \"LedgerLine_walletId_fkey\"\nFOREIGN KEY (\"walletId\")\nREFERENCES \"public\".\"Wallet\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LedgerLine_walletId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "LedgerLine_walletId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\"",
+          "f",
+          "[\"walletId\"]",
+          "\"public\".\"Wallet\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LedgerLine.LedgerLine_revenueAccountId_fkey",
+    "label": "Add foreign key \"LedgerLine_revenueAccountId_fkey\" on \"LedgerLine\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LedgerLine_revenueAccountId_fkey",
+        "table": "LedgerLine"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LedgerLine_revenueAccountId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerLine_revenueAccountId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"LedgerLine_revenueAccountId_fkey\" on \"LedgerLine\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LedgerLine_revenueAccountId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerLine\"\nADD CONSTRAINT \"LedgerLine_revenueAccountId_fkey\"\nFOREIGN KEY (\"revenueAccountId\")\nREFERENCES \"public\".\"RevenueAccount\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LedgerLine_revenueAccountId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "LedgerLine_revenueAccountId_fkey",
+          "public",
+          "\"public\".\"LedgerLine\"",
+          "f",
+          "[\"revenueAccountId\"]",
+          "\"public\".\"RevenueAccount\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LedgerTransaction.LedgerTransaction_actorUserId_fkey",
+    "label": "Add foreign key \"LedgerTransaction_actorUserId_fkey\" on \"LedgerTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LedgerTransaction_actorUserId_fkey",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LedgerTransaction_actorUserId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerTransaction_actorUserId_fkey",
+          "public",
+          "\"public\".\"LedgerTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"LedgerTransaction_actorUserId_fkey\" on \"LedgerTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LedgerTransaction_actorUserId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerTransaction\"\nADD CONSTRAINT \"LedgerTransaction_actorUserId_fkey\"\nFOREIGN KEY (\"actorUserId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LedgerTransaction_actorUserId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "LedgerTransaction_actorUserId_fkey",
+          "public",
+          "\"public\".\"LedgerTransaction\"",
+          "f",
+          "[\"actorUserId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LedgerTransaction.LedgerTransaction_walletId_fkey",
+    "label": "Add foreign key \"LedgerTransaction_walletId_fkey\" on \"LedgerTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LedgerTransaction_walletId_fkey",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LedgerTransaction_walletId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerTransaction_walletId_fkey",
+          "public",
+          "\"public\".\"LedgerTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"LedgerTransaction_walletId_fkey\" on \"LedgerTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LedgerTransaction_walletId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerTransaction\"\nADD CONSTRAINT \"LedgerTransaction_walletId_fkey\"\nFOREIGN KEY (\"walletId\")\nREFERENCES \"public\".\"Wallet\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LedgerTransaction_walletId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "LedgerTransaction_walletId_fkey",
+          "public",
+          "\"public\".\"LedgerTransaction\"",
+          "f",
+          "[\"walletId\"]",
+          "\"public\".\"Wallet\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.LedgerTransaction.LedgerTransaction_swapTransactionId_fkey",
+    "label": "Add foreign key \"LedgerTransaction_swapTransactionId_fkey\" on \"LedgerTransaction\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "LedgerTransaction_swapTransactionId_fkey",
+        "table": "LedgerTransaction"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"LedgerTransaction_swapTransactionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "LedgerTransaction_swapTransactionId_fkey",
+          "public",
+          "\"public\".\"LedgerTransaction\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"LedgerTransaction_swapTransactionId_fkey\" on \"LedgerTransaction\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"LedgerTransaction_swapTransactionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"LedgerTransaction\"\nADD CONSTRAINT \"LedgerTransaction_swapTransactionId_fkey\"\nFOREIGN KEY (\"swapTransactionId\")\nREFERENCES \"public\".\"SwapTransaction\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"LedgerTransaction_swapTransactionId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "LedgerTransaction_swapTransactionId_fkey",
+          "public",
+          "\"public\".\"LedgerTransaction\"",
+          "f",
+          "[\"swapTransactionId\"]",
+          "\"public\".\"SwapTransaction\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Wallet.Wallet_userId_fkey",
+    "label": "Add foreign key \"Wallet_userId_fkey\" on \"Wallet\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Wallet_userId_fkey",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Wallet_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Wallet_userId_fkey\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Wallet_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\"\nADD CONSTRAINT \"Wallet_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Wallet_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Wallet_userId_fkey",
+          "public",
+          "\"public\".\"Wallet\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

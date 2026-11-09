@@ -27,9 +27,10 @@
     "db:migrate:show": "prisma db migrate --show",
     "migration:plan": "prisma migration plan",
     "migration:status": "prisma migration status",
-    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
-    "seed:permissions": "tsx scripts/seed-permissions.ts",
-    "align:user-types": "tsx scripts/align-user-types.ts"
+    "bootstrap:admin": "NODE_ENV=development tsx scripts/bootstrap-admin.ts",
+    "seed:permissions": "NODE_ENV=development tsx scripts/seed-permissions.ts",
+    "seed:ledger-accounts": "NODE_ENV=development tsx scripts/seed-ledger-accounts.ts",
+    "align:user-types": "NODE_ENV=development tsx scripts/align-user-types.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

@@ -20,8 +20,20 @@
       "model": "Bike",
       "namespace": "public"
     },
+    "CompanyAccount": {
+      "model": "CompanyAccount",
+      "namespace": "public"
+    },
     "LedgerEntry": {
       "model": "LedgerEntry",
+      "namespace": "public"
+    },
+    "LedgerLine": {
+      "model": "LedgerLine",
+      "namespace": "public"
+    },
+    "LedgerTransaction": {
+      "model": "LedgerTransaction",
       "namespace": "public"
     },
     "NfcCard": {
@@ -34,6 +46,10 @@
     },
     "Permission": {
       "model": "Permission",
+      "namespace": "public"
+    },
+    "RevenueAccount": {
+      "model": "RevenueAccount",
       "namespace": "public"
     },
     "Role": {
@@ -87,6 +103,36 @@
               {
                 "name": "faulty",
                 "value": "faulty"
+              }
+            ]
+          },
+          "LedgerDirection": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "debit",
+                "value": "debit"
+              },
+              {
+                "name": "credit",
+                "value": "credit"
+              }
+            ]
+          },
+          "LedgerTransactionKind": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "float_topup",
+                "value": "float_topup"
+              },
+              {
+                "name": "swap_fee",
+                "value": "swap_fee"
+              },
+              {
+                "name": "adjustment",
+                "value": "adjustment"
               }
             ]
           },
@@ -938,6 +984,123 @@
               "table": "Bike"
             }
           },
+          "CompanyAccount": {
+            "fields": {
+              "accountNumber": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "balance": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "bankName": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "currency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {
+              "ledgerLines": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "companyAccountId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerLine",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "accountNumber": {
+                  "column": "accountNumber"
+                },
+                "balance": {
+                  "column": "balance"
+                },
+                "bankName": {
+                  "column": "bankName"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "currency": {
+                  "column": "currency"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "CompanyAccount"
+            }
+          },
           "LedgerEntry": {
             "fields": {
               "amount": {
@@ -1031,6 +1194,349 @@
               },
               "namespaceId": "public",
               "table": "LedgerEntry"
+            }
+          },
+          "LedgerLine": {
+            "fields": {
+              "amount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "companyAccountId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "direction": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "LedgerDirection",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "revenueAccountId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "transactionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "walletId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "companyAccount": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "companyAccountId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "CompanyAccount",
+                  "namespace": "public"
+                }
+              },
+              "revenueAccount": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "revenueAccountId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "RevenueAccount",
+                  "namespace": "public"
+                }
+              },
+              "transaction": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "transactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerTransaction",
+                  "namespace": "public"
+                }
+              },
+              "wallet": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "walletId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Wallet",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "amount": {
+                  "column": "amount"
+                },
+                "companyAccountId": {
+                  "column": "companyAccountId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "direction": {
+                  "column": "direction"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "revenueAccountId": {
+                  "column": "revenueAccountId"
+                },
+                "transactionId": {
+                  "column": "transactionId"
+                },
+                "walletId": {
+                  "column": "walletId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "LedgerLine"
+            }
+          },
+          "LedgerTransaction": {
+            "fields": {
+              "actorUserId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "description": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "externalReference": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "idempotencyKey": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "kind": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "LedgerTransactionKind",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "swapTransactionId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "walletId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "actor": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "actorUserId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "lines": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "transactionId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerLine",
+                  "namespace": "public"
+                }
+              },
+              "swapTransaction": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "swapTransactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              },
+              "wallet": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "walletId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Wallet",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actorUserId": {
+                  "column": "actorUserId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "description": {
+                  "column": "description"
+                },
+                "externalReference": {
+                  "column": "externalReference"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "idempotencyKey": {
+                  "column": "idempotencyKey"
+                },
+                "kind": {
+                  "column": "kind"
+                },
+                "swapTransactionId": {
+                  "column": "swapTransactionId"
+                },
+                "walletId": {
+                  "column": "walletId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "LedgerTransaction"
             }
           },
           "NfcCard": {
@@ -1378,6 +1884,113 @@
               },
               "namespaceId": "public",
               "table": "Permission"
+            }
+          },
+          "RevenueAccount": {
+            "fields": {
+              "balance": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "code": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "currency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "name": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {
+              "ledgerLines": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "revenueAccountId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerLine",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "balance": {
+                  "column": "balance"
+                },
+                "code": {
+                  "column": "code"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "currency": {
+                  "column": "currency"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "name": {
+                  "column": "name"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "RevenueAccount"
             }
           },
           "Role": {
@@ -1884,6 +2497,21 @@
                   "namespace": "public"
                 }
               },
+              "ledgerTransactions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "swapTransactionId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerTransaction",
+                  "namespace": "public"
+                }
+              },
               "newBattery": {
                 "cardinality": "N:1",
                 "nullable": true,
@@ -2252,6 +2880,21 @@
                   "namespace": "public"
                 }
               },
+              "ledgerTransactions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "actorUserId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerTransaction",
+                  "namespace": "public"
+                }
+              },
               "nfcCards": {
                 "cardinality": "1:N",
                 "on": {
@@ -2325,6 +2968,22 @@
                 },
                 "to": {
                   "model": "SwapTransaction",
+                  "namespace": "public"
+                }
+              },
+              "riderWallet": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "Wallet",
                   "namespace": "public"
                 }
               },
@@ -2688,9 +3347,46 @@
                     "precision": 3
                   }
                 }
+              },
+              "userId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
               }
             },
             "relations": {
+              "ledgerLines": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "walletId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerLine",
+                  "namespace": "public"
+                }
+              },
+              "ledgerTransactions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "walletId"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerTransaction",
+                  "namespace": "public"
+                }
+              },
               "owner": {
                 "cardinality": "N:1",
                 "nullable": false,
@@ -2704,6 +3400,22 @@
                 },
                 "to": {
                   "model": "Owner",
+                  "namespace": "public"
+                }
+              },
+              "riderUser": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
                   "namespace": "public"
                 }
               }
@@ -2727,6 +3439,9 @@
                 },
                 "updatedAt": {
                   "column": "updatedAt"
+                },
+                "userId": {
+                  "column": "userId"
                 }
               },
               "namespaceId": "public",
@@ -3334,6 +4049,90 @@
                 }
               ]
             },
+            "CompanyAccount": {
+              "columns": {
+                "accountNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "balance": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "bankName": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "currency": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "CDF"
+                  },
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "accountNumber"
+                  ]
+                }
+              ]
+            },
             "LedgerEntry": {
               "columns": {
                 "amount": {
@@ -3419,6 +4218,371 @@
                 ]
               },
               "uniques": []
+            },
+            "LedgerLine": {
+              "checks": [
+                {
+                  "expression": "\"direction\" IN ('debit', 'credit')",
+                  "name": "LedgerLine_direction_check_6cfe4aa1",
+                  "prefix": "LedgerLine_direction_check"
+                }
+              ],
+              "columns": {
+                "amount": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "companyAccountId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "direction": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "LedgerDirection",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "revenueAccountId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "transactionId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "walletId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "LedgerLine_transactionId_idx_d3180832"
+                  },
+                  "source": {
+                    "columns": [
+                      "transactionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerLine"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerTransaction"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "LedgerLine_companyAccountId_idx_56d6e937"
+                  },
+                  "source": {
+                    "columns": [
+                      "companyAccountId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerLine"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "CompanyAccount"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "LedgerLine_walletId_idx_2e003173"
+                  },
+                  "source": {
+                    "columns": [
+                      "walletId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerLine"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Wallet"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "LedgerLine_revenueAccountId_idx_c391c524"
+                  },
+                  "source": {
+                    "columns": [
+                      "revenueAccountId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerLine"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "RevenueAccount"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "companyAccountId"
+                  ],
+                  "name": "LedgerLine_companyAccountId_idx_56d6e937",
+                  "prefix": "LedgerLine_companyAccountId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "revenueAccountId"
+                  ],
+                  "name": "LedgerLine_revenueAccountId_idx_c391c524",
+                  "prefix": "LedgerLine_revenueAccountId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "transactionId"
+                  ],
+                  "name": "LedgerLine_transactionId_idx_d3180832",
+                  "prefix": "LedgerLine_transactionId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "walletId"
+                  ],
+                  "name": "LedgerLine_walletId_idx_2e003173",
+                  "prefix": "LedgerLine_walletId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "LedgerTransaction": {
+              "checks": [
+                {
+                  "expression": "\"kind\" IN ('float_topup', 'swap_fee', 'adjustment')",
+                  "name": "LedgerTransaction_kind_check_6b381fe0",
+                  "prefix": "LedgerTransaction_kind_check"
+                }
+              ],
+              "columns": {
+                "actorUserId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "description": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "externalReference": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "idempotencyKey": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "kind": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "LedgerTransactionKind",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "swapTransactionId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "walletId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "LedgerTransaction_actorUserId_idx_96dac96c"
+                  },
+                  "source": {
+                    "columns": [
+                      "actorUserId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerTransaction"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "LedgerTransaction_walletId_idx_2e003173"
+                  },
+                  "source": {
+                    "columns": [
+                      "walletId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerTransaction"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Wallet"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "LedgerTransaction_swapTransactionId_idx_64f4df5e"
+                  },
+                  "source": {
+                    "columns": [
+                      "swapTransactionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerTransaction"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "SwapTransaction"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "actorUserId"
+                  ],
+                  "name": "LedgerTransaction_actorUserId_idx_96dac96c",
+                  "prefix": "LedgerTransaction_actorUserId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "swapTransactionId"
+                  ],
+                  "name": "LedgerTransaction_swapTransactionId_idx_64f4df5e",
+                  "prefix": "LedgerTransaction_swapTransactionId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "walletId"
+                  ],
+                  "name": "LedgerTransaction_walletId_idx_2e003173",
+                  "prefix": "LedgerTransaction_walletId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "externalReference"
+                  ]
+                },
+                {
+                  "columns": [
+                    "idempotencyKey"
+                  ]
+                }
+              ]
             },
             "NfcCard": {
               "columns": {
@@ -3691,6 +4855,85 @@
                   "columns": [
                     "roleId",
                     "name"
+                  ]
+                }
+              ]
+            },
+            "RevenueAccount": {
+              "columns": {
+                "balance": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "code": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "currency": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "CDF"
+                  },
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "name": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "code"
                   ]
                 }
               ]
@@ -4731,6 +5974,11 @@
                   "typeParams": {
                     "precision": 3
                   }
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
                 }
               },
               "foreignKeys": [
@@ -4754,6 +6002,27 @@
                     "namespaceId": "public",
                     "tableName": "Owner"
                   }
+                },
+                {
+                  "index": {
+                    "unique": [
+                      "userId"
+                    ]
+                  },
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Wallet"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
                 }
               ],
               "indexes": [],
@@ -4766,6 +6035,11 @@
                 {
                   "columns": [
                     "ownerId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "userId"
                   ]
                 }
               ]
@@ -4780,6 +6054,21 @@
                 "charging",
                 "in_use",
                 "faulty"
+              ]
+            },
+            "LedgerDirection": {
+              "kind": "valueSet",
+              "values": [
+                "debit",
+                "credit"
+              ]
+            },
+            "LedgerTransactionKind": {
+              "kind": "valueSet",
+              "values": [
+                "float_topup",
+                "swap_fee",
+                "adjustment"
               ]
             },
             "PaymentStatus": {
@@ -4848,10 +6137,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "78ed5f43229f35b6c2a1d880a129df0465e3a9eb25d6db2f296a10608590591f"
+    "storageHash": "fc48b6585d4c2d17ae4e244ccb2678839c02f862949b2d8cc2271b3eac50f4b2"
   },
   "execution": {
-    "executionHash": "d6d605fdf1c0d091c133bdae71506f5a9fc9dabd97c863f80eb7bdfd32cfbd61",
+    "executionHash": "deb71d48cb977786a4783b1b4d6ea6cedf2efbb7eef3f634c79006583c849889",
     "mutations": {
       "defaults": [
         {
@@ -4912,6 +6201,27 @@
             }
           },
           "ref": {
+            "entry": "CompanyAccount",
+            "field": "updatedAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "ref": {
             "entry": "NfcCard",
             "field": "updatedAt",
             "namespace": "public"
@@ -4934,6 +6244,27 @@
           },
           "ref": {
             "entry": "Owner",
+            "field": "updatedAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "ref": {
+            "entry": "RevenueAccount",
             "field": "updatedAt",
             "namespace": "public"
           }

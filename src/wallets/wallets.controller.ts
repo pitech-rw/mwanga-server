@@ -39,7 +39,7 @@ export class WalletsController {
 
   @Get()
   @RequirePermissions(PERMISSIONS.wallets.read)
-  @ApiOperation({ summary: 'List all rider wallets' })
+  @ApiOperation({ summary: 'List fleet owner wallets' })
   @ApiOkResponse({ description: 'All wallets' })
   findAll(@CurrentUser() user: AuthenticatedUser): Promise<Wallet[]> {
     return this.walletsService.findAll(this.readCtx(user));
@@ -57,7 +57,7 @@ export class WalletsController {
 
   @Post()
   @RequirePermissions(PERMISSIONS.wallets.write)
-  @ApiOperation({ summary: 'Create a wallet for a rider' })
+  @ApiOperation({ summary: 'Create a wallet for an owner' })
   @ApiCreatedResponse({ description: 'Created wallet' })
   create(@Body() createWalletDto: CreateWalletDto): Promise<Wallet> {
     return this.walletsService.create(createWalletDto);

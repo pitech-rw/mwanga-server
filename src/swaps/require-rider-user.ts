@@ -3,7 +3,6 @@ import type { PrismaService } from '../prisma.service.js';
 
 export async function requireRiderUser(prisma: PrismaService, userId: number) {
   const user = await prisma.db.orm.public.User.where({ id: userId })
-    .include('wallet')
     .include('nfcCards')
     .first();
 

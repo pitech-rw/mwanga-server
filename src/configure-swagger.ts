@@ -22,6 +22,7 @@ export function configureSwagger(app: INestApplication) {
       'Battery inventory. **GET /batteries/serial/:serial** resolves a pack by barcode before **POST /swaps/assign**.',
     )
     .addTag('Bikes')
+    .addTag('Owners', 'Fleet buyers — wallet, bikes, and riders')
     .addTag('Cards', 'NFC cards')
     .addTag('Roles')
     .addTag('Stations')

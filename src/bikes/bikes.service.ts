@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { bikeReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
+import { assertRiderBelongsToOwner } from '../fleet/fleet-rules.js';
+import { resolveFleetOwnerId } from '../fleet/resolve-fleet.js';
 import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Bike } from '../prisma/types.js';
@@ -13,7 +15,9 @@ export class BikesService {
   constructor(private readonly prisma: PrismaService) {}
 
   private bikeQuery() {
-    return this.prisma.db.orm.public.Bike.include('user').include('currentBattery');
+    return this.prisma.db.orm.public.Bike.include('user')
+      .include('owner')
+      .include('currentBattery');
   }
 
   async findAll(ctx: ReadScopeContext) {
@@ -22,6 +26,15 @@ export class BikesService {
 
     if (scope.mode === 'unrestricted') {
       return ordered.all();
+    }
+
+    if (scope.mode === 'fleet') {
+      const ownerId = await resolveFleetOwnerId(
+        this.prisma,
+        scope.actorUserId,
+        scope.actorType,
+      );
+      return ordered.where({ ownerId }).all();
     }
 
     if (scope.mode === 'agent') {
@@ -55,6 +68,18 @@ export class BikesService {
     if (scope.mode === 'unrestricted') {
       return bike;
     }
+    if (scope.mode === 'fleet') {
+      const ownerId = await resolveFleetOwnerId(
+        this.prisma,
+        scope.actorUserId,
+        scope.actorType,
+      );
+      if (bike.ownerId !== ownerId) {
+        denyOrNotFoundForScopedRead(ctx, 'not_owner');
+      }
+      return bike;
+    }
+
     if (scope.mode === 'agent') {
       if (bike.userId !== scope.userId) {
         denyOrNotFoundForScopedRead(ctx, 'not_owner');
@@ -74,19 +99,27 @@ export class BikesService {
   }
 
   async create(data: CreateBikeDto): Promise<Bike> {
+    const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
+    if (!owner) {
+      throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+    }
+
+    if (data.userId != null) {
+      await assertRiderBelongsToOwner(this.prisma, data.userId, data.ownerId);
+    }
+
     try {
-      return await this.prisma.db.orm.public.Bike.include('user')
-        .include('currentBattery')
-        .create({
-          plateNumber: data.plateNumber,
-          chassisNumber: data.chassisNumber,
-          serialNumber: data.serialNumber,
-          model: data.model,
-          image: data.image,
-          status: data.status ?? 'active',
-          userId: data.userId,
-          currentBatteryId: data.currentBatteryId,
-        });
+      return await this.bikeQuery().create({
+        plateNumber: data.plateNumber,
+        chassisNumber: data.chassisNumber,
+        serialNumber: data.serialNumber,
+        model: data.model,
+        image: data.image,
+        status: data.status ?? 'active',
+        ownerId: data.ownerId,
+        userId: data.userId,
+        currentBatteryId: data.currentBatteryId,
+      });
     } catch (error) {
       if (isUniqueViolation(error)) {
         throw new BadRequestException(
@@ -99,12 +132,24 @@ export class BikesService {
   }
 
   async update(id: number, data: UpdateBikeDto, ctx: ReadScopeContext): Promise<Bike> {
-    await this.findOne(id, ctx);
+    const existing = await this.findOne(id, ctx);
+
+  const nextOwnerId = data.ownerId ?? existing.ownerId;
+    if (data.ownerId != null) {
+      const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
+      if (!owner) {
+        throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+      }
+    }
+
+    const nextUserId = data.userId === undefined ? existing.userId : data.userId;
+    if (nextUserId != null) {
+      await assertRiderBelongsToOwner(this.prisma, nextUserId, nextOwnerId);
+    }
 
     try {
-      const bike = await this.prisma.db.orm.public.Bike.where({ id })
-        .include('user')
-        .include('currentBattery')
+      const bike = await this.bikeQuery()
+        .where({ id })
         .update(
           withoutUndefined({
             plateNumber: data.plateNumber,
@@ -113,6 +158,7 @@ export class BikesService {
             model: data.model,
             image: data.image,
             status: data.status,
+            ownerId: data.ownerId,
             // Allow null to unassign the rider (withoutUndefined strips undefined only).
             userId: data.userId === undefined ? undefined : data.userId,
             currentBatteryId: data.currentBatteryId,

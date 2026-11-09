@@ -6,6 +6,7 @@ enum UserType {
   office_manager
   swapper
   agent
+  owner
   rider
   viewer
 }
@@ -30,7 +31,9 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @onCreate(now()) @onUpdate(now())
 
-  wallet              Wallet?
+  ownerId             Int?
+  fleetOwner          Owner?            @relation("FleetRiders", fields: [ownerId], references: [id])
+  proprietorOwner     Owner?            @relation("OwnerPortalUser")
   nfcCards            NfcCard[]
   assignedBikes       Bike[]
   riderSwaps          SwapTransaction[] @relation("RiderSwap")
@@ -103,6 +106,22 @@ enum ViolationSeverity {
   critical
 }
 
+model Owner {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  phone     String?
+  status    String   @default("active")
+  userId    Int?     @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @onCreate(now()) @onUpdate(now())
+
+  portalUser User?   @relation("OwnerPortalUser", fields: [userId], references: [id])
+  wallet     Wallet?
+  bikes      Bike[]
+  riders     User[]  @relation("FleetRiders")
+}
+
 model Bike {
   id               Int      @id @default(autoincrement())
   plateNumber      String   @unique
@@ -111,11 +130,13 @@ model Bike {
   model            String
   image            String?
   status           String   @default("active")
+  ownerId          Int
   userId           Int?
   currentBatteryId  Int?     @unique
   createdAt        DateTime @default(now())
   updatedAt        DateTime @onCreate(now()) @onUpdate(now())
 
+  owner         Owner            @relation(fields: [ownerId], references: [id])
   user          User?            @relation(fields: [userId], references: [id])
   currentBattery Battery?        @relation("CurrentBattery", fields: [currentBatteryId], references: [id])
   transactions  SwapTransaction[]
@@ -178,13 +199,13 @@ model NfcCard {
 
 model Wallet {
   id        Int      @id @default(autoincrement())
-  userId    Int      @unique
+  ownerId   Int      @unique
   balance   Numeric(10,2)  @default(0)
   currency  String   @default("CDF")
   createdAt DateTime @default(now())
   updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
-  user User @relation(fields: [userId], references: [id])
+  owner Owner @relation(fields: [ownerId], references: [id])
 }
 
 model SwapTransaction {

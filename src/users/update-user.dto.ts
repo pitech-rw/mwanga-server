@@ -80,4 +80,9 @@ export class UpdateUserDto {
   @IsInt()
   @Min(1)
   stationId?: number | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  ownerId?: number;
 }

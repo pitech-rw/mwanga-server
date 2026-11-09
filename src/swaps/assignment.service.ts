@@ -5,7 +5,9 @@ import { PrismaService } from '../prisma.service.js';
 import { batteryStatusAtStation } from '../batteries/battery-status.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
-import { requireRiderUser } from './require-rider-user.js';
+import { assertRiderBelongsToOwner } from '../fleet/fleet-rules.js';
+import { resolveWalletForBikeOwner } from '../fleet/resolve-owner-wallet.js';
+import { requireSwapOperator } from './require-swap-operator.js';
 import { requireSwapper } from './require-swapper.js';
 import { statusTimestampsForTransition } from './swap-status-timestamps.js';
 import type { CompleteSwapDto } from './complete-swap.dto.js';
@@ -67,7 +69,7 @@ export class AssignmentService {
   async assignBattery(dto: AssignBatteryDto) {
     await requireSwapper(this.prisma, dto.swapperId);
 
-    const rider = await requireRiderUser(this.prisma, dto.userId);
+    const rider = await requireSwapOperator(this.prisma, dto.userId);
 
     const bike = await this.prisma.db.orm.public.Bike.where({ id: dto.bikeId })
       .include('currentBattery')
@@ -93,6 +95,12 @@ export class AssignmentService {
       await this.assertIncomingSerialMatchesBike(dto.bikeId, serial);
     }
 
+    if (bike.userId !== rider.id) {
+      throw new BadRequestException('Selected user is not assigned to this bike');
+    }
+
+    await assertRiderBelongsToOwner(this.prisma, rider.id, bike.ownerId);
+
     const activeCard = rider.nfcCards.find((card) => card.status === 'active');
     if (!activeCard) {
       throw new BadRequestException('Rider has no active NFC card for this swap');
@@ -110,6 +118,7 @@ export class AssignmentService {
     }
 
     const assignedAt = new Date();
+  const { wallet: fleetWallet } = await resolveWalletForBikeOwner(this.prisma, bike.id);
 
     const swap = await this.prisma.db.transaction(async (tx) => {
       const created = await tx.orm.public.SwapTransaction.include('user')
@@ -130,7 +139,7 @@ export class AssignmentService {
           status: 'assigned',
           paymentStatus: 'pending',
           fee: asNumeric(dto.fee ?? 0),
-          walletBalanceAfter: asNumeric(rider.wallet?.balance ?? 0),
+          walletBalanceAfter: asNumeric(fleetWallet.balance),
           notes: dto.notes ?? 'Battery assigned by system',
           ...statusTimestampsForTransition('assigned', assignedAt),
         });
@@ -215,20 +224,23 @@ export class AssignmentService {
       }
 
       if (action === 'completed' && loaded.paymentStatus !== 'captured') {
-        const riderWallet = await tx.orm.public.Wallet.where({ userId: loaded.userId }).first();
-
-        if (!riderWallet) {
-          throw new BadRequestException('Rider wallet not found for payment capture');
+        const paidBike = await tx.orm.public.Bike.first({ id: loaded.bikeId });
+        if (!paidBike) {
+          throw new NotFoundException(`Bike with id ${loaded.bikeId} not found`);
+        }
+        const ownerWallet = await tx.orm.public.Wallet.where({ ownerId: paidBike.ownerId }).first();
+        if (!ownerWallet) {
+          throw new BadRequestException('Owner wallet not found for payment capture');
         }
 
         const fee = Number(loaded.fee);
-        const updatedBalance = Number(riderWallet.balance) - fee;
+        const updatedBalance = Number(ownerWallet.balance) - fee;
 
         if (updatedBalance < 0) {
           throw new BadRequestException('Insufficient wallet balance to complete the swap');
         }
 
-        await tx.orm.public.Wallet.where({ id: riderWallet.id }).update({
+        await tx.orm.public.Wallet.where({ id: ownerWallet.id }).update({
           balance: asNumeric(updatedBalance),
         });
 

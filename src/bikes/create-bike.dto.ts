@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
 
 export class CreateBikeDto {
   @IsString()
@@ -30,6 +30,10 @@ export class CreateBikeDto {
   @IsString()
   @MaxLength(30)
   status?: string;
+
+  @IsInt()
+  @Min(1)
+  ownerId: number;
 
   @IsOptional()
   userId?: number;

@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { assertCanReadUserId, isUnrestrictedRead } from '../auth/read-scope.js';
+import { assertOwnerTypeInvariant } from '../fleet/fleet-rules.js';
+import {
+  assertUserInFleet,
+  resolveFleetOwnerId,
+} from '../fleet/resolve-fleet.js';
+import { asNumeric } from '../prisma/errors.js';
 import type { UserTypeName } from '../auth/permission-catalog.js';
 import { resolveRoleIdForType } from '../auth/user-type-alignment.js';
 import { hashPassword } from '../auth/password.js';
@@ -17,10 +23,27 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   private userQuery() {
-    return this.prisma.db.orm.public.User.include('role').include('assignedStation');
+    return this.prisma.db.orm.public.User.include('role')
+      .include('assignedStation')
+      .include('fleetOwner');
   }
 
   async findAll(ctx: ReadScopeContext, filters?: { type?: UserType }): Promise<SafeUser[]> {
+    if (ctx.user.type === 'owner' && !isUnrestrictedRead(ctx)) {
+      const fleetOwnerId = await resolveFleetOwnerId(
+        this.prisma,
+        ctx.user.sub,
+        'owner',
+      );
+      const users = await this.userQuery()
+        .where({ ownerId: fleetOwnerId })
+        .orderBy((user) => user.createdAt.desc())
+        .all();
+      const proprietor = await this.userQuery().first({ id: ctx.user.sub });
+      const list = proprietor ? [sanitizeUser(proprietor), ...users.map((u) => sanitizeUser(u))] : users.map((u) => sanitizeUser(u));
+      return list;
+    }
+
     if (!isUnrestrictedRead(ctx)) {
       const self = await this.userQuery().first({ id: ctx.user.sub });
 
@@ -38,7 +61,18 @@ export class UsersService {
   }
 
   async findOne(id: number, ctx: ReadScopeContext): Promise<SafeUser> {
-    assertCanReadUserId(ctx, id);
+    if (ctx.user.type === 'owner' && !isUnrestrictedRead(ctx)) {
+      const fleetOwnerId = await resolveFleetOwnerId(
+        this.prisma,
+        ctx.user.sub,
+        'owner',
+      );
+      if (id !== ctx.user.sub) {
+        await assertUserInFleet(this.prisma, fleetOwnerId, id);
+      }
+    } else {
+      assertCanReadUserId(ctx, id);
+    }
 
     const user = await this.userQuery().first({ id });
 
@@ -50,6 +84,18 @@ export class UsersService {
   }
 
   async create(data: CreateUserDto): Promise<SafeUser> {
+    assertOwnerTypeInvariant(data.type as UserType, data.ownerId ?? null);
+
+    if (data.type === 'rider') {
+      if (data.ownerId == null) {
+        throw new BadRequestException('Riders must be assigned to an owner (ownerId)');
+      }
+      const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
+      if (!owner) {
+        throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+      }
+    }
+
     const roleId = await resolveRoleIdForType(this.prisma, data.type as UserTypeName);
     const passwordHash = await hashPassword(data.password);
     const stationId = await resolveSwapperStationId(this.prisma, {
@@ -58,6 +104,49 @@ export class UsersService {
     });
 
     try {
+      if (data.type === 'owner') {
+        const user = await this.prisma.db.transaction(async (tx) => {
+          const created = await tx.orm.public.User.include('role')
+            .include('assignedStation')
+            .include('fleetOwner')
+            .create({
+              username: data.username,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              email: data.email.trim().toLowerCase(),
+              phone: data.phone,
+              address: data.address,
+              image: data.image,
+              nationalId: data.nationalId,
+              type: 'owner',
+              roleId,
+              kycStatus: data.kycStatus ?? 'pending',
+              isActive: data.isActive ?? true,
+              passwordHash,
+              stationId: stationId ?? null,
+            });
+
+          const displayName = [data.firstName, data.lastName].filter(Boolean).join(' ').trim();
+          const owner = await tx.orm.public.Owner.create({
+            name: displayName || data.username,
+            email: data.email.trim().toLowerCase(),
+            phone: data.phone,
+            status: 'active',
+            userId: created.id,
+          });
+
+          await tx.orm.public.Wallet.create({
+            ownerId: owner.id,
+            balance: asNumeric(0),
+            currency: 'CDF',
+          });
+
+          return created;
+        });
+
+        return sanitizeUser(user);
+      }
+
       const user = await this.userQuery().create({
         username: data.username,
         firstName: data.firstName,
@@ -69,6 +158,7 @@ export class UsersService {
         nationalId: data.nationalId,
         type: data.type as UserType,
         roleId,
+        ownerId: data.type === 'rider' ? data.ownerId : null,
         kycStatus: data.kycStatus ?? 'pending',
         isActive: data.isActive ?? true,
         passwordHash,
@@ -110,6 +200,27 @@ export class UsersService {
       });
     }
 
+    const nextOwnerId =
+      data.ownerId !== undefined ? data.ownerId : existing.ownerId;
+    assertOwnerTypeInvariant(nextType as UserType, nextOwnerId);
+    if (nextType === 'rider' && nextOwnerId != null) {
+      const owner = await this.prisma.db.orm.public.Owner.first({ id: nextOwnerId });
+      if (!owner) {
+        throw new BadRequestException(`Owner with id ${nextOwnerId} not found`);
+      }
+    }
+
+    const ownerIdPatch =
+      nextType === 'rider'
+        ? nextOwnerId
+        : nextType === 'owner'
+          ? null
+          : data.ownerId !== undefined
+            ? data.ownerId
+            : existing.type !== 'rider' && existing.type !== 'owner'
+              ? null
+              : undefined;
+
     let passwordHash: string | undefined;
     if (data.password !== undefined) {
       passwordHash = await hashPassword(data.password);
@@ -134,6 +245,7 @@ export class UsersService {
             isActive: data.isActive,
             passwordHash,
             stationId,
+            ownerId: ownerIdPatch,
           }),
         );
 

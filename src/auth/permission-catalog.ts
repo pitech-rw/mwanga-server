@@ -29,7 +29,6 @@ export const PERMISSIONS = {
     write: 'riders:write',
     delete: 'riders:delete',
   },
-  // deprecated: fleet is single-tenant (Mwanga); permissions kept for seeded roles
   owners: {
     read: 'owners:read',
     write: 'owners:write',
@@ -160,6 +159,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
   agent: [
     PERMISSIONS.riders.read,
     PERMISSIONS.riders.write,
+    PERMISSIONS.owners.read,
+    PERMISSIONS.owners.write,
     PERMISSIONS.bikes.read,
     PERMISSIONS.cards.read,
     PERMISSIONS.cards.write,
@@ -178,6 +179,17 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.swaps.read,
     PERMISSIONS.wallets.read,
     PERMISSIONS.stations.read,
+  ],
+
+  /** Fleet proprietor portal: own owner record, wallet, bikes, and riders in fleet */
+  owner: [
+    PERMISSIONS.owners.read,
+    PERMISSIONS.bikes.read,
+    PERMISSIONS.swaps.read,
+    PERMISSIONS.wallets.read,
+    PERMISSIONS.users.read,
+    PERMISSIONS.stations.read,
+    PERMISSIONS.cards.read,
   ],
 
   /** Read-only dashboard / audit */

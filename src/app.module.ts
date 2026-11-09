@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard.js';
 import { PermissionsGuard } from './auth/permissions.guard.js';
 import { BatteriesModule } from './batteries/batteries.module.js';
 import { BikesModule } from './bikes/bikes.module.js';
+import { OwnersModule } from './owners/owners.module.js';
 import { CardsModule } from './cards/cards.module.js';
 import { PrismaModule } from './prisma.module.js';
 import { RolesModule } from './roles/roles.module.js';
@@ -28,6 +29,7 @@ import { WalletsModule } from './wallets/wallets.module.js';
     RolesModule,
     CardsModule,
     BikesModule,
+    OwnersModule,
     StationsModule,
     BatteriesModule,
     WalletsModule,

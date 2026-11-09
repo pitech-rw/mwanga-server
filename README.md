@@ -61,7 +61,8 @@ Default roles (synced with `npm run seed:permissions`):
 | `office_manager` | Office + user admin + destructive CRM/swap admin |
 | `swapper` | Station executive workflow + read-only context |
 | `agent` | Field agent: rider/card registration (cannot operate swaps) |
-| `rider` | Rider self-service: own swaps and wallet; own user record; stations directory (full list for discovery) |
+| `owner` | Fleet proprietor portal: own owner record, wallet, bikes, riders in fleet, swaps |
+| `rider` | Rider self-service: own swaps; fleet wallet (read); own user record; stations directory (full list for discovery) |
 | `viewer` | Read-only across resources (same row visibility as `office` / back-office dashboards) |
 
 Assign users a **`type`** matching their job; permissions come from the role with the same name. After changing the permission matrix, run `npm run seed:permissions`. To fix legacy rows where `type` ≠ `Role.name`, run `npm run align:user-types -- --sync-role-name`.

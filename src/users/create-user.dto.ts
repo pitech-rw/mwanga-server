@@ -8,6 +8,7 @@ import {
   MaxLength,
   MinLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { USER_TYPE_NAMES } from '../auth/permission-catalog.js';
 
@@ -73,4 +74,10 @@ export class CreateUserDto {
   @IsInt()
   @Min(1)
   stationId?: number;
+
+  /** Required when type is rider — fleet the operator belongs to */
+  @ValidateIf((dto) => dto.type === 'rider')
+  @IsInt()
+  @Min(1)
+  ownerId?: number;
 }

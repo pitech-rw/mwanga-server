@@ -1,0 +1,49 @@
+[
+  {
+    "id": "checkConstraint.Battery.Battery_status_check_d1516b84",
+    "label": "Add check constraint \"Battery_status_check_d1516b84\" on \"Battery\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "Battery_status_check_d1516b84",
+        "table": "Battery"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Battery_status_check_d1516b84\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Battery_status_check_d1516b84",
+          "public",
+          "\"public\".\"Battery\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Battery_status_check_d1516b84\" on \"Battery\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"Battery_status_check_d1516b84\"",
+        "sql": "ALTER TABLE \"public\".\"Battery\" ADD CONSTRAINT \"Battery_status_check_d1516b84\" CHECK (\"status\" IN ('offline', 'available', 'charging', 'in_use', 'faulty'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify check constraint \"Battery_status_check_d1516b84\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4)) AS \"result\"",
+        "params": [
+          "Battery_status_check_d1516b84",
+          "public",
+          "\"public\".\"Battery\"",
+          "c"
+        ]
+      }
+    ]
+  }
+]

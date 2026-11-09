@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'e4963dfdb838382895ea3e8ea1f7b8bcab8165b9048315546429a53f3c7fd941'>;
+  StorageHashBase<'2de91680cf49a794116112d151ee7fae5b3d64461f1dc13a3051dde7634f4581'>;
 export type ExecutionHash =
   ExecutionHashBase<'5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f'>;
 export type ProfileHash =
@@ -278,6 +278,12 @@ type ParameterizedOutputTypeFunctions = PgParameterizedOutputTypes;
 type FieldTypeOverrides = {
   readonly public: {
     readonly models: {
+      readonly Battery: {
+        readonly status: {
+          readonly output: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+          readonly input: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+        };
+      };
       readonly BatteryReading: {
         readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
       };
@@ -346,6 +352,12 @@ export type FieldInputTypes = FieldTypesFromDomain<
 >;
 type ColumnTypeOverrides = {
   readonly public: {
+    readonly Battery: {
+      readonly status: {
+        readonly output: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+        readonly input: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+      };
+    };
     readonly BatteryReading: {
       readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
     };
@@ -2160,6 +2172,10 @@ type ContractBase = Omit<
             };
           };
           readonly valueSet: {
+            readonly BatteryStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['offline', 'available', 'charging', 'in_use', 'faulty'];
+            };
             readonly PaymentStatus: {
               readonly kind: 'valueSet';
               readonly values: readonly ['pending', 'captured', 'failed', 'reversed'];
@@ -3640,6 +3656,16 @@ type ContractBase = Omit<
           };
         };
         readonly enum: {
+          readonly BatteryStatus: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'offline'; readonly value: 'offline' },
+              { readonly name: 'available'; readonly value: 'available' },
+              { readonly name: 'charging'; readonly value: 'charging' },
+              { readonly name: 'in_use'; readonly value: 'in_use' },
+              { readonly name: 'faulty'; readonly value: 'faulty' },
+            ];
+          };
           readonly PaymentStatus: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -3701,6 +3727,13 @@ type ContractBase = Omit<
           };
         };
         readonly enumMemberTypes?: {
+          readonly BatteryStatus: readonly [
+            { readonly name: 'offline'; readonly value: 'offline' },
+            { readonly name: 'available'; readonly value: 'available' },
+            { readonly name: 'charging'; readonly value: 'charging' },
+            { readonly name: 'in_use'; readonly value: 'in_use' },
+            { readonly name: 'faulty'; readonly value: 'faulty' },
+          ];
           readonly PaymentStatus: readonly [
             { readonly name: 'pending'; readonly value: 'pending' },
             { readonly name: 'captured'; readonly value: 'captured' },

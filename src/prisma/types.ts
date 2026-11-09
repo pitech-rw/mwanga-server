@@ -9,6 +9,7 @@ export type Permission = Scalars<Models.public_Permission>;
 export type Bike = Scalars<Models.public_Bike>;
 export type Station = Scalars<Models.public_Station>;
 export type Battery = Scalars<Models.public_Battery>;
+export type BatteryStatus = Models.public_Battery['status'];
 export type NfcCard = Scalars<Models.public_NfcCard>;
 export type Wallet = Scalars<Models.public_Wallet>;
 export type SwapTransaction = Scalars<Models.public_SwapTransaction>;

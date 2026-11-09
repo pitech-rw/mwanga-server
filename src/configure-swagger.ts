@@ -17,14 +17,17 @@ export function configureSwagger(app: INestApplication) {
     )
     .addTag('App', 'Root and health checks')
     .addTag('Auth', 'Sign in and session')
-    .addTag('Batteries')
+    .addTag(
+      'Batteries',
+      'Battery inventory. **GET /batteries/serial/:serial** resolves a pack by barcode before **POST /swaps/assign**.',
+    )
     .addTag('Bikes')
     .addTag('Cards', 'NFC cards')
     .addTag('Roles')
     .addTag('Stations')
     .addTag(
       'Swaps',
-      'Swap transactions and assignment workflow. **GET /swaps/lookup** (or **POST /swaps/lookup**) confirms the incoming battery serial against the bike before **POST /swaps/assign**.',
+      'Swap transactions and station assignment workflow (**POST /swaps/assign**, complete steps). Confirm incoming packs with **GET /batteries/serial/:serial** first.',
     )
     .addTag('Users')
     .addTag('Wallets')

@@ -48,9 +48,10 @@ export class BatteriesController {
   @Get('serial/:serial')
   @RequirePermissions(PERMISSIONS.batteries.read)
   @ApiOperation({
+    operationId: 'batteriesGetBySerial',
     summary: 'Get battery by serial number',
     description:
-      'Resolves a unique `serialNumber` (URL-encoded). For station operators, visibility matches inventory: shelf packs at the assigned station, or a pack currently mounted on a bike they may read (same rules as bike list for swappers).',
+      'Resolves a unique `serialNumber` (URL-encode special characters). Used before **POST /swaps/assign** to confirm the returned pack. Swappers see shelf inventory at their station, any pack with status **in_use**, or other mounted packs on bikes they may read.',
   })
   @ApiParam({ name: 'serial', type: String, description: 'Battery serial (unique); encode special characters' })
   @ApiOkResponse({ description: 'Battery record with station and bike relations' })

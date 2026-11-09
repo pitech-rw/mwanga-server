@@ -3,7 +3,7 @@ import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { batteryReadFilter, isUnrestrictedRead } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
-import type { Battery } from '../prisma/types.js';
+import type { Battery, Wallet } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { batteryStatusAtStation } from './battery-status.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
@@ -16,7 +16,28 @@ export class BatteriesService {
   constructor(private readonly prisma: PrismaService) {}
 
   private batteryQuery() {
-    return this.prisma.db.orm.public.Battery.include('station').include('bike');
+    return this.prisma.db.orm.public.Battery.include('station').include('bike', (bike) =>
+      bike
+        .include('user', (user) => user.include('riderWallet'))
+        .include('owner', (owner) => owner.include('wallet')),
+    );
+  }
+
+  /** Prefer rider wallet; fall back to fleet owner wallet on `bike.wallet`. */
+  private withBikeWallet<T extends Battery>(battery: T): T {
+    const bike = battery.bike as
+      | (NonNullable<Battery['bike']> & {
+          user?: { riderWallet?: Wallet | null } | null;
+          owner?: { wallet?: Wallet | null } | null;
+          wallet?: Wallet | null;
+        })
+      | null
+      | undefined;
+    if (!bike) {
+      return battery;
+    }
+    bike.wallet = bike.user?.riderWallet ?? bike.owner?.wallet ?? null;
+    return battery;
   }
 
   /**
@@ -67,11 +88,11 @@ export class BatteriesService {
     const filter = batteryReadFilter(ctx);
     const ordered = this.batteryQuery().orderBy((battery) => battery.createdAt.desc());
 
-    if (filter.unrestricted) {
-      return ordered.all();
-    }
+    const rows = filter.unrestricted
+      ? await ordered.all()
+      : await ordered.where({ stationId: filter.stationId }).all();
 
-    return ordered.where({ stationId: filter.stationId }).all();
+    return rows.map((row) => this.withBikeWallet(row));
   }
 
   async findOne(id: number, ctx: ReadScopeContext) {
@@ -90,7 +111,7 @@ export class BatteriesService {
       throw err;
     }
 
-    return battery;
+    return this.withBikeWallet(battery);
   }
 
   async findOneBySerial(serialNumber: string, ctx: ReadScopeContext): Promise<Battery> {
@@ -110,7 +131,7 @@ export class BatteriesService {
 
     await this.assertCanReadBattery(battery, ctx);
 
-    return battery;
+    return this.withBikeWallet(battery);
   }
 
   async create(data: CreateBatteryDto): Promise<Battery> {

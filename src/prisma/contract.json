@@ -61,6 +61,31 @@
     "namespaces": {
       "public": {
         "enum": {
+          "BatteryStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "offline",
+                "value": "offline"
+              },
+              {
+                "name": "available",
+                "value": "available"
+              },
+              {
+                "name": "charging",
+                "value": "charging"
+              },
+              {
+                "name": "in_use",
+                "value": "in_use"
+              },
+              {
+                "name": "faulty",
+                "value": "faulty"
+              }
+            ]
+          },
           "PaymentStatus": {
             "codecId": "pg/text@1",
             "members": [
@@ -407,6 +432,12 @@
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "BatteryStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "updatedAt": {
@@ -2588,6 +2619,13 @@
               "uniques": []
             },
             "Battery": {
+              "checks": [
+                {
+                  "expression": "\"status\" IN ('offline', 'available', 'charging', 'in_use', 'faulty')",
+                  "name": "Battery_status_check_d1516b84",
+                  "prefix": "Battery_status_check"
+                }
+              ],
               "columns": {
                 "batteryType": {
                   "codecId": "pg/text@1",
@@ -2678,7 +2716,13 @@
                     "kind": "literal",
                     "value": "available"
                   },
-                  "nullable": false
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "BatteryStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-date@1",
@@ -4346,6 +4390,16 @@
             }
           },
           "valueSet": {
+            "BatteryStatus": {
+              "kind": "valueSet",
+              "values": [
+                "offline",
+                "available",
+                "charging",
+                "in_use",
+                "faulty"
+              ]
+            },
             "PaymentStatus": {
               "kind": "valueSet",
               "values": [
@@ -4411,7 +4465,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e4963dfdb838382895ea3e8ea1f7b8bcab8165b9048315546429a53f3c7fd941"
+    "storageHash": "2de91680cf49a794116112d151ee7fae5b3d64461f1dc13a3051dde7634f4581"
   },
   "execution": {
     "executionHash": "5ee7f9d1b0b2596995c954acc98402b10e5bfe36a2afb391916b6c561363ff0f",

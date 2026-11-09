@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { asNumeric } from '../prisma/errors.js';
 import type { SwapStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { batteryStatusAtStation } from '../batteries/battery-status.js';
 import { AssignBatteryDto } from './assign-battery.dto.js';
-import type { SwapLookupDto } from './swap-lookup.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
 import { requireRiderUser } from './require-rider-user.js';
 import { requireSwapper } from './require-swapper.js';
@@ -34,37 +34,24 @@ export class AssignmentService {
       .include('readings');
   }
 
-  /**
-   * Look up the pack on the bike by serial and verify it matches station + bike before assign.
-   */
-  async lookupIncomingBattery(dto: SwapLookupDto) {
-    await requireSwapper(this.prisma, dto.swapperId);
-
-    const station = await this.prisma.db.orm.public.Station.first({ id: dto.stationId });
-
-    if (!station) {
-      throw new NotFoundException(`Station with id ${dto.stationId} not found`);
-    }
-
-    const bike = await this.prisma.db.orm.public.Bike.where({ id: dto.bikeId })
+  /** Ensures scanned serial is the pack currently on the bike (assign guard). */
+  private async assertIncomingSerialMatchesBike(bikeId: number, serialNumber: string): Promise<void> {
+    const bike = await this.prisma.db.orm.public.Bike.where({ id: bikeId })
       .include('currentBattery')
       .first();
 
     if (!bike) {
-      throw new NotFoundException(`Bike with id ${dto.bikeId} not found`);
+      throw new NotFoundException(`Bike with id ${bikeId} not found`);
     }
 
-    const normalizedSerial = dto.serialNumber.trim();
+    const normalizedSerial = serialNumber.trim();
     if (normalizedSerial === '') {
       throw new BadRequestException('Incoming battery serial number is required');
     }
 
     const incoming = await this.prisma.db.orm.public.Battery.where({
       serialNumber: normalizedSerial,
-    })
-      .include('station')
-      .include('bike')
-      .first();
+    }).first();
 
     if (!incoming) {
       throw new NotFoundException('No battery found with this serial number');
@@ -75,13 +62,6 @@ export class AssignmentService {
         'This serial does not match the battery currently installed on the selected bike',
       );
     }
-
-    return {
-      confirmed: true as const,
-      bikeId: bike.id,
-      stationId: station.id,
-      incomingBattery: incoming,
-    };
   }
 
   async assignBattery(dto: AssignBatteryDto) {
@@ -110,12 +90,7 @@ export class AssignmentService {
           'incomingBatterySerialNumber is required when the bike has a mounted battery',
         );
       }
-      await this.lookupIncomingBattery({
-        swapperId: dto.swapperId,
-        stationId: dto.stationId,
-        bikeId: dto.bikeId,
-        serialNumber: serial,
-      });
+      await this.assertIncomingSerialMatchesBike(dto.bikeId, serial);
     }
 
     const activeCard = rider.nfcCards.find((card) => card.status === 'active');
@@ -164,7 +139,7 @@ export class AssignmentService {
       await recordBatteryReading(tx, created.id, availableBattery.id, 'out');
 
       await tx.orm.public.Battery.where({ id: availableBattery.id }).update({
-        status: 'assigned',
+        status: 'offline',
         stationId: dto.stationId,
       });
 
@@ -364,7 +339,7 @@ export class AssignmentService {
     if (swap.oldBatteryId != null) {
       await tx.orm.public.Battery.where({ id: swap.oldBatteryId }).update({
         stationId: swap.stationId,
-        status: 'available',
+        status: 'charging',
       });
     }
   }
@@ -374,9 +349,12 @@ export class AssignmentService {
       return;
     }
 
+    const pack = await tx.orm.public.Battery.first({ id: swap.newBatteryId });
+    const soc = pack?.soc ?? 100;
+
     await tx.orm.public.Battery.where({ id: swap.newBatteryId }).update({
       stationId: swap.stationId,
-      status: 'available',
+      status: batteryStatusAtStation(soc),
     });
   }
 }

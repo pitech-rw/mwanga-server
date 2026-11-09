@@ -5,6 +5,7 @@ import { batteryReadFilter, isUnrestrictedRead } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Battery } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { batteryStatusAtStation } from './battery-status.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
 import { UpdateBatteryDto } from './update-battery.dto.js';
 
@@ -19,9 +20,15 @@ export class BatteriesService {
   }
 
   /**
-   * Swapper may read packs at their station or packs currently mounted on a bike they may read
-   * (aligned with bike read scope for station operators).
+   * Swapper may read packs at their station, packs **in_use** (any station), or packs on a bike
+   * they may read (aligned with bike list scope).
    */
+  private notFoundForBattery(battery: Battery): NotFoundException {
+    return new NotFoundException(
+      `No battery found with serial number "${battery.serialNumber}"`,
+    );
+  }
+
   private async assertCanReadBattery(battery: Battery, ctx: ReadScopeContext): Promise<void> {
     if (isUnrestrictedRead(ctx)) {
       return;
@@ -32,6 +39,9 @@ export class BatteriesService {
     if (ctx.user.stationId == null) {
       throw new ForbiddenException('Swapper is not assigned to a station');
     }
+    if (battery.status === 'in_use') {
+      return;
+    }
     if (battery.stationId === ctx.user.stationId) {
       return;
     }
@@ -40,7 +50,8 @@ export class BatteriesService {
         .include('user')
         .first()) ?? null;
     if (!bike) {
-      throw new NotFoundException(`Battery with id ${battery.id} not found`);
+      // Serial exists but pack is not at this station and not mounted on a bike (or visibility rules hide it).
+      throw this.notFoundForBattery(battery);
     }
     if (bike.userId === ctx.user.sub) {
       return;
@@ -49,7 +60,7 @@ export class BatteriesService {
     if (seenIds.includes(bike.id)) {
       return;
     }
-    throw new NotFoundException(`Battery with id ${battery.id} not found`);
+    throw this.notFoundForBattery(battery);
   }
 
   async findAll(ctx: ReadScopeContext) {
@@ -70,7 +81,14 @@ export class BatteriesService {
       throw new NotFoundException(`Battery with id ${id} not found`);
     }
 
-    await this.assertCanReadBattery(battery, ctx);
+    try {
+      await this.assertCanReadBattery(battery, ctx);
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw new NotFoundException(`Battery with id ${id} not found`);
+      }
+      throw err;
+    }
 
     return battery;
   }
@@ -96,6 +114,10 @@ export class BatteriesService {
   }
 
   async create(data: CreateBatteryDto): Promise<Battery> {
+    const soc = data.soc ?? 100;
+    const defaultStatus =
+      data.stationId != null ? batteryStatusAtStation(soc) : ('offline' as const);
+
     try {
       return await this.prisma.db.orm.public.Battery.include('station').include('bike').create({
         serialNumber: data.serialNumber,
@@ -103,8 +125,8 @@ export class BatteriesService {
         oem: data.oem,
         model: data.model,
         batteryType: data.batteryType ?? 'lithium',
-        status: data.status ?? 'available',
-        soc: data.soc ?? 100,
+        status: data.status ?? defaultStatus,
+        soc,
         soh: data.soh ?? 100,
         cycleCount: data.cycleCount ?? 0,
         voltage: data.voltage,
@@ -120,7 +142,7 @@ export class BatteriesService {
   }
 
   async update(id: number, data: UpdateBatteryDto, ctx: ReadScopeContext): Promise<Battery> {
-    await this.findOne(id, ctx);
+    const existing = await this.findOne(id, ctx);
 
     const bikePresent = data.bikeId !== undefined;
     const stationPresent = data.stationId !== undefined;
@@ -134,13 +156,24 @@ export class BatteriesService {
       );
     }
 
+    const stationIdAfterPatch =
+      data.stationId !== undefined ? data.stationId : existing.stationId;
+
     const scalarPatch = withoutUndefined({
       serialNumber: data.serialNumber,
       manufacturer: data.manufacturer,
       oem: data.oem,
       model: data.model,
       batteryType: data.batteryType,
-      status: data.status,
+      status:
+        data.status ??
+        (data.soc !== undefined &&
+        stationIdAfterPatch != null &&
+        existing.status !== 'in_use' &&
+        existing.status !== 'faulty' &&
+        existing.status !== 'offline'
+          ? batteryStatusAtStation(data.soc)
+          : undefined),
       soc: data.soc,
       soh: data.soh,
       cycleCount: data.cycleCount,
@@ -205,11 +238,18 @@ export class BatteriesService {
   ): Promise<Battery> {
     await this.clearBatteryFromBikes(tx, batteryId);
 
+    const existing = await tx.orm.public.Battery.first({ id: batteryId });
+    const soc =
+      (scalarPatch.soc as number | undefined) ?? existing?.soc ?? 100;
+    const statusPatch =
+      stationId != null ? { status: batteryStatusAtStation(soc) } : {};
+
     const battery = await tx.orm.public.Battery.where({ id: batteryId })
       .include('station')
       .include('bike')
       .update({
         ...scalarPatch,
+        ...statusPatch,
         stationId,
       });
 

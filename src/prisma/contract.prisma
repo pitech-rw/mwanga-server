@@ -81,6 +81,14 @@ enum ReadingDirection {
   out
 }
 
+enum BatteryStatus {
+  offline
+  available
+  charging
+  in_use
+  faulty
+}
+
 enum ViolationStatus {
   open
   under_review
@@ -137,8 +145,8 @@ model Battery {
   manufacturer    String?
   oem             String?
   model           String
-  batteryType     String   @default("lithium")
-  status          String   @default("available")
+  batteryType     String       @default("lithium")
+  status          BatteryStatus @default(available)
   soc             Int      @default(100)
   soh             Int      @default(100)
   cycleCount      Int      @default(0)

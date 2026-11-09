@@ -24,10 +24,10 @@ export class AssignBatteryDto {
   @MaxLength(500)
   notes?: string;
 
-  /** Required when the bike still has a mounted battery (same value as `POST /swaps/lookup` `serialNumber`). */
+  /** Required when the bike still has a mounted battery (same serial as `GET /batteries/serial/:serial`). */
   @ApiPropertyOptional({
     description:
-      'Scanned serial of the incoming pack. Required when the bike has `currentBatteryId`; must match `POST /swaps/lookup`.',
+      'Scanned serial of the incoming pack. Required when the bike has `currentBatteryId`; must match the pack returned from **GET /batteries/serial/:serial** and the bike’s current battery.',
     example: 'BAT-1042',
     maxLength: 200,
   })

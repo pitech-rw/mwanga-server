@@ -32,6 +32,7 @@ export function configureSwagger(app: INestApplication) {
     )
     .addTag('Users')
     .addTag('Wallets')
+    .addTag('Company accounts', 'Company bank accounts (assets) for float collection')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

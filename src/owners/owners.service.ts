@@ -67,7 +67,7 @@ export class OwnersService {
 
         await tx.orm.public.Wallet.create({
           ownerId: owner.id,
-          balance: asNumeric(data.balance ?? 0),
+          balance: asNumeric(0),
           currency: data.currency ?? 'CDF',
         });
 

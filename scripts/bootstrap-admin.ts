@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { requireDevMode } from './require-dev-mode.js';
 import {
   PERMISSIONS,
   USER_TYPE_NAMES,
@@ -23,6 +24,7 @@ function parseBootstrapRoleName(raw: string | undefined): UserTypeName {
 }
 
 async function main() {
+  requireDevMode('bootstrap:admin');
   await db.connect({ url: process.env['DATABASE_URL']! });
 
   const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;

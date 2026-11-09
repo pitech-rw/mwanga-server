@@ -43,6 +43,8 @@ model User {
   // Swapper station operator assignment (one station at a time)
   stationId           Int?
   assignedStation     Station?          @relation("StationOperators", fields: [stationId], references: [id])
+  riderWallet         Wallet?           @relation("RiderWallet")
+  ledgerTransactions  LedgerTransaction[] @relation("LedgerActor")
 }
 
 model Role {
@@ -104,6 +106,17 @@ enum ViolationSeverity {
   medium
   high
   critical
+}
+
+enum LedgerTransactionKind {
+  float_topup
+  swap_fee
+  adjustment
+}
+
+enum LedgerDirection {
+  debit
+  credit
 }
 
 model Owner {
@@ -199,13 +212,76 @@ model NfcCard {
 
 model Wallet {
   id        Int      @id @default(autoincrement())
+  /// Fleet proprietor wallet (required today). Future: optional rider wallet via userId with one holder enforced in app logic.
   ownerId   Int      @unique
+  userId    Int?     @unique
   balance   Numeric(10,2)  @default(0)
   currency  String   @default("CDF")
   createdAt DateTime @default(now())
   updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
-  owner Owner @relation(fields: [ownerId], references: [id])
+  owner            Owner              @relation(fields: [ownerId], references: [id])
+  riderUser        User?              @relation("RiderWallet", fields: [userId], references: [id])
+  ledgerLines      LedgerLine[]
+  ledgerTransactions LedgerTransaction[] @relation("WalletLedger")
+}
+
+model CompanyAccount {
+  id            Int      @id @default(autoincrement())
+  name          String
+  bankName      String?
+  accountNumber String?  @unique
+  currency      String   @default("CDF")
+  balance       Numeric(10, 2) @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @onCreate(now()) @onUpdate(now())
+
+  ledgerLines LedgerLine[]
+}
+
+model RevenueAccount {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  name      String
+  currency  String   @default("CDF")
+  balance   Numeric(10, 2) @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @onCreate(now()) @onUpdate(now())
+
+  ledgerLines LedgerLine[]
+}
+
+model LedgerTransaction {
+  id                 Int                   @id @default(autoincrement())
+  kind               LedgerTransactionKind
+  externalReference  String?               @unique
+  idempotencyKey     String?               @unique
+  actorUserId        Int?
+  walletId           Int?
+  swapTransactionId  Int?
+  description        String?
+  createdAt          DateTime              @default(now())
+
+  actor            User?              @relation("LedgerActor", fields: [actorUserId], references: [id])
+  wallet           Wallet?            @relation("WalletLedger", fields: [walletId], references: [id])
+  swapTransaction  SwapTransaction?   @relation(fields: [swapTransactionId], references: [id])
+  lines            LedgerLine[]
+}
+
+model LedgerLine {
+  id                Int              @id @default(autoincrement())
+  transactionId     Int
+  direction         LedgerDirection
+  amount            Numeric(10, 2)
+  companyAccountId  Int?
+  walletId          Int?
+  revenueAccountId  Int?
+  createdAt         DateTime         @default(now())
+
+  transaction     LedgerTransaction @relation(fields: [transactionId], references: [id])
+  companyAccount  CompanyAccount?   @relation(fields: [companyAccountId], references: [id])
+  wallet          Wallet?           @relation(fields: [walletId], references: [id])
+  revenueAccount  RevenueAccount?   @relation(fields: [revenueAccountId], references: [id])
 }
 
 model SwapTransaction {
@@ -241,6 +317,7 @@ model SwapTransaction {
   newBattery   Battery?      @relation("NewBattery", fields: [newBatteryId], references: [id])
   readings     BatteryReading[]
   ledgerEntries LedgerEntry[]
+  ledgerTransactions LedgerTransaction[]
   auditLogs    AuditLog[]
 }
 

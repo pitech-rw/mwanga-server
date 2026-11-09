@@ -7,6 +7,7 @@ import { AssignBatteryDto } from './assign-battery.dto.js';
 import { recordBatteryReading } from './record-battery-reading.js';
 import { assertRiderBelongsToOwner } from '../fleet/fleet-rules.js';
 import { resolveWalletForBikeOwner } from '../fleet/resolve-owner-wallet.js';
+import { LedgerService } from '../ledger/ledger.service.js';
 import { requireSwapOperator } from './require-swap-operator.js';
 import { requireSwapper } from './require-swapper.js';
 import { statusTimestampsForTransition } from './swap-status-timestamps.js';
@@ -23,7 +24,10 @@ type SwapCustody = {
 
 @Injectable()
 export class AssignmentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ledger: LedgerService,
+  ) {}
 
   private swapQuery() {
     return this.prisma.db.orm.public.SwapTransaction.include('user')
@@ -234,20 +238,16 @@ export class AssignmentService {
         }
 
         const fee = Number(loaded.fee);
-        const updatedBalance = Number(ownerWallet.balance) - fee;
-
-        if (updatedBalance < 0) {
-          throw new BadRequestException('Insufficient wallet balance to complete the swap');
-        }
-
-        await tx.orm.public.Wallet.where({ id: ownerWallet.id }).update({
-          balance: asNumeric(updatedBalance),
+        const { walletBalanceAfter } = await this.ledger.captureSwapFeeInTx(tx, {
+          walletId: ownerWallet.id,
+          amount: fee,
+          swapTransactionId: swapId,
         });
 
         await tx.orm.public.SwapTransaction.where({ id: swapId }).update({
           paymentStatus: 'captured',
           paymentReference: `MWANGA-${loaded.id}-${Date.now()}`,
-          walletBalanceAfter: asNumeric(updatedBalance),
+          walletBalanceAfter: asNumeric(walletBalanceAfter),
         });
       }
 
@@ -280,24 +280,10 @@ export class AssignmentService {
       });
 
       if (action === 'completed') {
-        await tx.orm.public.LedgerEntry.create({
-          swapTransactionId: swapId,
-          eventType: 'swap_completed',
-          amount: updatedSwap.fee,
-          description: `Swap completed for rider ${updatedSwap.userId} at station ${updatedSwap.stationId}`,
-        });
-
         await this.transferCustody(tx, updatedSwap);
       }
 
       if (action === 'failed' || action === 'cancelled') {
-        await tx.orm.public.LedgerEntry.create({
-          swapTransactionId: swapId,
-          eventType: action === 'failed' ? 'swap_failed' : 'swap_cancelled',
-          amount: updatedSwap.fee,
-          description: `Swap ${action} for rider ${updatedSwap.userId}`,
-        });
-
         await this.releaseIssuedBattery(tx, updatedSwap);
       }
 

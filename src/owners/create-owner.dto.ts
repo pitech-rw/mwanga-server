@@ -30,7 +30,4 @@ export class CreateOwnerDto {
   @IsString()
   @MaxLength(10)
   currency?: string;
-
-  @IsOptional()
-  balance?: number;
 }

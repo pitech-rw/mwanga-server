@@ -57,7 +57,12 @@ export const PERMISSIONS = {
   wallets: {
     read: 'wallets:read',
     write: 'wallets:write',
+    credit: 'wallets:credit',
     delete: 'wallets:delete',
+  },
+  companyAccounts: {
+    read: 'company-accounts:read',
+    write: 'company-accounts:write',
   },
   swaps: {
     read: 'swaps:read',
@@ -84,6 +89,7 @@ export type PermissionName =
   | (typeof PERMISSIONS.batteries)[keyof typeof PERMISSIONS.batteries]
   | (typeof PERMISSIONS.stations)[keyof typeof PERMISSIONS.stations]
   | (typeof PERMISSIONS.wallets)[keyof typeof PERMISSIONS.wallets]
+  | (typeof PERMISSIONS.companyAccounts)[keyof typeof PERMISSIONS.companyAccounts]
   | (typeof PERMISSIONS.swaps)[keyof typeof PERMISSIONS.swaps]
   | (typeof PERMISSIONS.violations)[keyof typeof PERMISSIONS.violations];
 
@@ -97,6 +103,7 @@ const readPermissions = [
   PERMISSIONS.batteries.read,
   PERMISSIONS.stations.read,
   PERMISSIONS.wallets.read,
+  PERMISSIONS.companyAccounts.read,
   PERMISSIONS.swaps.read,
   PERMISSIONS.violations.read,
 ] as const;
@@ -126,6 +133,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
   office_manager: [
     ...readPermissions,
     ...crmWritePermissions,
+    PERMISSIONS.wallets.credit,
+    PERMISSIONS.companyAccounts.write,
     PERMISSIONS.users.read,
     PERMISSIONS.users.write,
     PERMISSIONS.roles.read,

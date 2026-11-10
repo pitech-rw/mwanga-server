@@ -3,8 +3,12 @@ import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { batteryReadFilter, isUnrestrictedRead } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
-import type { Battery, Wallet } from '../prisma/types.js';
+import type { Battery } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import {
+  buildBatteryDetailQuery,
+  type BatteryDetail,
+} from './battery-detail.query.js';
 import { batteryStatusAtStation } from './battery-status.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
 import { UpdateBatteryDto } from './update-battery.dto.js';
@@ -16,27 +20,18 @@ export class BatteriesService {
   constructor(private readonly prisma: PrismaService) {}
 
   private batteryQuery() {
-    return this.prisma.db.orm.public.Battery.include('station').include('bike', (bike) =>
-      bike
-        .include('user', (user) => user.include('riderWallet'))
-        .include('owner', (owner) => owner.include('wallet')),
-    );
+    return buildBatteryDetailQuery(this.prisma.db);
   }
 
   /** Prefer rider wallet; fall back to fleet owner wallet on `bike.wallet`. */
-  private withBikeWallet<T extends Battery>(battery: T): T {
-    const bike = battery.bike as
-      | (NonNullable<Battery['bike']> & {
-          user?: { riderWallet?: Wallet | null } | null;
-          owner?: { wallet?: Wallet | null } | null;
-          wallet?: Wallet | null;
-        })
-      | null
-      | undefined;
+  private withBikeWallet<T extends BatteryDetail>(battery: T): T {
+    const bike = battery.bike;
     if (!bike) {
       return battery;
     }
-    bike.wallet = bike.user?.riderWallet ?? bike.owner?.wallet ?? null;
+    Object.assign(bike, {
+      wallet: bike.user?.riderWallet ?? bike.owner?.wallet ?? null,
+    });
     return battery;
   }
 
@@ -84,7 +79,7 @@ export class BatteriesService {
     throw this.notFoundForBattery(battery);
   }
 
-  async findAll(ctx: ReadScopeContext) {
+  async findAll(ctx: ReadScopeContext): Promise<BatteryDetail[]> {
     const filter = batteryReadFilter(ctx);
     const ordered = this.batteryQuery().orderBy((battery) => battery.createdAt.desc());
 
@@ -114,7 +109,7 @@ export class BatteriesService {
     return this.withBikeWallet(battery);
   }
 
-  async findOneBySerial(serialNumber: string, ctx: ReadScopeContext): Promise<Battery> {
+  async findOneBySerial(serialNumber: string, ctx: ReadScopeContext): Promise<BatteryDetail> {
     const normalized = serialNumber.trim();
     if (normalized === '') {
       throw new BadRequestException('serialNumber query is required');

@@ -23,6 +23,7 @@ import type { ReadScopeContext } from '../auth/read-scope.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { Battery } from '../prisma/types.js';
+import type { BatteryDetail } from './battery-detail.query.js';
 import { BatteriesService } from './batteries.service.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
 import { UpdateBatteryDto } from './update-battery.dto.js';
@@ -59,7 +60,7 @@ export class BatteriesController {
   findOneBySerial(
     @Param('serial') serial: string,
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<Battery> {
+  ): Promise<BatteryDetail> {
     return this.batteriesService.findOneBySerial(serial, this.readCtx(user));
   }
 
@@ -69,7 +70,10 @@ export class BatteriesController {
   @ApiParam({ name: 'id', type: Number })
   @ApiOkResponse({ description: 'Battery record' })
   @ApiNotFoundResponse({ description: 'Battery not found' })
-  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<Battery> {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<BatteryDetail> {
     return this.batteriesService.findOne(id, this.readCtx(user));
   }
 

@@ -147,6 +147,41 @@ export class UsersService {
         return sanitizeUser(user);
       }
 
+      if (data.type === 'rider') {
+        const user = await this.prisma.db.transaction(async (tx) => {
+          const created = await tx.orm.public.User.include('role')
+            .include('assignedStation')
+            .include('fleetOwner')
+            .create({
+              username: data.username,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              email: data.email.trim().toLowerCase(),
+              phone: data.phone,
+              address: data.address,
+              image: data.image,
+              nationalId: data.nationalId,
+              type: 'rider',
+              roleId,
+              ownerId: data.ownerId,
+              kycStatus: data.kycStatus ?? 'pending',
+              isActive: data.isActive ?? true,
+              passwordHash,
+              stationId: stationId ?? null,
+            });
+
+          await tx.orm.public.Wallet.create({
+            userId: created.id,
+            balance: asNumeric(0),
+            currency: 'CDF',
+          });
+
+          return created;
+        });
+
+        return sanitizeUser(user);
+      }
+
       const user = await this.userQuery().create({
         username: data.username,
         firstName: data.firstName,
@@ -213,11 +248,11 @@ export class UsersService {
     const ownerIdPatch =
       nextType === 'rider'
         ? nextOwnerId
-        : nextType === 'owner'
+        : nextType === 'owner' || nextType === 'agent'
           ? null
           : data.ownerId !== undefined
             ? data.ownerId
-            : existing.type !== 'rider' && existing.type !== 'owner'
+            : existing.type !== 'rider' && existing.type !== 'owner' && existing.type !== 'agent'
               ? null
               : undefined;
 

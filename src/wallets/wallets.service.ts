@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { denyOrNotFoundForScopedRead, walletReadScope } from '../auth/read-scope.js';
-import { resolveFleetOwnerIdForContext } from '../fleet/resolve-fleet.js';
+import { resolveFleetOwnerId } from '../fleet/resolve-fleet.js';
 import { LedgerService } from '../ledger/ledger.service.js';
 import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
 import type { LedgerTransaction, Wallet } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateWalletDto } from './create-wallet.dto.js';
 import type { FloatCreditDto } from './float-credit.dto.js';
+
 @Injectable()
 export class WalletsService {
   constructor(
@@ -16,7 +17,7 @@ export class WalletsService {
   ) {}
 
   private walletQuery() {
-    return this.prisma.db.orm.public.Wallet.include('owner');
+    return this.prisma.db.orm.public.Wallet.include('owner').include('riderUser').include('agent');
   }
 
   async findAll(ctx: ReadScopeContext) {
@@ -27,12 +28,21 @@ export class WalletsService {
       return ordered.all();
     }
 
-    const ownerId = await resolveFleetOwnerIdForContext(this.prisma, ctx);
-    if (ownerId == null) {
-      throw new NotFoundException('Fleet owner not found');
+    if (scope.mode === 'owner') {
+      const ownerId = await resolveFleetOwnerId(this.prisma, scope.userId, 'owner');
+      return ordered.where({ ownerId }).all();
     }
 
-    return ordered.where({ ownerId }).all();
+    if (scope.mode === 'rider') {
+      return ordered.where({ userId: scope.userId }).all();
+    }
+
+    const agent = await this.prisma.db.orm.public.Agent.first({ userId: scope.userId });
+    if (!agent) {
+      throw new NotFoundException('Agent not found');
+    }
+
+    return ordered.where({ agentId: agent.id }).all();
   }
 
   async findOne(id: number, ctx: ReadScopeContext) {
@@ -43,9 +53,18 @@ export class WalletsService {
     }
 
     const scope = walletReadScope(ctx);
-    if (scope.mode === 'fleet') {
-      const ownerId = await resolveFleetOwnerIdForContext(this.prisma, ctx);
-      if (ownerId == null || wallet.ownerId !== ownerId) {
+    if (scope.mode === 'owner') {
+      const ownerId = await resolveFleetOwnerId(this.prisma, scope.userId, 'owner');
+      if (wallet.ownerId !== ownerId) {
+        denyOrNotFoundForScopedRead(ctx, 'not_owner');
+      }
+    } else if (scope.mode === 'rider') {
+      if (wallet.userId !== scope.userId) {
+        denyOrNotFoundForScopedRead(ctx, 'not_owner');
+      }
+    } else if (scope.mode === 'agent') {
+      const agent = await this.prisma.db.orm.public.Agent.first({ userId: scope.userId });
+      if (!agent || wallet.agentId !== agent.id) {
         denyOrNotFoundForScopedRead(ctx, 'not_owner');
       }
     }

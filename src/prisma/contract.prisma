@@ -45,6 +45,7 @@ model User {
   assignedStation     Station?          @relation("StationOperators", fields: [stationId], references: [id])
   riderWallet         Wallet?           @relation("RiderWallet")
   ledgerTransactions  LedgerTransaction[] @relation("LedgerActor")
+  portalAgent         Agent?            @relation("AgentPortalUser")
 }
 
 model Role {
@@ -110,6 +111,7 @@ enum ViolationSeverity {
 
 enum LedgerTransactionKind {
   float_topup
+  agent_topup
   swap_fee
   adjustment
 }
@@ -133,6 +135,20 @@ model Owner {
   wallet     Wallet?
   bikes      Bike[]
   riders     User[]  @relation("FleetRiders")
+}
+
+model Agent {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  phone     String?
+  status    String   @default("active")
+  userId    Int?     @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @onCreate(now()) @onUpdate(now())
+
+  portalUser User?   @relation("AgentPortalUser", fields: [userId], references: [id])
+  wallet     Wallet?
 }
 
 model Bike {
@@ -212,16 +228,18 @@ model NfcCard {
 
 model Wallet {
   id        Int      @id @default(autoincrement())
-  /// Fleet proprietor wallet (required today). Future: optional rider wallet via userId with one holder enforced in app logic.
-  ownerId   Int      @unique
+  /// Exactly one holder: ownerId (fleet), userId (rider), or agentId (agent float). Enforced in app logic.
+  ownerId   Int?     @unique
   userId    Int?     @unique
+  agentId   Int?     @unique
   balance   Numeric(10,2)  @default(0)
   currency  String   @default("CDF")
   createdAt DateTime @default(now())
   updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
-  owner            Owner              @relation(fields: [ownerId], references: [id])
+  owner            Owner?             @relation(fields: [ownerId], references: [id])
   riderUser        User?              @relation("RiderWallet", fields: [userId], references: [id])
+  agent            Agent?             @relation(fields: [agentId], references: [id])
   ledgerLines      LedgerLine[]
   ledgerTransactions LedgerTransaction[] @relation("WalletLedger")
 }

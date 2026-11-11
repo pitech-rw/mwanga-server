@@ -34,6 +34,11 @@ export const PERMISSIONS = {
     write: 'owners:write',
     delete: 'owners:delete',
   },
+  agents: {
+    read: 'agents:read',
+    write: 'agents:write',
+    delete: 'agents:delete',
+  },
   bikes: {
     read: 'bikes:read',
     write: 'bikes:write',
@@ -58,6 +63,7 @@ export const PERMISSIONS = {
     read: 'wallets:read',
     write: 'wallets:write',
     credit: 'wallets:credit',
+    agentTopup: 'wallets:agent-topup',
     delete: 'wallets:delete',
   },
   companyAccounts: {
@@ -84,6 +90,7 @@ export type PermissionName =
   | (typeof PERMISSIONS.roles)[keyof typeof PERMISSIONS.roles]
   | (typeof PERMISSIONS.riders)[keyof typeof PERMISSIONS.riders]
   | (typeof PERMISSIONS.owners)[keyof typeof PERMISSIONS.owners]
+  | (typeof PERMISSIONS.agents)[keyof typeof PERMISSIONS.agents]
   | (typeof PERMISSIONS.bikes)[keyof typeof PERMISSIONS.bikes]
   | (typeof PERMISSIONS.cards)[keyof typeof PERMISSIONS.cards]
   | (typeof PERMISSIONS.batteries)[keyof typeof PERMISSIONS.batteries]
@@ -98,6 +105,7 @@ const readPermissions = [
   PERMISSIONS.roles.read,
   PERMISSIONS.riders.read,
   PERMISSIONS.owners.read,
+  PERMISSIONS.agents.read,
   PERMISSIONS.bikes.read,
   PERMISSIONS.cards.read,
   PERMISSIONS.batteries.read,
@@ -111,6 +119,7 @@ const readPermissions = [
 const crmWritePermissions = [
   PERMISSIONS.riders.write,
   PERMISSIONS.owners.write,
+  PERMISSIONS.agents.write,
   PERMISSIONS.bikes.write,
   PERMISSIONS.cards.write,
   PERMISSIONS.batteries.write,
@@ -140,6 +149,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.roles.read,
     PERMISSIONS.riders.delete,
     PERMISSIONS.owners.delete,
+    PERMISSIONS.agents.delete,
     PERMISSIONS.bikes.delete,
     PERMISSIONS.cards.delete,
     PERMISSIONS.batteries.delete,
@@ -164,8 +174,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.violations.write,
   ],
 
-  /** Field agent: rider/card registration (no station swap workflow) */
+  /** Field agent: own float wallet, top-ups into rider or owner wallets */
   agent: [
+    PERMISSIONS.agents.read,
     PERMISSIONS.riders.read,
     PERMISSIONS.riders.write,
     PERMISSIONS.owners.read,
@@ -176,6 +187,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.batteries.read,
     PERMISSIONS.stations.read,
     PERMISSIONS.wallets.read,
+    PERMISSIONS.wallets.agentTopup,
     PERMISSIONS.violations.read,
     PERMISSIONS.violations.write,
   ],

@@ -129,4 +129,93 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
     const unchanged = await db.orm.public.Wallet.first({ id: walletId });
     expect(Number(unchanged?.balance)).toBe(Number(wallet.balance));
   });
+
+  it('moves agent float into an owner wallet and rejects a reused reference', async () => {
+    const role = await db.orm.public.Role.orderBy((role) => role.id.asc()).first();
+    if (!role) {
+      throw new Error('Integration test requires a role');
+    }
+
+    const actor = await db.orm.public.User.create({
+      username: `agent-${refPrefix}`,
+      firstName: 'Float',
+      lastName: 'Agent',
+      email: `agent-${refPrefix}@example.com`,
+      type: 'agent',
+      roleId: role.id,
+      kycStatus: 'pending',
+      isActive: true,
+    });
+
+    const agent = await db.orm.public.Agent.create({
+      name: 'Float Agent',
+      status: 'active',
+      userId: actor.id,
+    });
+
+    const agentWallet = await db.orm.public.Wallet.create({
+      agentId: agent.id,
+      balance: asNumeric(0),
+      currency: 'CDF',
+    });
+
+    const funded = 200;
+    await db.transaction(async (tx) => {
+      await ledger.creditFloatInTx(tx, {
+        walletId: agentWallet.id,
+        companyAccountId,
+        amount: funded,
+        externalReference: `${refPrefix}-agent-fund`,
+      });
+    });
+
+    const beforeOwner = await db.orm.public.Wallet.first({ id: walletId });
+    if (!beforeOwner) {
+      throw new Error('Owner wallet missing');
+    }
+
+    const amount = 40;
+    const externalReference = `${refPrefix}-agent-topup`;
+    await db.transaction(async (tx) => {
+      await ledger.transferAgentFloatInTx(tx, {
+        agentWalletId: agentWallet.id,
+        targetWalletId: walletId,
+        amount,
+        externalReference,
+        actorUserId: actor.id,
+        description: 'agent integration top-up',
+      });
+    });
+
+    const afterAgent = await db.orm.public.Wallet.first({ id: agentWallet.id });
+    const afterOwner = await db.orm.public.Wallet.first({ id: walletId });
+    expect(Number(afterAgent?.balance)).toBeCloseTo(funded - amount, 2);
+    expect(Number(afterOwner?.balance)).toBeCloseTo(Number(beforeOwner.balance) + amount, 2);
+
+    await expect(
+      db.transaction(async (tx) => {
+        await ledger.transferAgentFloatInTx(tx, {
+          agentWalletId: agentWallet.id,
+          targetWalletId: walletId,
+          amount: 1,
+          externalReference,
+          actorUserId: actor.id,
+        });
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects an agent top-up whose source is not an agent float', async () => {
+    await expect(
+      db.transaction(async (tx) => {
+        await ledger.transferAgentFloatInTx(tx, {
+          agentWalletId: walletId,
+          targetWalletId: walletId,
+          amount: 1,
+          externalReference: `${refPrefix}-not-agent`,
+          actorUserId: 1,
+        });
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
 });

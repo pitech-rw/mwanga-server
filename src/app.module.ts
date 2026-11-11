@@ -9,6 +9,7 @@ import { PermissionsGuard } from './auth/permissions.guard.js';
 import { BatteriesModule } from './batteries/batteries.module.js';
 import { BikesModule } from './bikes/bikes.module.js';
 import { OwnersModule } from './owners/owners.module.js';
+import { AgentsModule } from './agents/agents.module.js';
 import { CardsModule } from './cards/cards.module.js';
 import { PrismaModule } from './prisma.module.js';
 import { RolesModule } from './roles/roles.module.js';
@@ -33,6 +34,7 @@ import { CompanyAccountsModule } from './company-accounts/company-accounts.modul
     CardsModule,
     BikesModule,
     OwnersModule,
+    AgentsModule,
     StationsModule,
     BatteriesModule,
     WalletsModule,

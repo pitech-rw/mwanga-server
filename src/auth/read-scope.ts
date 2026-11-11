@@ -35,18 +35,27 @@ export function assertCanReadUserId(ctx: ReadScopeContext, targetUserId: number)
 }
 
 /**
- * Wallet read access: back office sees all; owner/rider see fleet wallet only.
+ * Wallet read access: back office sees all; owner sees the fleet wallet;
+ * rider sees their personal wallet; agent sees their float wallet.
  */
 export type WalletReadScope =
   | { mode: 'unrestricted' }
-  | { mode: 'fleet'; actorUserId: number; actorType: UserType };
+  | { mode: 'owner'; userId: number }
+  | { mode: 'rider'; userId: number }
+  | { mode: 'agent'; userId: number };
 
 export function walletReadScope(ctx: ReadScopeContext): WalletReadScope {
   if (isUnrestrictedRead(ctx)) {
     return { mode: 'unrestricted' };
   }
-  if (ctx.user.type === 'owner' || ctx.user.type === 'rider') {
-    return { mode: 'fleet', actorUserId: ctx.user.sub, actorType: ctx.user.type as UserType };
+  if (ctx.user.type === 'owner') {
+    return { mode: 'owner', userId: ctx.user.sub };
+  }
+  if (ctx.user.type === 'rider') {
+    return { mode: 'rider', userId: ctx.user.sub };
+  }
+  if (ctx.user.type === 'agent') {
+    return { mode: 'agent', userId: ctx.user.sub };
   }
   throw new ForbiddenException('Insufficient scope to list wallets');
 }
@@ -146,6 +155,18 @@ export type SwapReadScope =
   | { mode: 'swapper'; stationId: number };
 
 export type OwnerReadScope = { mode: 'unrestricted' } | { mode: 'portal'; userId: number };
+
+export type AgentReadScope = { mode: 'unrestricted' } | { mode: 'self'; userId: number };
+
+export function agentReadScope(ctx: ReadScopeContext): AgentReadScope {
+  if (isUnrestrictedRead(ctx)) {
+    return { mode: 'unrestricted' };
+  }
+  if (ctx.user.type === 'agent') {
+    return { mode: 'self', userId: ctx.user.sub };
+  }
+  throw new ForbiddenException('Insufficient scope to read agents');
+}
 
 export function ownerReadScope(ctx: ReadScopeContext): OwnerReadScope {
   if (isUnrestrictedRead(ctx)) {

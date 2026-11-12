@@ -6,9 +6,7 @@ COPY package*.json ./
 RUN npm ci
 
 FROM deps AS development
-RUN useradd -ms /bin/sh -u 1001 app
-COPY --chown=app:app . .
-USER app
+COPY . .
 CMD ["npm", "run", "start:dev"]
 
 FROM deps AS builder

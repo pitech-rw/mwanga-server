@@ -40,6 +40,14 @@ export class UsersController {
     return { user, isAdminBypass: user.adminBypass };
   }
 
+  @Get('riders')
+  @RequirePermissions(PERMISSIONS.riders.read)
+  @ApiOperation({ summary: 'List riders and fleet owners (field agents)' })
+  @ApiOkResponse({ description: 'Rider users and fleet Owner records for top-up lookup' })
+  findRiders(@CurrentUser() user: AuthenticatedUser): Promise<Record<string, unknown>[]> {
+    return this.usersService.findRidersForAgent(this.readCtx(user));
+  }
+
   @Get()
   @RequirePermissions(PERMISSIONS.users.read)
   @ApiOperation({ summary: 'List users' })

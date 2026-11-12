@@ -32,6 +32,9 @@ export function assertOwnerTypeInvariant(type: UserType, ownerId: number | null 
   if (type === 'owner' && ownerId != null) {
     throw new BadRequestException('Owner portal accounts must not set ownerId; link via Owner.userId');
   }
+  if (type === 'agent' && ownerId != null) {
+    throw new BadRequestException('Agent accounts must not have ownerId set');
+  }
   if (type !== 'rider' && type !== 'owner' && ownerId != null) {
     throw new BadRequestException('Only riders may have ownerId set');
   }

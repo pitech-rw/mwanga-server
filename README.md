@@ -60,9 +60,9 @@ Default roles (synced with `npm run seed:permissions`):
 | `office` | Back-office CRM + inventory; read-only on swaps |
 | `office_manager` | Office + user admin + destructive CRM/swap admin |
 | `swapper` | Station executive workflow + read-only context |
-| `agent` | Field agent: rider/card registration (cannot operate swaps) |
+| `agent` | Field agent: own float wallet; tops up a rider or owner wallet (`POST /agents/top-ups`). Cannot operate swaps or credit a company account |
 | `owner` | Fleet proprietor portal: own owner record, wallet, bikes, riders in fleet, swaps |
-| `rider` | Rider self-service: own swaps; fleet wallet (read); own user record; stations directory (full list for discovery) |
+| `rider` | Rider self-service: own swaps; personal wallet (read); own user record; stations directory (full list for discovery) |
 | `viewer` | Read-only across resources (same row visibility as `office` / back-office dashboards) |
 
 Assign users a **`type`** matching their job; permissions come from the role with the same name. After changing the permission matrix, run `npm run seed:permissions`. To fix legacy rows where `type` ≠ `Role.name`, run `npm run align:user-types -- --sync-role-name`.
@@ -75,9 +75,9 @@ Coarse permissions (`*:read`) are enforced by `PermissionsGuard`. On top of that
 |-----------|------------------|
 | `admin` (`system:admin`) | Full data; JWT includes `adminBypass` |
 | `office`, `office_manager`, `viewer` | Full read on all resources below |
-| `rider` | Own `User` row; own swaps (`userId`); own wallet; full station list (read-only directory) |
+| `rider` | Own `User` row; own swaps (`userId`); personal wallet (`Wallet.userId`); full station list (read-only directory) |
 | `swapper` | Assigned station only (JWT includes `stationId`): that station, batteries at that station, swaps at that station; bikes/cards tied to swaps at that station or `userId` on the asset |
-| `agent` | Full station list (same as rider); bikes/cards assigned to them (`userId`); violations they reported or where they are offender |
+| `agent` | Own agent record and float wallet; exact phone lookup of a rider or owner to top up. Station list is unrestricted. Bikes and cards assigned to them (`userId`); violations they reported or where they are offender |
 
 **Re-login** after changing `stationId` or role permissions so the JWT picks up `stationId` and `adminBypass`.
 

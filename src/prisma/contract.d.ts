@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'fc48b6585d4c2d17ae4e244ccb2678839c02f862949b2d8cc2271b3eac50f4b2'>;
+  StorageHashBase<'8dbd778de0907f9a80354420b110608b9ab61a5f644d7cd83def9dabbe05315b'>;
 export type ExecutionHash =
-  ExecutionHashBase<'deb71d48cb977786a4783b1b4d6ea6cedf2efbb7eef3f634c79006583c849889'>;
+  ExecutionHashBase<'e476640239c809a073d92a5deb0bce69f90b186500714a505b4dda9fb3e749e3'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -295,8 +295,8 @@ type FieldTypeOverrides = {
       };
       readonly LedgerTransaction: {
         readonly kind: {
-          readonly output: 'float_topup' | 'swap_fee' | 'adjustment';
-          readonly input: 'float_topup' | 'swap_fee' | 'adjustment';
+          readonly output: 'float_topup' | 'agent_topup' | 'swap_fee' | 'adjustment';
+          readonly input: 'float_topup' | 'agent_topup' | 'swap_fee' | 'adjustment';
         };
       };
       readonly SwapTransaction: {
@@ -395,8 +395,8 @@ type ColumnTypeOverrides = {
     };
     readonly LedgerTransaction: {
       readonly kind: {
-        readonly output: 'float_topup' | 'swap_fee' | 'adjustment';
-        readonly input: 'float_topup' | 'swap_fee' | 'adjustment';
+        readonly output: 'float_topup' | 'agent_topup' | 'swap_fee' | 'adjustment';
+        readonly input: 'float_topup' | 'agent_topup' | 'swap_fee' | 'adjustment';
       };
     };
     readonly SwapTransaction: {
@@ -475,6 +475,19 @@ export type StorageColumnInputTypes = ColumnTypesFromStorage<
 >;
 
 export namespace Models {
+  export type public_Agent = {
+    createdAt: FieldOutputTypes['public']['Agent']['createdAt'];
+    email: FieldOutputTypes['public']['Agent']['email'];
+    id: FieldOutputTypes['public']['Agent']['id'];
+    name: FieldOutputTypes['public']['Agent']['name'];
+    phone: FieldOutputTypes['public']['Agent']['phone'];
+    status: FieldOutputTypes['public']['Agent']['status'];
+    updatedAt: FieldOutputTypes['public']['Agent']['updatedAt'];
+    userId: FieldOutputTypes['public']['Agent']['userId'];
+    portalUser: public_User | null;
+    wallet: public_Wallet | null;
+    readonly [RelationKeys]?: 'portalUser' | 'wallet';
+  };
   export type public_AuditLog = {
     action: FieldOutputTypes['public']['AuditLog']['action'];
     actor: FieldOutputTypes['public']['AuditLog']['actor'];
@@ -739,6 +752,7 @@ export namespace Models {
     ledgerTransactions: public_LedgerTransaction[];
     nfcCards: public_NfcCard[];
     offendingViolations: public_Violation[];
+    portalAgent: public_Agent | null;
     proprietorOwner: public_Owner | null;
     reportedViolations: public_Violation[];
     riderSwaps: public_SwapTransaction[];
@@ -752,6 +766,7 @@ export namespace Models {
       | 'ledgerTransactions'
       | 'nfcCards'
       | 'offendingViolations'
+      | 'portalAgent'
       | 'proprietorOwner'
       | 'reportedViolations'
       | 'riderSwaps'
@@ -779,6 +794,7 @@ export namespace Models {
     readonly [RelationKeys]?: 'offender' | 'reporter' | 'station';
   };
   export type public_Wallet = {
+    agentId: FieldOutputTypes['public']['Wallet']['agentId'];
     balance: FieldOutputTypes['public']['Wallet']['balance'];
     createdAt: FieldOutputTypes['public']['Wallet']['createdAt'];
     currency: FieldOutputTypes['public']['Wallet']['currency'];
@@ -786,16 +802,19 @@ export namespace Models {
     ownerId: FieldOutputTypes['public']['Wallet']['ownerId'];
     updatedAt: FieldOutputTypes['public']['Wallet']['updatedAt'];
     userId: FieldOutputTypes['public']['Wallet']['userId'];
+    agent: public_Agent | null;
     ledgerLines: public_LedgerLine[];
     ledgerTransactions: public_LedgerTransaction[];
-    owner: public_Owner;
+    owner: public_Owner | null;
     riderUser: public_User | null;
-    readonly [RelationKeys]?: 'ledgerLines' | 'ledgerTransactions' | 'owner' | 'riderUser';
+    readonly [RelationKeys]?:
+      'agent' | 'ledgerLines' | 'ledgerTransactions' | 'owner' | 'riderUser';
   };
 }
 
 export declare const models: {
   public: {
+    Agent: Models.public_Agent;
     AuditLog: Models.public_AuditLog;
     Battery: Models.public_Battery;
     BatteryReading: Models.public_BatteryReading;
@@ -835,6 +854,86 @@ type ContractBase = Omit<
         readonly kind: 'postgres-schema';
         readonly entries: {
           readonly table: {
+            readonly Agent: {
+              columns: {
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly email: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly name: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly phone: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'active'>;
+                  };
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['userId'] }];
+              indexes: readonly [];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Agent';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
             readonly AuditLog: {
               columns: {
                 readonly action: {
@@ -2770,6 +2869,12 @@ type ContractBase = Omit<
             };
             readonly Wallet: {
               columns: {
+                readonly agentId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly balance: {
                   readonly dataType: 'pg/numeric';
                   readonly codecId: 'pg/numeric@1';
@@ -2812,7 +2917,7 @@ type ContractBase = Omit<
                 readonly ownerId: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly updatedAt: {
@@ -2833,6 +2938,7 @@ type ContractBase = Omit<
               uniques: readonly [
                 { readonly columns: readonly ['ownerId'] },
                 { readonly columns: readonly ['userId'] },
+                { readonly columns: readonly ['agentId'] },
               ];
               indexes: readonly [];
               foreignKeys: readonly [
@@ -2860,6 +2966,18 @@ type ContractBase = Omit<
                     readonly columns: readonly ['id'];
                   };
                 },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Wallet';
+                    readonly columns: readonly ['agentId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Agent';
+                    readonly columns: readonly ['id'];
+                  };
+                },
               ];
             };
           };
@@ -2874,7 +2992,7 @@ type ContractBase = Omit<
             };
             readonly LedgerTransactionKind: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['float_topup', 'swap_fee', 'adjustment'];
+              readonly values: readonly ['float_topup', 'agent_topup', 'swap_fee', 'adjustment'];
             };
             readonly PaymentStatus: {
               readonly kind: 'valueSet';
@@ -2929,6 +3047,7 @@ type ContractBase = Omit<
   readonly target: 'postgres';
   readonly targetFamily: 'sql';
   readonly roots: {
+    readonly Agent: { readonly namespace: 'public' & NamespaceId; readonly model: 'Agent' };
     readonly AuditLog: { readonly namespace: 'public' & NamespaceId; readonly model: 'AuditLog' };
     readonly Battery: { readonly namespace: 'public' & NamespaceId; readonly model: 'Battery' };
     readonly BatteryReading: {
@@ -2976,6 +3095,87 @@ type ContractBase = Omit<
     readonly namespaces: {
       readonly public: {
         readonly models: {
+          readonly Agent: {
+            readonly fields: {
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly email: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly phone: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly userId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: {
+              readonly portalUser: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly wallet: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Wallet';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['agentId'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'Agent';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly email: { readonly column: 'email' };
+                readonly id: { readonly column: 'id' };
+                readonly name: { readonly column: 'name' };
+                readonly phone: { readonly column: 'phone' };
+                readonly status: { readonly column: 'status' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
+              };
+            };
+          };
           readonly AuditLog: {
             readonly fields: {
               readonly action: {
@@ -4620,6 +4820,18 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['offenderId'];
                 };
               };
+              readonly portalAgent: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Agent';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
+                };
+              };
               readonly proprietorOwner: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -4834,6 +5046,10 @@ type ContractBase = Omit<
           };
           readonly Wallet: {
             readonly fields: {
+              readonly agentId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
               readonly balance: {
                 readonly nullable: false;
                 readonly type: {
@@ -4859,7 +5075,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly ownerId: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly updatedAt: {
@@ -4876,6 +5092,18 @@ type ContractBase = Omit<
               };
             };
             readonly relations: {
+              readonly agent: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Agent';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['agentId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
               readonly ledgerLines: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -4904,7 +5132,7 @@ type ContractBase = Omit<
                   readonly model: 'Owner';
                 };
                 readonly cardinality: 'N:1';
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly on: {
                   readonly localFields: readonly ['ownerId'];
                   readonly targetFields: readonly ['id'];
@@ -4924,6 +5152,7 @@ type ContractBase = Omit<
               readonly table: 'Wallet';
               readonly namespaceId: 'public';
               readonly fields: {
+                readonly agentId: { readonly column: 'agentId' };
                 readonly balance: { readonly column: 'balance' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly currency: { readonly column: 'currency' };
@@ -4957,6 +5186,7 @@ type ContractBase = Omit<
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
               { readonly name: 'float_topup'; readonly value: 'float_topup' },
+              { readonly name: 'agent_topup'; readonly value: 'agent_topup' },
               { readonly name: 'swap_fee'; readonly value: 'swap_fee' },
               { readonly name: 'adjustment'; readonly value: 'adjustment' },
             ];
@@ -5036,6 +5266,7 @@ type ContractBase = Omit<
           ];
           readonly LedgerTransactionKind: readonly [
             { readonly name: 'float_topup'; readonly value: 'float_topup' },
+            { readonly name: 'agent_topup'; readonly value: 'agent_topup' },
             { readonly name: 'swap_fee'; readonly value: 'swap_fee' },
             { readonly name: 'adjustment'; readonly value: 'adjustment' },
           ];
@@ -5117,6 +5348,23 @@ type ContractBase = Omit<
     readonly executionHash: ExecutionHash;
     readonly mutations: {
       readonly defaults: readonly [
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly onUpdate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'Agent';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
         {
           readonly onCreate: {
             readonly id: 'timestampNow';

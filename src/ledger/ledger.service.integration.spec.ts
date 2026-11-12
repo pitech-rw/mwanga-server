@@ -6,7 +6,7 @@ import { db } from '../prisma/db.js';
 import { LedgerService } from './ledger.service.js';
 import { PrismaService } from '../prisma.service.js';
 
-describe('LedgerService (integration)', { timeout: 60_000 }, () => {
+describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
   const prisma = { db } as PrismaService;
   const ledger = new LedgerService(prisma);
 
@@ -42,6 +42,13 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
       }));
     companyAccountId = company.id;
 
+    const minCompanyBalance = 10_000;
+    if (Number(company.balance) < minCompanyBalance) {
+      await db.orm.public.CompanyAccount.where({ id: company.id }).update({
+        balance: asNumeric(minCompanyBalance),
+      });
+    }
+
     const revenue = await db.orm.public.RevenueAccount.where({ code: 'swap_fees' }).first();
     if (!revenue) {
       throw new Error('Run npm run seed:ledger-accounts before integration tests');
@@ -76,7 +83,28 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
     }
 
     expect(Number(afterWallet.balance)).toBeCloseTo(Number(beforeWallet.balance) + amount, 2);
-    expect(Number(afterCompany.balance)).toBeCloseTo(Number(beforeCompany.balance) + amount, 2);
+    expect(Number(afterCompany.balance)).toBeCloseTo(Number(beforeCompany.balance) - amount, 2);
+  });
+
+  it('rejects float top-up when company account balance is insufficient', async () => {
+    const company = await db.orm.public.CompanyAccount.first({ id: companyAccountId });
+    if (!company) {
+      throw new Error('Company account missing');
+    }
+
+    const overspend = Number(company.balance) + 10_000;
+    const externalReference = `${refPrefix}-float-insufficient-co`;
+
+    await expect(
+      db.transaction(async (tx) => {
+        await ledger.creditFloatInTx(tx, {
+          walletId,
+          companyAccountId,
+          amount: overspend,
+          externalReference,
+        });
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects duplicate externalReference', async () => {
@@ -128,5 +156,98 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
 
     const unchanged = await db.orm.public.Wallet.first({ id: walletId });
     expect(Number(unchanged?.balance)).toBe(Number(wallet.balance));
+  });
+
+  it('moves agent float into an owner wallet and rejects a reused reference', async () => {
+    const role = await db.orm.public.Role.orderBy((role) => role.id.asc()).first();
+    if (!role) {
+      throw new Error('Integration test requires a role');
+    }
+
+    const actor = await db.orm.public.User.create({
+      username: `agent-${refPrefix}`,
+      firstName: 'Float',
+      lastName: 'Agent',
+      email: `agent-${refPrefix}@example.com`,
+      type: 'agent',
+      roleId: role.id,
+      kycStatus: 'pending',
+      isActive: true,
+    });
+
+    const agent = await db.orm.public.Agent.create({
+      name: 'Float Agent',
+      status: 'active',
+      userId: actor.id,
+    });
+
+    const agentWallet = await db.orm.public.Wallet.create({
+      agentId: agent.id,
+      balance: asNumeric(0),
+      currency: 'CDF',
+    });
+
+    const amount = 40;
+    const funded = amount + 1;
+    const companyBeforeFund = await db.orm.public.CompanyAccount.first({ id: companyAccountId });
+    if (!companyBeforeFund || Number(companyBeforeFund.balance) < funded) {
+      throw new Error('Company account needs enough balance for agent float integration test');
+    }
+
+    await db.transaction(async (tx) => {
+      await ledger.creditFloatInTx(tx, {
+        walletId: agentWallet.id,
+        companyAccountId,
+        amount: funded,
+        externalReference: `${refPrefix}-agent-fund`,
+      });
+    });
+
+    const beforeOwner = await db.orm.public.Wallet.first({ id: walletId });
+    if (!beforeOwner) {
+      throw new Error('Owner wallet missing');
+    }
+    const externalReference = `${refPrefix}-agent-topup`;
+    await db.transaction(async (tx) => {
+      await ledger.transferAgentFloatInTx(tx, {
+        agentWalletId: agentWallet.id,
+        targetWalletId: walletId,
+        amount,
+        externalReference,
+        actorUserId: actor.id,
+        description: 'agent integration top-up',
+      });
+    });
+
+    const afterAgent = await db.orm.public.Wallet.first({ id: agentWallet.id });
+    const afterOwner = await db.orm.public.Wallet.first({ id: walletId });
+    expect(Number(afterAgent?.balance)).toBeCloseTo(funded - amount, 2);
+    expect(Number(afterOwner?.balance)).toBeCloseTo(Number(beforeOwner.balance) + amount, 2);
+
+    await expect(
+      db.transaction(async (tx) => {
+        await ledger.transferAgentFloatInTx(tx, {
+          agentWalletId: agentWallet.id,
+          targetWalletId: walletId,
+          amount: 1,
+          externalReference,
+          actorUserId: actor.id,
+        });
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects an agent top-up whose source is not an agent float', async () => {
+    await expect(
+      db.transaction(async (tx) => {
+        await ledger.transferAgentFloatInTx(tx, {
+          agentWalletId: walletId,
+          targetWalletId: walletId,
+          amount: 1,
+          externalReference: `${refPrefix}-not-agent`,
+          actorUserId: 1,
+        });
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

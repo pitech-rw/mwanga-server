@@ -10,7 +10,7 @@ import {
 } from '@nestjs/swagger';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
-import type { CompanyAccount } from '../prisma/types.js';
+import type { CompanyAccount, LedgerTransaction } from '../prisma/types.js';
 import { CompanyAccountsService } from './company-accounts.service.js';
 import { CreateCompanyAccountDto } from './create-company-account.dto.js';
 
@@ -26,6 +26,15 @@ export class CompanyAccountsController {
   @ApiOkResponse({ description: 'Company accounts' })
   findAll(): Promise<CompanyAccount[]> {
     return this.companyAccountsService.findAll();
+  }
+
+  @Get(':id/transactions')
+  @RequirePermissions(PERMISSIONS.companyAccounts.read)
+  @ApiOperation({ summary: 'List ledger transactions for a company account' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiOkResponse({ description: 'Immutable ledger transactions' })
+  listTransactions(@Param('id', ParseIntPipe) id: number): Promise<LedgerTransaction[]> {
+    return this.companyAccountsService.listLedgerTransactions(id);
   }
 
   @Get(':id')

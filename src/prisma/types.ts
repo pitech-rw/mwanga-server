@@ -7,6 +7,7 @@ export type UserType = Models.public_User['type'];
 export type Role = Scalars<Models.public_Role>;
 export type Permission = Scalars<Models.public_Permission>;
 export type Owner = Scalars<Models.public_Owner>;
+export type Agent = Scalars<Models.public_Agent>;
 export type Bike = Scalars<Models.public_Bike>;
 export type Station = Scalars<Models.public_Station>;
 export type Battery = Scalars<Models.public_Battery>;

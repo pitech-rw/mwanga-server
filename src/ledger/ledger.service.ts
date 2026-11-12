@@ -66,6 +66,9 @@ export class LedgerService {
         throw new NotFoundException(`Company account ${line.companyAccountId} not found`);
       }
       const next = Number(account.balance) + delta;
+      if (next < 0) {
+        throw new BadRequestException('Insufficient company account balance');
+      }
       await tx.orm.public.CompanyAccount.where({ id: account.id }).update({
         balance: asNumeric(next),
       });
@@ -116,6 +119,27 @@ export class LedgerService {
       }
       if (!input.externalReference?.trim()) {
         throw new BadRequestException('externalReference is required for float top-up');
+      }
+    }
+
+    if (input.kind === 'agent_topup') {
+      const debitWallet = input.lines.find(
+        (line) => line.direction === 'debit' && line.walletId != null,
+      );
+      const creditWallet = input.lines.find(
+        (line) => line.direction === 'credit' && line.walletId != null,
+      );
+      if (
+        debitWallet?.walletId == null ||
+        creditWallet?.walletId == null ||
+        debitWallet.walletId === creditWallet.walletId
+      ) {
+        throw new BadRequestException(
+          'Agent top-up must debit the agent wallet and credit a different wallet',
+        );
+      }
+      if (!input.externalReference?.trim()) {
+        throw new BadRequestException('externalReference is required for agent top-up');
       }
     }
 
@@ -203,6 +227,8 @@ export class LedgerService {
       throw new BadRequestException('Wallet and company account currency must match');
     }
 
+    this.assertCompanyAccountSolvent(company, params.amount);
+
     return this.postTransaction(tx, {
       kind: 'float_topup',
       walletId: wallet.id,
@@ -219,6 +245,72 @@ export class LedgerService {
           direction: 'credit',
           amount: params.amount,
           walletId: wallet.id,
+        },
+      ],
+    });
+  }
+
+  async transferAgentFloatInTx(
+    tx: LedgerTx,
+    params: {
+      agentWalletId: number;
+      targetWalletId: number;
+      amount: number;
+      externalReference: string;
+      actorUserId: number;
+      description?: string;
+    },
+  ): Promise<LedgerTransaction> {
+    if (!(params.amount > 0)) {
+      throw new BadRequestException('Top-up amount must be positive');
+    }
+
+    const source = await tx.orm.public.Wallet.first({ id: params.agentWalletId });
+    if (!source) {
+      throw new NotFoundException(`Wallet ${params.agentWalletId} not found`);
+    }
+    if (source.agentId == null) {
+      throw new BadRequestException('Source wallet is not an agent float');
+    }
+
+    const agent = await tx.orm.public.Agent.first({ id: source.agentId });
+    if (!agent || agent.userId !== params.actorUserId) {
+      throw new BadRequestException('Agent float does not belong to the acting user');
+    }
+
+    const target = await tx.orm.public.Wallet.first({ id: params.targetWalletId });
+    if (!target) {
+      throw new NotFoundException(`Wallet ${params.targetWalletId} not found`);
+    }
+
+    const targetIsRider = target.userId != null && target.ownerId == null && target.agentId == null;
+    const targetIsOwner = target.ownerId != null && target.userId == null && target.agentId == null;
+    if (!targetIsRider && !targetIsOwner) {
+      throw new BadRequestException('Top-up target must be a rider or owner wallet');
+    }
+
+    if (source.currency !== target.currency) {
+      throw new BadRequestException('Agent float and target wallet currency must match');
+    }
+
+    this.assertWalletSolvent(source, params.amount);
+
+    return this.postTransaction(tx, {
+      kind: 'agent_topup',
+      walletId: target.id,
+      actorUserId: params.actorUserId,
+      externalReference: params.externalReference,
+      description: params.description,
+      lines: [
+        {
+          direction: 'debit',
+          amount: params.amount,
+          walletId: source.id,
+        },
+        {
+          direction: 'credit',
+          amount: params.amount,
+          walletId: target.id,
         },
       ],
     });
@@ -300,11 +392,61 @@ export class LedgerService {
     }
   }
 
+  /** Float top-up debits the company account by `debitAmount`. */
+  assertCompanyAccountSolvent(
+    company: { balance: string | number },
+    debitAmount: number,
+  ): void {
+    if (!(debitAmount > 0)) {
+      throw new BadRequestException('Top-up amount must be positive');
+    }
+    const balance = Number(company.balance);
+    if (balance < debitAmount) {
+      throw new BadRequestException('Insufficient company account balance');
+    }
+  }
+
   async listTransactionsForWallet(walletId: number, limit = 50) {
-    const rows = await this.prisma.db.orm.public.LedgerTransaction.include('lines')
-      .where({ walletId })
-      .orderBy((row) => row.createdAt.desc())
-      .all();
-    return rows.slice(0, limit);
+    const [byHeader, lines] = await Promise.all([
+      this.prisma.db.orm.public.LedgerTransaction.include('lines').where({ walletId }).all(),
+      this.prisma.db.orm.public.LedgerLine.where({ walletId }).all(),
+    ]);
+    const seen = new Set(byHeader.map((row) => row.id));
+    const missingIds = [...new Set(lines.map((line) => line.transactionId))].filter((id) => !seen.has(id));
+    const extras = (
+      await Promise.all(
+        missingIds.map((id) => this.prisma.db.orm.public.LedgerTransaction.include('lines').first({ id })),
+      )
+    ).filter((row) => row != null);
+
+    return [...byHeader, ...extras]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async listTransactionsForCompanyAccount(companyAccountId: number, limit = 50) {
+    const lines = await this.prisma.db.orm.public.LedgerLine.where({ companyAccountId }).all();
+    const ids = [...new Set(lines.map((line) => line.transactionId))];
+    const transactions = (
+      await Promise.all(
+        ids.map((id) => this.prisma.db.orm.public.LedgerTransaction.include('lines').first({ id })),
+      )
+    ).filter((row) => row != null);
+
+    return transactions
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async listTransactionsForActor(
+    actorUserId: number,
+    options?: { kind?: 'float_topup' | 'agent_topup' | 'swap_fee' | 'adjustment' },
+    limit = 100,
+  ) {
+    const query = { actorUserId, ...(options?.kind ? { kind: options.kind } : {}) };
+    const rows = await this.prisma.db.orm.public.LedgerTransaction.include('lines').where(query).all();
+    return rows
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
   }
 }

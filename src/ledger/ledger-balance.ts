@@ -10,8 +10,9 @@ export function signedDeltaForLine(
 ): number {
   const magnitude = Math.abs(amount);
   switch (accountKind) {
+    // Company accounts track cash available for float; debiting pays out to a wallet.
     case 'company':
-      return direction === 'debit' ? magnitude : -magnitude;
+      return direction === 'debit' ? -magnitude : magnitude;
     case 'wallet':
     case 'revenue':
       return direction === 'credit' ? magnitude : -magnitude;

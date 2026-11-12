@@ -66,6 +66,9 @@ export class LedgerService {
         throw new NotFoundException(`Company account ${line.companyAccountId} not found`);
       }
       const next = Number(account.balance) + delta;
+      if (next < 0) {
+        throw new BadRequestException('Insufficient company account balance');
+      }
       await tx.orm.public.CompanyAccount.where({ id: account.id }).update({
         balance: asNumeric(next),
       });
@@ -223,6 +226,8 @@ export class LedgerService {
     if (wallet.currency !== company.currency) {
       throw new BadRequestException('Wallet and company account currency must match');
     }
+
+    this.assertCompanyAccountSolvent(company, params.amount);
 
     return this.postTransaction(tx, {
       kind: 'float_topup',
@@ -387,6 +392,20 @@ export class LedgerService {
     }
   }
 
+  /** Float top-up debits the company account by `debitAmount`. */
+  assertCompanyAccountSolvent(
+    company: { balance: string | number },
+    debitAmount: number,
+  ): void {
+    if (!(debitAmount > 0)) {
+      throw new BadRequestException('Top-up amount must be positive');
+    }
+    const balance = Number(company.balance);
+    if (balance < debitAmount) {
+      throw new BadRequestException('Insufficient company account balance');
+    }
+  }
+
   async listTransactionsForWallet(walletId: number, limit = 50) {
     const [byHeader, lines] = await Promise.all([
       this.prisma.db.orm.public.LedgerTransaction.include('lines').where({ walletId }).all(),
@@ -401,6 +420,20 @@ export class LedgerService {
     ).filter((row) => row != null);
 
     return [...byHeader, ...extras]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async listTransactionsForCompanyAccount(companyAccountId: number, limit = 50) {
+    const lines = await this.prisma.db.orm.public.LedgerLine.where({ companyAccountId }).all();
+    const ids = [...new Set(lines.map((line) => line.transactionId))];
+    const transactions = (
+      await Promise.all(
+        ids.map((id) => this.prisma.db.orm.public.LedgerTransaction.include('lines').first({ id })),
+      )
+    ).filter((row) => row != null);
+
+    return transactions
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
   }

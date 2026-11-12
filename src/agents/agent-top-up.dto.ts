@@ -23,6 +23,6 @@ export class AgentTopUpDto {
 export class TopUpTargetQueryDto {
   @IsString()
   @MinLength(2)
-  @MaxLength(30)
-  phone: string;
+  @MaxLength(120)
+  q: string;
 }

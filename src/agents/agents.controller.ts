@@ -41,9 +41,9 @@ export class AgentsController {
 
   @Get('top-up-targets')
   @RequirePermissions(PERMISSIONS.wallets.agentTopup)
-  @ApiOperation({ summary: 'Find a rider or owner wallet by exact phone' })
+  @ApiOperation({ summary: 'Find a rider or owner wallet by phone or name' })
   findTopUpTarget(@Query() query: TopUpTargetQueryDto): Promise<TopUpTarget> {
-    return this.agentsService.findTopUpTarget(query.phone);
+    return this.agentsService.findTopUpTarget(query.q);
   }
 
   @Post('top-ups')

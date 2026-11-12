@@ -137,17 +137,45 @@ export class AgentsService {
     return agent;
   }
 
-  async findTopUpTarget(phone: string): Promise<TopUpTarget> {
-    const trimmed = phone.trim();
-    const user = await this.prisma.db.orm.public.User.first({ phone: trimmed });
+  async findTopUpTarget(query: string): Promise<TopUpTarget> {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      throw new BadRequestException('Enter at least 2 characters');
+    }
+
+    try {
+      return await this.findTopUpTargetByPhone(trimmed);
+    } catch (error) {
+      if (!(error instanceof NotFoundException)) {
+        throw error;
+      }
+    }
+
+    return this.findTopUpTargetByName(trimmed);
+  }
+
+  private normalizeLookupName(value: string): string {
+    return value.toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  private riderDisplayName(user: {
+    firstName: string | null;
+    lastName: string | null;
+    username: string;
+  }): string {
+    const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+    return name || user.username;
+  }
+
+  private async findTopUpTargetByPhone(phone: string): Promise<TopUpTarget> {
+    const user = await this.prisma.db.orm.public.User.first({ phone });
 
     if (user?.type === 'rider') {
       const wallet = await this.prisma.db.orm.public.Wallet.first({ userId: user.id });
       if (!wallet) {
         throw new NotFoundException('Rider wallet not found');
       }
-      const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
-      return { kind: 'rider', name: name || user.username, walletId: wallet.id };
+      return { kind: 'rider', name: this.riderDisplayName(user), walletId: wallet.id };
     }
 
     if (user?.type === 'owner') {
@@ -158,12 +186,71 @@ export class AgentsService {
       return this.ownerTarget(owner.id, owner.name);
     }
 
-    const owner = await this.prisma.db.orm.public.Owner.first({ phone: trimmed });
+    const owner = await this.prisma.db.orm.public.Owner.first({ phone });
     if (!owner) {
       throw new NotFoundException('No rider or owner matches that phone');
     }
 
     return this.ownerTarget(owner.id, owner.name);
+  }
+
+  private async findTopUpTargetByName(raw: string): Promise<TopUpTarget> {
+    const needle = this.normalizeLookupName(raw);
+
+    const [riders, owners] = await Promise.all([
+      this.prisma.db.orm.public.User.include('riderWallet').where({ type: 'rider' }).all(),
+      this.prisma.db.orm.public.Owner.include('wallet').all(),
+    ]);
+
+    type Candidate = { kind: 'rider' | 'owner'; name: string; walletId: number; exact: boolean };
+    const candidates: Candidate[] = [];
+
+    for (const user of riders) {
+      const wallet = user.riderWallet;
+      if (!wallet) {
+        continue;
+      }
+      const name = this.riderDisplayName(user);
+      const normalized = this.normalizeLookupName(name);
+      const exact = normalized === needle;
+      const partial = !exact && normalized.includes(needle);
+      if (exact || partial) {
+        candidates.push({ kind: 'rider', name, walletId: wallet.id, exact });
+      }
+    }
+
+    for (const owner of owners) {
+      const wallet = owner.wallet;
+      if (!wallet) {
+        continue;
+      }
+      const normalized = this.normalizeLookupName(owner.name);
+      const exact = normalized === needle;
+      const partial = !exact && normalized.includes(needle);
+      if (exact || partial) {
+        candidates.push({ kind: 'owner', name: owner.name, walletId: wallet.id, exact });
+      }
+    }
+
+    const exactMatches = candidates.filter((candidate) => candidate.exact);
+    if (exactMatches.length === 1) {
+      const match = exactMatches[0]!;
+      return { kind: match.kind, name: match.name, walletId: match.walletId };
+    }
+    if (exactMatches.length > 1) {
+      throw new BadRequestException('Multiple riders or owners match that name — use phone instead.');
+    }
+
+    const partialMatches = candidates.filter((candidate) => !candidate.exact);
+    if (partialMatches.length === 1) {
+      const match = partialMatches[0]!;
+      return { kind: match.kind, name: match.name, walletId: match.walletId };
+    }
+    if (partialMatches.length > 1) {
+      throw new BadRequestException('Multiple riders or owners match that name — narrow the search or use phone.');
+    }
+
+    throw new NotFoundException('No rider or owner matches that phone or name');
   }
 
   async listMyTransactions(actorUserId: number): Promise<LedgerTransaction[]> {

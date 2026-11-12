@@ -3,7 +3,7 @@ import type { ReadScopeContext } from '../auth/read-scope.js';
 import { agentReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
 import { LedgerService } from '../ledger/ledger.service.js';
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
-import type { Agent, LedgerTransaction } from '../prisma/types.js';
+import type { Agent, LedgerTransaction, SafeUser } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import type { AgentTopUpDto } from './agent-top-up.dto.js';
 import { CreateAgentDto } from './create-agent.dto.js';
@@ -192,7 +192,7 @@ export class AgentsService {
     return { kind: 'owner', name, walletId: wallet.id };
   }
 
-  private async assertPortalUser(userId: number) {
+  private async assertPortalUser(userId: number): Promise<SafeUser> {
     const user = await this.prisma.db.orm.public.User.first({ id: userId });
     if (!user) {
       throw new BadRequestException(`User with id ${userId} not found`);

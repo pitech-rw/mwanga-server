@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { assertCanReadUserId, isUnrestrictedRead } from '../auth/read-scope.js';
 import { assertOwnerTypeInvariant } from '../fleet/fleet-rules.js';
@@ -26,6 +26,54 @@ export class UsersService {
     return this.prisma.db.orm.public.User.include('role')
       .include('assignedStation')
       .include('fleetOwner');
+  }
+
+  /** Rider + fleet owner directory for field agents (`riders:read`). */
+  async findRidersForAgent(ctx: ReadScopeContext): Promise<Record<string, unknown>[]> {
+    if (ctx.user.type !== 'agent' && !isUnrestrictedRead(ctx)) {
+      throw new ForbiddenException('Insufficient scope to list riders');
+    }
+
+    const [riders, owners] = await Promise.all([
+      this.prisma.db.orm.public.User.include('role')
+        .include('riderWallet')
+        .where({ type: 'rider' })
+        .orderBy((user) => user.createdAt.desc())
+        .all(),
+      this.prisma.db.orm.public.Owner.include('wallet')
+        .orderBy((owner) => owner.createdAt.desc())
+        .all(),
+    ]);
+
+    const riderRows = riders.map((user) => ({
+      ...sanitizeUser(user),
+      directoryKind: 'rider' as const,
+    }));
+
+    const ownerRows = owners.map((owner) => ({
+      directoryKind: 'owner' as const,
+      id: owner.id,
+      name: owner.name,
+      email: owner.email,
+      phone: owner.phone,
+      status: owner.status,
+      type: 'owner' as const,
+      wallet: owner.wallet,
+    }));
+
+    const label = (row: Record<string, unknown>) => {
+      if (row.directoryKind === 'owner') {
+        return String(row.name ?? '');
+      }
+      const first = typeof row.firstName === 'string' ? row.firstName : '';
+      const last = typeof row.lastName === 'string' ? row.lastName : '';
+      const name = [first, last].filter(Boolean).join(' ').trim();
+      return name || (typeof row.username === 'string' ? row.username : '');
+    };
+
+    return [...riderRows, ...ownerRows].sort((a, b) =>
+      label(a).localeCompare(label(b), undefined, { sensitivity: 'base' }),
+    );
   }
 
   async findAll(ctx: ReadScopeContext, filters?: { type?: UserType }): Promise<SafeUser[]> {

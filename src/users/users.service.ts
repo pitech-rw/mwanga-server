@@ -351,7 +351,14 @@ export class UsersService {
   async remove(id: number, ctx: ReadScopeContext): Promise<SafeUser> {
     await this.findOne(id, ctx);
 
-    const user = await this.prisma.db.orm.public.User.where({ id }).delete();
+    if (id === ctx.user.sub) {
+      throw new BadRequestException('You cannot deactivate your own account');
+    }
+
+    const user = await this.userQuery().where({ id }).update({
+      isActive: false,
+      passwordHash: null,
+    });
 
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);

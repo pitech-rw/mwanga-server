@@ -102,9 +102,9 @@ export class UsersController {
 
   @Delete(':id')
   @RequirePermissions(PERMISSIONS.users.delete)
-  @ApiOperation({ summary: 'Delete a user' })
+  @ApiOperation({ summary: 'Deactivate a user (soft delete)' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiOkResponse({ description: 'Deleted user' })
+  @ApiOkResponse({ description: 'Deactivated user; login disabled' })
   @ApiNotFoundResponse({ description: 'User not found' })
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: AuthenticatedUser): Promise<SafeUser> {
     return this.usersService.remove(id, this.readCtx(user));

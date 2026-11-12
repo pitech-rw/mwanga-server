@@ -123,7 +123,7 @@ export class AuthService {
   async getProfile(userId: number, view: MeProfileView = 'persona') {
     const user = await this.userQuery().first({ id: userId });
 
-    if (!user) {
+    if (!user?.isActive) {
       throw new UnauthorizedException();
     }
 

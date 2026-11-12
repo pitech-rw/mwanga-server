@@ -166,6 +166,10 @@ export class AgentsService {
     return this.ownerTarget(owner.id, owner.name);
   }
 
+  async listMyTransactions(actorUserId: number): Promise<LedgerTransaction[]> {
+    return this.ledger.listTransactionsForActor(actorUserId, { kind: 'agent_topup' });
+  }
+
   async topUp(actorUserId: number, dto: AgentTopUpDto): Promise<LedgerTransaction> {
     const agent = await this.prisma.db.orm.public.Agent.include('wallet').first({ userId: actorUserId });
     if (!agent?.wallet) {

@@ -57,6 +57,14 @@ export class AgentsController {
     return this.agentsService.topUp(user.sub, dto);
   }
 
+  @Get('me/transactions')
+  @RequirePermissions(PERMISSIONS.wallets.read)
+  @ApiOperation({ summary: 'Ledger entries for top-ups performed by the signed-in agent' })
+  @ApiOkResponse({ description: 'Agent top-up transactions (newest first)' })
+  listMyTransactions(@CurrentUser() user: AuthenticatedUser): Promise<LedgerTransaction[]> {
+    return this.agentsService.listMyTransactions(user.sub);
+  }
+
   @Get()
   @RequirePermissions(PERMISSIONS.agents.read)
   @ApiOperation({ summary: 'List agents' })

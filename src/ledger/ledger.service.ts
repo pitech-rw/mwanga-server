@@ -437,4 +437,16 @@ export class LedgerService {
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
   }
+
+  async listTransactionsForActor(
+    actorUserId: number,
+    options?: { kind?: 'float_topup' | 'agent_topup' | 'swap_fee' | 'adjustment' },
+    limit = 100,
+  ) {
+    const query = { actorUserId, ...(options?.kind ? { kind: options.kind } : {}) };
+    const rows = await this.prisma.db.orm.public.LedgerTransaction.include('lines').where(query).all();
+    return rows
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
 }

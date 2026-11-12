@@ -6,7 +6,7 @@ import { db } from '../prisma/db.js';
 import { LedgerService } from './ledger.service.js';
 import { PrismaService } from '../prisma.service.js';
 
-describe('LedgerService (integration)', { timeout: 60_000 }, () => {
+describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
   const prisma = { db } as PrismaService;
   const ledger = new LedgerService(prisma);
 
@@ -42,6 +42,13 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
       }));
     companyAccountId = company.id;
 
+    const minCompanyBalance = 10_000;
+    if (Number(company.balance) < minCompanyBalance) {
+      await db.orm.public.CompanyAccount.where({ id: company.id }).update({
+        balance: asNumeric(minCompanyBalance),
+      });
+    }
+
     const revenue = await db.orm.public.RevenueAccount.where({ code: 'swap_fees' }).first();
     if (!revenue) {
       throw new Error('Run npm run seed:ledger-accounts before integration tests');
@@ -76,7 +83,28 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
     }
 
     expect(Number(afterWallet.balance)).toBeCloseTo(Number(beforeWallet.balance) + amount, 2);
-    expect(Number(afterCompany.balance)).toBeCloseTo(Number(beforeCompany.balance) + amount, 2);
+    expect(Number(afterCompany.balance)).toBeCloseTo(Number(beforeCompany.balance) - amount, 2);
+  });
+
+  it('rejects float top-up when company account balance is insufficient', async () => {
+    const company = await db.orm.public.CompanyAccount.first({ id: companyAccountId });
+    if (!company) {
+      throw new Error('Company account missing');
+    }
+
+    const overspend = Number(company.balance) + 10_000;
+    const externalReference = `${refPrefix}-float-insufficient-co`;
+
+    await expect(
+      db.transaction(async (tx) => {
+        await ledger.creditFloatInTx(tx, {
+          walletId,
+          companyAccountId,
+          amount: overspend,
+          externalReference,
+        });
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects duplicate externalReference', async () => {
@@ -159,7 +187,13 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
       currency: 'CDF',
     });
 
-    const funded = 200;
+    const amount = 40;
+    const funded = amount + 1;
+    const companyBeforeFund = await db.orm.public.CompanyAccount.first({ id: companyAccountId });
+    if (!companyBeforeFund || Number(companyBeforeFund.balance) < funded) {
+      throw new Error('Company account needs enough balance for agent float integration test');
+    }
+
     await db.transaction(async (tx) => {
       await ledger.creditFloatInTx(tx, {
         walletId: agentWallet.id,
@@ -173,8 +207,6 @@ describe('LedgerService (integration)', { timeout: 60_000 }, () => {
     if (!beforeOwner) {
       throw new Error('Owner wallet missing');
     }
-
-    const amount = 40;
     const externalReference = `${refPrefix}-agent-topup`;
     await db.transaction(async (tx) => {
       await ledger.transferAgentFloatInTx(tx, {

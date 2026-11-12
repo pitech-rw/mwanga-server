@@ -1,12 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { LedgerService } from '../ledger/ledger.service.js';
 import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
-import type { CompanyAccount } from '../prisma/types.js';
+import type { CompanyAccount, LedgerTransaction } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { CreateCompanyAccountDto } from './create-company-account.dto.js';
 
 @Injectable()
 export class CompanyAccountsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ledger: LedgerService,
+  ) {}
 
   async findAll(): Promise<CompanyAccount[]> {
     return this.prisma.db.orm.public.CompanyAccount.orderBy((row) => row.name.asc()).all();
@@ -18,6 +22,11 @@ export class CompanyAccountsService {
       throw new NotFoundException(`Company account with id ${id} not found`);
     }
     return account;
+  }
+
+  async listLedgerTransactions(id: number): Promise<LedgerTransaction[]> {
+    await this.findOne(id);
+    return this.ledger.listTransactionsForCompanyAccount(id);
   }
 
   async create(data: CreateCompanyAccountDto): Promise<CompanyAccount> {

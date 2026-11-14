@@ -71,9 +71,25 @@ export class OwnersService {
           currency: data.currency ?? 'CDF',
         });
 
-        const loaded = await tx.orm.public.Owner.include('portalUser').include('wallet').first({
-          id: owner.id,
-        });
+        if (data.bikes?.length) {
+          for (const bike of data.bikes) {
+            await tx.orm.public.Bike.create({
+              plateNumber: bike.plateNumber,
+              chassisNumber: bike.chassisNumber,
+              serialNumber: bike.serialNumber,
+              model: bike.model,
+              status: 'active',
+              ownerId: owner.id,
+            });
+          }
+        }
+
+        const loaded = await tx.orm.public.Owner.include('portalUser')
+          .include('wallet')
+          .include('bikes')
+          .first({
+            id: owner.id,
+          });
 
         if (!loaded) {
           throw new NotFoundException(`Owner with id ${owner.id} not found`);
@@ -83,7 +99,9 @@ export class OwnersService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An owner with this portal user or wallet already exists');
+        throw new BadRequestException(
+          'An owner with this portal user or wallet already exists, or a fleet bike plate/serial is already registered',
+        );
       }
       throw error;
     }

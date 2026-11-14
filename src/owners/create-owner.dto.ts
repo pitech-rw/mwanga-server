@@ -1,4 +1,16 @@
-import { IsEmail, IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEmail,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+import { CreateOwnerBikeDto } from './create-owner-bike.dto.js';
 
 export class CreateOwnerDto {
   @IsString()
@@ -30,4 +42,11 @@ export class CreateOwnerDto {
   @IsString()
   @MaxLength(10)
   currency?: string;
+
+  /** Optional fleet bikes to register on this owner in the same transaction. */
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateOwnerBikeDto)
+  bikes?: CreateOwnerBikeDto[];
 }

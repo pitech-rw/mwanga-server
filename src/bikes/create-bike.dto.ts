@@ -31,9 +31,10 @@ export class CreateBikeDto {
   @MaxLength(30)
   status?: string;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
-  ownerId: number;
+  ownerId?: number;
 
   @IsOptional()
   userId?: number;

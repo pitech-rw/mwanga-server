@@ -28,6 +28,14 @@
       "model": "CompanyAccount",
       "namespace": "public"
     },
+    "InventoryItem": {
+      "model": "InventoryItem",
+      "namespace": "public"
+    },
+    "InventoryMovement": {
+      "model": "InventoryMovement",
+      "namespace": "public"
+    },
     "LedgerEntry": {
       "model": "LedgerEntry",
       "namespace": "public"
@@ -107,6 +115,48 @@
               {
                 "name": "faulty",
                 "value": "faulty"
+              }
+            ]
+          },
+          "InventoryItemKind": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "bike",
+                "value": "bike"
+              },
+              {
+                "name": "battery",
+                "value": "battery"
+              }
+            ]
+          },
+          "InventoryMovementKind": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "receive",
+                "value": "receive"
+              },
+              {
+                "name": "issue_to_owner",
+                "value": "issue_to_owner"
+              },
+              {
+                "name": "issue_to_station",
+                "value": "issue_to_station"
+              },
+              {
+                "name": "issue_to_bike",
+                "value": "issue_to_bike"
+              },
+              {
+                "name": "return_to_stock",
+                "value": "return_to_stock"
+              },
+              {
+                "name": "adjust",
+                "value": "adjust"
               }
             ]
           },
@@ -674,6 +724,22 @@
                   "namespace": "public"
                 }
               },
+              "inventoryItem": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "batteryId"
+                  ]
+                },
+                "to": {
+                  "model": "InventoryItem",
+                  "namespace": "public"
+                }
+              },
               "newSwapTransactions": {
                 "cardinality": "1:N",
                 "on": {
@@ -979,7 +1045,7 @@
                 }
               },
               "ownerId": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/int4@1",
                   "kind": "scalar"
@@ -1041,9 +1107,25 @@
                   "namespace": "public"
                 }
               },
+              "inventoryItem": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "bikeId"
+                  ]
+                },
+                "to": {
+                  "model": "InventoryItem",
+                  "namespace": "public"
+                }
+              },
               "owner": {
                 "cardinality": "N:1",
-                "nullable": false,
+                "nullable": true,
                 "on": {
                   "localFields": [
                     "ownerId"
@@ -1247,6 +1329,293 @@
               },
               "namespaceId": "public",
               "table": "CompanyAccount"
+            }
+          },
+          "InventoryItem": {
+            "fields": {
+              "batteryId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "bikeId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "kind": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "InventoryItemKind",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "notes": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "receivedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {
+              "battery": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "batteryId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Battery",
+                  "namespace": "public"
+                }
+              },
+              "bike": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "bikeId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Bike",
+                  "namespace": "public"
+                }
+              },
+              "movements": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "inventoryItemId"
+                  ]
+                },
+                "to": {
+                  "model": "InventoryMovement",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "batteryId": {
+                  "column": "batteryId"
+                },
+                "bikeId": {
+                  "column": "bikeId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "kind": {
+                  "column": "kind"
+                },
+                "notes": {
+                  "column": "notes"
+                },
+                "receivedAt": {
+                  "column": "receivedAt"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "InventoryItem"
+            }
+          },
+          "InventoryMovement": {
+            "fields": {
+              "actorUserId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "batteryId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "bikeId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "details": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "inventoryItemId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "kind": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "InventoryMovementKind",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              }
+            },
+            "relations": {
+              "actor": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "actorUserId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "inventoryItem": {
+                "cardinality": "N:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "inventoryItemId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "InventoryItem",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actorUserId": {
+                  "column": "actorUserId"
+                },
+                "batteryId": {
+                  "column": "batteryId"
+                },
+                "bikeId": {
+                  "column": "bikeId"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "details": {
+                  "column": "details"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "inventoryItemId": {
+                  "column": "inventoryItemId"
+                },
+                "kind": {
+                  "column": "kind"
+                }
+              },
+              "namespaceId": "public",
+              "table": "InventoryMovement"
             }
           },
           "LedgerEntry": {
@@ -3048,6 +3417,21 @@
                   "namespace": "public"
                 }
               },
+              "inventoryMovements": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "actorUserId"
+                  ]
+                },
+                "to": {
+                  "model": "InventoryMovement",
+                  "namespace": "public"
+                }
+              },
               "ledgerTransactions": {
                 "cardinality": "1:N",
                 "on": {
@@ -4220,7 +4604,7 @@
                 "ownerId": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
-                  "nullable": false
+                  "nullable": true
                 },
                 "plateNumber": {
                   "codecId": "pg/text@1",
@@ -4445,6 +4829,279 @@
                   ]
                 }
               ]
+            },
+            "InventoryItem": {
+              "checks": [
+                {
+                  "expression": "\"kind\" IN ('bike', 'battery')",
+                  "name": "InventoryItem_kind_check_97e84ffd",
+                  "prefix": "InventoryItem_kind_check"
+                }
+              ],
+              "columns": {
+                "batteryId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "bikeId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "kind": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "InventoryItemKind",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "notes": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "receivedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "unique": [
+                      "bikeId"
+                    ]
+                  },
+                  "source": {
+                    "columns": [
+                      "bikeId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "InventoryItem"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Bike"
+                  }
+                },
+                {
+                  "index": {
+                    "unique": [
+                      "batteryId"
+                    ]
+                  },
+                  "source": {
+                    "columns": [
+                      "batteryId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "InventoryItem"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Battery"
+                  }
+                }
+              ],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "bikeId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "batteryId"
+                  ]
+                }
+              ]
+            },
+            "InventoryMovement": {
+              "checks": [
+                {
+                  "expression": "\"kind\" IN ('receive', 'issue_to_owner', 'issue_to_station', 'issue_to_bike', 'return_to_stock', 'adjust')",
+                  "name": "InventoryMovement_kind_check_b69a5042",
+                  "prefix": "InventoryMovement_kind_check"
+                }
+              ],
+              "columns": {
+                "actorUserId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "batteryId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "bikeId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "details": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "inventoryItemId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": true
+                },
+                "kind": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "InventoryMovementKind",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "name": "InventoryMovement_inventoryItemId_idx_ddbb7ccf"
+                  },
+                  "onDelete": "setNull",
+                  "source": {
+                    "columns": [
+                      "inventoryItemId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "InventoryMovement"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "InventoryItem"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "InventoryMovement_actorUserId_idx_96dac96c"
+                  },
+                  "source": {
+                    "columns": [
+                      "actorUserId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "InventoryMovement"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "actorUserId"
+                  ],
+                  "name": "InventoryMovement_actorUserId_idx_96dac96c",
+                  "prefix": "InventoryMovement_actorUserId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "inventoryItemId"
+                  ],
+                  "name": "InventoryMovement_inventoryItemId_idx_ddbb7ccf",
+                  "prefix": "InventoryMovement_inventoryItemId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
             },
             "LedgerEntry": {
               "columns": {
@@ -6410,6 +7067,24 @@
                 "faulty"
               ]
             },
+            "InventoryItemKind": {
+              "kind": "valueSet",
+              "values": [
+                "bike",
+                "battery"
+              ]
+            },
+            "InventoryMovementKind": {
+              "kind": "valueSet",
+              "values": [
+                "receive",
+                "issue_to_owner",
+                "issue_to_station",
+                "issue_to_bike",
+                "return_to_stock",
+                "adjust"
+              ]
+            },
             "LedgerDirection": {
               "kind": "valueSet",
               "values": [
@@ -6492,10 +7167,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "91d700a0b37098ef54f013b78164ad72ee97bd3d78543f7e4e8ebcc37b61da3d"
+    "storageHash": "edb1c8d64cd2fe3d7492eb2d9c836cb9ec06681a05c7bc9806ceea05050e9f19"
   },
   "execution": {
-    "executionHash": "e476640239c809a073d92a5deb0bce69f90b186500714a505b4dda9fb3e749e3",
+    "executionHash": "3ed804fa5738d21585316ebf673035dced9773413830f387d73f01c903141061",
     "mutations": {
       "defaults": [
         {
@@ -6578,6 +7253,27 @@
           },
           "ref": {
             "entry": "CompanyAccount",
+            "field": "updatedAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "ref": {
+            "entry": "InventoryItem",
             "field": "updatedAt",
             "namespace": "public"
           }

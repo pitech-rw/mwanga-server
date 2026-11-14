@@ -103,6 +103,9 @@ export class AssignmentService {
       throw new BadRequestException('Selected user is not assigned to this bike');
     }
 
+    if (bike.ownerId == null) {
+      throw new BadRequestException('This bike is not assigned to a fleet owner');
+    }
     await assertRiderBelongsToOwner(this.prisma, rider.id, bike.ownerId);
 
     const activeCard = rider.nfcCards.find((card) => card.status === 'active');

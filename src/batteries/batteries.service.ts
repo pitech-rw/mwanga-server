@@ -10,6 +10,7 @@ import {
   type BatteryDetail,
 } from './battery-detail.query.js';
 import { batteryStatusAtStation } from './battery-status.js';
+import { bikeBelongsInInventory, syncBatteryInventory, syncBikeInventory } from '../inventory/inventory-lifecycle.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
 import { UpdateBatteryDto } from './update-battery.dto.js';
 
@@ -135,19 +136,24 @@ export class BatteriesService {
       data.stationId != null ? batteryStatusAtStation(soc) : ('offline' as const);
 
     try {
-      return await this.prisma.db.orm.public.Battery.include('station').include('bike').create({
-        serialNumber: data.serialNumber,
-        manufacturer: data.manufacturer,
-        oem: data.oem,
-        model: data.model,
-        capacity: data.capacity,
-        batteryType: data.batteryType ?? 'lithium',
-        status: data.status ?? defaultStatus,
-        soc,
-        soh: data.soh ?? 100,
-        cycleCount: data.cycleCount ?? 0,
-        voltage: data.voltage,
-        stationId: data.stationId,
+      return await this.prisma.db.transaction(async (tx) => {
+        const battery = await tx.orm.public.Battery.include('station').include('bike').create({
+          serialNumber: data.serialNumber,
+          manufacturer: data.manufacturer,
+          oem: data.oem,
+          model: data.model,
+          capacity: data.capacity,
+          batteryType: data.batteryType ?? 'lithium',
+          status: data.status ?? defaultStatus,
+          soc,
+          soh: data.soh ?? 100,
+          cycleCount: data.cycleCount ?? 0,
+          voltage: data.voltage,
+          stationId: data.stationId,
+        });
+
+        await syncBatteryInventory(tx, battery);
+        return battery;
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -217,14 +223,19 @@ export class BatteriesService {
         );
       }
 
-      const battery = await this.prisma.db.orm.public.Battery.where({ id })
-        .include('station')
-        .include('bike')
-        .update(scalarPatch);
+      const battery = await this.prisma.db.transaction(async (tx) => {
+        const updated = await tx.orm.public.Battery.where({ id })
+          .include('station')
+          .include('bike')
+          .update(scalarPatch);
 
-      if (!battery) {
-        throw new NotFoundException(`Battery with id ${id} not found`);
-      }
+        if (!updated) {
+          throw new NotFoundException(`Battery with id ${id} not found`);
+        }
+
+        await syncBatteryInventory(tx, updated);
+        return updated;
+      });
 
       return battery;
     } catch (error) {
@@ -275,6 +286,7 @@ export class BatteriesService {
       throw new NotFoundException(`Battery with id ${batteryId} not found`);
     }
 
+    await syncBatteryInventory(tx, battery);
     return battery;
   }
 
@@ -302,6 +314,7 @@ export class BatteriesService {
       throw new NotFoundException(`Battery with id ${batteryId} not found`);
     }
 
+    await syncBatteryInventory(tx, battery);
     return battery;
   }
 
@@ -323,6 +336,12 @@ export class BatteriesService {
       );
     }
 
+    if (bikeBelongsInInventory(bike)) {
+      throw new BadRequestException(
+        'Cannot install a battery on a bike that is still in warehouse stock. Issue the bike to a fleet owner first.',
+      );
+    }
+
     await this.clearBatteryFromBikes(tx, batteryId);
 
     await tx.orm.public.Bike.where({ id: bikeId }).update({
@@ -339,6 +358,13 @@ export class BatteriesService {
 
     if (!battery) {
       throw new NotFoundException(`Battery with id ${batteryId} not found`);
+    }
+
+    await syncBatteryInventory(tx, battery);
+
+    const bikeAfter = await tx.orm.public.Bike.where({ id: bikeId }).first();
+    if (bikeAfter) {
+      await syncBikeInventory(tx, bikeAfter);
     }
 
     return battery;

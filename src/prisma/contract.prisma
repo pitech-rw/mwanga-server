@@ -46,6 +46,7 @@ model User {
   riderWallet         Wallet?           @relation("RiderWallet")
   ledgerTransactions  LedgerTransaction[] @relation("LedgerActor")
   portalAgent         Agent?            @relation("AgentPortalUser")
+  inventoryMovements  InventoryMovement[] @relation("InventoryMovementActor")
 }
 
 model Role {
@@ -121,6 +122,20 @@ enum LedgerDirection {
   credit
 }
 
+enum InventoryItemKind {
+  bike
+  battery
+}
+
+enum InventoryMovementKind {
+  receive
+  issue_to_owner
+  issue_to_station
+  issue_to_bike
+  return_to_stock
+  adjust
+}
+
 model Owner {
   id        Int      @id @default(autoincrement())
   name      String
@@ -159,16 +174,17 @@ model Bike {
   model            String
   image            String?
   status           String   @default("active")
-  ownerId          Int
+  ownerId          Int?
   userId           Int?
   currentBatteryId  Int?     @unique
   createdAt        DateTime @default(now())
   updatedAt        DateTime @onCreate(now()) @onUpdate(now())
 
-  owner         Owner            @relation(fields: [ownerId], references: [id])
+  owner         Owner?           @relation(fields: [ownerId], references: [id])
   user          User?            @relation(fields: [userId], references: [id])
   currentBattery Battery?        @relation("CurrentBattery", fields: [currentBatteryId], references: [id])
   transactions  SwapTransaction[]
+  inventoryItem InventoryItem?
 }
 
 model Station {
@@ -213,6 +229,36 @@ model Battery {
   oldSwapTransactions SwapTransaction[] @relation("OldBattery")
   newSwapTransactions SwapTransaction[] @relation("NewBattery")
   readings            BatteryReading[]
+  inventoryItem       InventoryItem?
+}
+
+model InventoryItem {
+  id         Int               @id @default(autoincrement())
+  kind       InventoryItemKind
+  bikeId     Int?              @unique
+  batteryId  Int?              @unique
+  receivedAt DateTime          @default(now())
+  notes      String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @onCreate(now()) @onUpdate(now())
+
+  bike      Bike?               @relation(fields: [bikeId], references: [id])
+  battery   Battery?            @relation(fields: [batteryId], references: [id])
+  movements InventoryMovement[]
+}
+
+model InventoryMovement {
+  id              Int                   @id @default(autoincrement())
+  inventoryItemId Int?
+  bikeId          Int?
+  batteryId       Int?
+  kind            InventoryMovementKind
+  actorUserId     Int?
+  details         String?
+  createdAt       DateTime              @default(now())
+
+  inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
+  actor         User?         @relation("InventoryMovementActor", fields: [actorUserId], references: [id])
 }
 
 model NfcCard {

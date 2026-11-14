@@ -1,0 +1,271 @@
+[
+  {
+    "id": "dropConstraint.InventoryMovement.InventoryMovement_inventoryItemId_fkey",
+    "label": "Drop constraint \"InventoryMovement_inventoryItemId_fkey\" on \"InventoryMovement\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "InventoryMovement_inventoryItemId_fkey",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"InventoryMovement_inventoryItemId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryMovement_inventoryItemId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\""
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "constraint \"InventoryMovement_inventoryItemId_fkey\" on \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop constraint \"InventoryMovement_inventoryItemId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryMovement\" DROP CONSTRAINT \"InventoryMovement_inventoryItemId_fkey\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"InventoryMovement_inventoryItemId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryMovement_inventoryItemId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"InventoryMovement_inventoryItemId_fkey\" on \"InventoryMovement\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "column.public.InventoryMovement.batteryId",
+    "label": "Add column \"batteryId\" to \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "batteryId",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"batteryId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "batteryId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"batteryId\" on \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"batteryId\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryMovement\" ADD COLUMN \"batteryId\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"batteryId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "batteryId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"batteryId\" on \"InventoryMovement\""
+        }
+      },
+      {
+        "description": "verify column \"batteryId\" has type \"integer\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "batteryId",
+          "integer"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.InventoryMovement.bikeId",
+    "label": "Add column \"bikeId\" to \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "bikeId",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"bikeId\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "bikeId"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"bikeId\" on \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"bikeId\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryMovement\" ADD COLUMN \"bikeId\" int4"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"bikeId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "bikeId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"bikeId\" on \"InventoryMovement\""
+        }
+      },
+      {
+        "description": "verify column \"bikeId\" has type \"integer\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "bikeId",
+          "integer"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.dropNotNull.InventoryMovement.inventoryItemId",
+    "label": "Drop NOT NULL on \"InventoryMovement\".\"inventoryItemId\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "inventoryItemId",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"inventoryItemId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "inventoryItemId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"inventoryItemId\" on \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"inventoryItemId\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryMovement\" ALTER COLUMN \"inventoryItemId\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"inventoryItemId\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "InventoryMovement",
+          "inventoryItemId",
+          "YES"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.InventoryMovement.InventoryMovement_inventoryItemId_fkey",
+    "label": "Add foreign key \"InventoryMovement_inventoryItemId_fkey\" on \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "InventoryMovement_inventoryItemId_fkey",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"InventoryMovement_inventoryItemId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryMovement_inventoryItemId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"InventoryMovement_inventoryItemId_fkey\" on \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"InventoryMovement_inventoryItemId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryMovement\"\nADD CONSTRAINT \"InventoryMovement_inventoryItemId_fkey\"\nFOREIGN KEY (\"inventoryItemId\")\nREFERENCES \"public\".\"InventoryItem\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"InventoryMovement_inventoryItemId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "InventoryMovement_inventoryItemId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\"",
+          "f",
+          "[\"inventoryItemId\"]",
+          "\"public\".\"InventoryItem\"",
+          "[\"id\"]",
+          "n",
+          "a"
+        ]
+      }
+    ]
+  }
+]

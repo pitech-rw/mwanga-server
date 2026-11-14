@@ -28,3 +28,7 @@ export type LedgerTransaction = Scalars<Models.public_LedgerTransaction>;
 export type LedgerLine = Scalars<Models.public_LedgerLine>;
 export type LedgerTransactionKind = Models.public_LedgerTransaction['kind'];
 export type LedgerDirection = Models.public_LedgerLine['direction'];
+export type InventoryItem = Scalars<Models.public_InventoryItem>;
+export type InventoryItemKind = Models.public_InventoryItem['kind'];
+export type InventoryMovement = Scalars<Models.public_InventoryMovement>;
+export type InventoryMovementKind = Models.public_InventoryMovement['kind'];

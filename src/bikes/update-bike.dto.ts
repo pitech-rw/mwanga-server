@@ -36,12 +36,12 @@ export class UpdateBikeDto {
 
   @IsOptional()
   @IsInt()
-  ownerId?: number;
+  ownerId?: number | null;
 
   @IsOptional()
   @IsInt()
   userId?: number | null;
 
   @IsOptional()
-  currentBatteryId?: number;
+  currentBatteryId?: number | null;
 }

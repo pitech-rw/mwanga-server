@@ -28,5 +28,15 @@ export class UpdateStationDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  capacity?: number;
+  chargingCapacity?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  model?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  photo?: string;
 }

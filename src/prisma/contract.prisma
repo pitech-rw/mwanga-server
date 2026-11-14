@@ -172,16 +172,18 @@ model Bike {
 }
 
 model Station {
-  id        Int      @id @default(autoincrement())
-  code      String   @unique
-  name      String
-  address   String?
-  latitude  Float?
-  longitude Float?
-  status    String   @default("active")
-  capacity  Int      @default(0)
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @onCreate(now()) @onUpdate(now())
+  id               Int      @id @default(autoincrement())
+  code             String   @unique
+  name             String
+  address          String?
+  latitude         Float?
+  longitude        Float?
+  status           String   @default("active")
+  chargingCapacity Int      @default(0)
+  model            String?
+  photo            String?
+  createdAt        DateTime? @default(now())
+  updatedAt        DateTime? @onCreate(now()) @onUpdate(now())
 
   batteries    Battery[]
   transactions SwapTransaction[]
@@ -194,7 +196,8 @@ model Battery {
   serialNumber    String   @unique
   manufacturer    String?
   oem             String?
-  model           String
+  model           String?
+  capacity        Float?
   batteryType     String       @default("lithium")
   status          BatteryStatus @default(available)
   soc             Int      @default(100)

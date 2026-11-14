@@ -57,6 +57,11 @@ export class UpdateBatteryDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
+  capacity?: number;
+
+  @IsOptional()
+  @IsNumber()
   stationId?: number | null;
 
   /**

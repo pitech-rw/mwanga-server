@@ -78,7 +78,9 @@ export class StationsService {
           latitude: data.latitude,
           longitude: data.longitude,
           status: data.status ?? 'active',
-          capacity: data.capacity ?? 0,
+          chargingCapacity: data.chargingCapacity ?? 0,
+          model: data.model,
+          photo: data.photo,
         });
       } catch (error) {
         if (isUniqueViolation(error) && attempt < CREATE_CODE_MAX_ATTEMPTS - 1) {
@@ -107,7 +109,9 @@ export class StationsService {
           latitude: data.latitude,
           longitude: data.longitude,
           status: data.status,
-          capacity: data.capacity,
+          chargingCapacity: data.chargingCapacity,
+          model: data.model,
+          photo: data.photo,
         }),
       );
 

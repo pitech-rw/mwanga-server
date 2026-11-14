@@ -546,6 +546,13 @@
                   "kind": "scalar"
                 }
               },
+              "capacity": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -578,7 +585,7 @@
                 }
               },
               "model": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -733,6 +740,9 @@
               "fields": {
                 "batteryType": {
                   "column": "batteryType"
+                },
+                "capacity": {
+                  "column": "capacity"
                 },
                 "createdAt": {
                   "column": "createdAt"
@@ -2202,7 +2212,7 @@
                   "kind": "scalar"
                 }
               },
-              "capacity": {
+              "chargingCapacity": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
@@ -2247,8 +2257,22 @@
                   "kind": "scalar"
                 }
               },
+              "model": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "name": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "photo": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -2339,8 +2363,8 @@
                 "address": {
                   "column": "address"
                 },
-                "capacity": {
-                  "column": "capacity"
+                "chargingCapacity": {
+                  "column": "chargingCapacity"
                 },
                 "code": {
                   "column": "code"
@@ -2357,8 +2381,14 @@
                 "longitude": {
                   "column": "longitude"
                 },
+                "model": {
+                  "column": "model"
+                },
                 "name": {
                   "column": "name"
+                },
+                "photo": {
+                  "column": "photo"
                 },
                 "status": {
                   "column": "status"
@@ -3849,6 +3879,11 @@
                   },
                   "nullable": false
                 },
+                "capacity": {
+                  "codecId": "pg/float8@1",
+                  "dataType": "pg/float8",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
@@ -3887,7 +3922,7 @@
                 "model": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
-                  "nullable": false
+                  "nullable": true
                 },
                 "oem": {
                   "codecId": "pg/text@1",
@@ -5255,7 +5290,7 @@
                   "dataType": "pg/text",
                   "nullable": true
                 },
-                "capacity": {
+                "chargingCapacity": {
                   "codecId": "pg/int4@1",
                   "dataType": "pg/int4",
                   "default": {
@@ -5300,10 +5335,20 @@
                   "dataType": "pg/float8",
                   "nullable": true
                 },
+                "model": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
                 "name": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
                   "nullable": false
+                },
+                "photo": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
                 },
                 "status": {
                   "codecId": "pg/text@1",
@@ -6447,7 +6492,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "8dbd778de0907f9a80354420b110608b9ab61a5f644d7cd83def9dabbe05315b"
+    "storageHash": "91d700a0b37098ef54f013b78164ad72ee97bd3d78543f7e4e8ebcc37b61da3d"
   },
   "execution": {
     "executionHash": "e476640239c809a073d92a5deb0bce69f90b186500714a505b4dda9fb3e749e3",

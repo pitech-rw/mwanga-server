@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'8dbd778de0907f9a80354420b110608b9ab61a5f644d7cd83def9dabbe05315b'>;
+  StorageHashBase<'91d700a0b37098ef54f013b78164ad72ee97bd3d78543f7e4e8ebcc37b61da3d'>;
 export type ExecutionHash =
   ExecutionHashBase<'e476640239c809a073d92a5deb0bce69f90b186500714a505b4dda9fb3e749e3'>;
 export type ProfileHash =
@@ -502,6 +502,7 @@ export namespace Models {
   };
   export type public_Battery = {
     batteryType: FieldOutputTypes['public']['Battery']['batteryType'];
+    capacity: FieldOutputTypes['public']['Battery']['capacity'];
     createdAt: FieldOutputTypes['public']['Battery']['createdAt'];
     cycleCount: FieldOutputTypes['public']['Battery']['cycleCount'];
     id: FieldOutputTypes['public']['Battery']['id'];
@@ -664,13 +665,15 @@ export namespace Models {
   };
   export type public_Station = {
     address: FieldOutputTypes['public']['Station']['address'];
-    capacity: FieldOutputTypes['public']['Station']['capacity'];
+    chargingCapacity: FieldOutputTypes['public']['Station']['chargingCapacity'];
     code: FieldOutputTypes['public']['Station']['code'];
     createdAt: FieldOutputTypes['public']['Station']['createdAt'];
     id: FieldOutputTypes['public']['Station']['id'];
     latitude: FieldOutputTypes['public']['Station']['latitude'];
     longitude: FieldOutputTypes['public']['Station']['longitude'];
+    model: FieldOutputTypes['public']['Station']['model'];
     name: FieldOutputTypes['public']['Station']['name'];
+    photo: FieldOutputTypes['public']['Station']['photo'];
     status: FieldOutputTypes['public']['Station']['status'];
     updatedAt: FieldOutputTypes['public']['Station']['updatedAt'];
     batteries: public_Battery[];
@@ -1032,6 +1035,12 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly capacity: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly createdAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -1069,7 +1078,7 @@ type ContractBase = Omit<
                 readonly model: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly oem: {
@@ -2136,7 +2145,7 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
-                readonly capacity: {
+                readonly chargingCapacity: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: false;
@@ -2182,10 +2191,22 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly model: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly name: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly photo: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly status: {
@@ -3250,6 +3271,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly capacity: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -3271,7 +3296,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly model: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly oem: {
@@ -3372,6 +3397,7 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly batteryType: { readonly column: 'batteryType' };
+                readonly capacity: { readonly column: 'capacity' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly cycleCount: { readonly column: 'cycleCount' };
                 readonly id: { readonly column: 'id' };
@@ -4277,7 +4303,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly capacity: {
+              readonly chargingCapacity: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
@@ -4305,8 +4331,16 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
               };
+              readonly model: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly name: {
                 readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly photo: {
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly status: {
@@ -4370,13 +4404,15 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly address: { readonly column: 'address' };
-                readonly capacity: { readonly column: 'capacity' };
+                readonly chargingCapacity: { readonly column: 'chargingCapacity' };
                 readonly code: { readonly column: 'code' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly latitude: { readonly column: 'latitude' };
                 readonly longitude: { readonly column: 'longitude' };
+                readonly model: { readonly column: 'model' };
                 readonly name: { readonly column: 'name' };
+                readonly photo: { readonly column: 'photo' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };

@@ -140,6 +140,7 @@ export class BatteriesService {
         manufacturer: data.manufacturer,
         oem: data.oem,
         model: data.model,
+        capacity: data.capacity,
         batteryType: data.batteryType ?? 'lithium',
         status: data.status ?? defaultStatus,
         soc,
@@ -180,6 +181,7 @@ export class BatteriesService {
       manufacturer: data.manufacturer,
       oem: data.oem,
       model: data.model,
+      capacity: data.capacity,
       batteryType: data.batteryType,
       status:
         data.status ??

@@ -82,6 +82,11 @@ export const PERMISSIONS = {
     write: 'violations:write',
     delete: 'violations:delete',
   },
+  inventory: {
+    read: 'inventory:read',
+    write: 'inventory:write',
+    delete: 'inventory:delete',
+  },
 } as const;
 
 export type PermissionName =
@@ -98,7 +103,8 @@ export type PermissionName =
   | (typeof PERMISSIONS.wallets)[keyof typeof PERMISSIONS.wallets]
   | (typeof PERMISSIONS.companyAccounts)[keyof typeof PERMISSIONS.companyAccounts]
   | (typeof PERMISSIONS.swaps)[keyof typeof PERMISSIONS.swaps]
-  | (typeof PERMISSIONS.violations)[keyof typeof PERMISSIONS.violations];
+  | (typeof PERMISSIONS.violations)[keyof typeof PERMISSIONS.violations]
+  | (typeof PERMISSIONS.inventory)[keyof typeof PERMISSIONS.inventory];
 
 const readPermissions = [
   PERMISSIONS.users.read,
@@ -114,6 +120,7 @@ const readPermissions = [
   PERMISSIONS.companyAccounts.read,
   PERMISSIONS.swaps.read,
   PERMISSIONS.violations.read,
+  PERMISSIONS.inventory.read,
 ] as const;
 
 const crmWritePermissions = [
@@ -126,6 +133,7 @@ const crmWritePermissions = [
   PERMISSIONS.stations.write,
   PERMISSIONS.wallets.write,
   PERMISSIONS.violations.write,
+  PERMISSIONS.inventory.write,
 ] as const;
 
 /**
@@ -158,6 +166,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.swaps.write,
     PERMISSIONS.swaps.delete,
     PERMISSIONS.violations.delete,
+    PERMISSIONS.inventory.delete,
   ],
 
   /** Station swap executive app */

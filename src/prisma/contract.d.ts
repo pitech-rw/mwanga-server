@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'8dbd778de0907f9a80354420b110608b9ab61a5f644d7cd83def9dabbe05315b'>;
+  StorageHashBase<'edb1c8d64cd2fe3d7492eb2d9c836cb9ec06681a05c7bc9806ceea05050e9f19'>;
 export type ExecutionHash =
-  ExecutionHashBase<'e476640239c809a073d92a5deb0bce69f90b186500714a505b4dda9fb3e749e3'>;
+  ExecutionHashBase<'3ed804fa5738d21585316ebf673035dced9773413830f387d73f01c903141061'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -287,6 +287,27 @@ type FieldTypeOverrides = {
       readonly BatteryReading: {
         readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
       };
+      readonly InventoryItem: {
+        readonly kind: { readonly output: 'bike' | 'battery'; readonly input: 'bike' | 'battery' };
+      };
+      readonly InventoryMovement: {
+        readonly kind: {
+          readonly output:
+            | 'receive'
+            | 'issue_to_owner'
+            | 'issue_to_station'
+            | 'issue_to_bike'
+            | 'return_to_stock'
+            | 'adjust';
+          readonly input:
+            | 'receive'
+            | 'issue_to_owner'
+            | 'issue_to_station'
+            | 'issue_to_bike'
+            | 'return_to_stock'
+            | 'adjust';
+        };
+      };
       readonly LedgerLine: {
         readonly direction: {
           readonly output: 'debit' | 'credit';
@@ -386,6 +407,27 @@ type ColumnTypeOverrides = {
     };
     readonly BatteryReading: {
       readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
+    };
+    readonly InventoryItem: {
+      readonly kind: { readonly output: 'bike' | 'battery'; readonly input: 'bike' | 'battery' };
+    };
+    readonly InventoryMovement: {
+      readonly kind: {
+        readonly output:
+          | 'receive'
+          | 'issue_to_owner'
+          | 'issue_to_station'
+          | 'issue_to_bike'
+          | 'return_to_stock'
+          | 'adjust';
+        readonly input:
+          | 'receive'
+          | 'issue_to_owner'
+          | 'issue_to_station'
+          | 'issue_to_bike'
+          | 'return_to_stock'
+          | 'adjust';
+      };
     };
     readonly LedgerLine: {
       readonly direction: {
@@ -502,6 +544,7 @@ export namespace Models {
   };
   export type public_Battery = {
     batteryType: FieldOutputTypes['public']['Battery']['batteryType'];
+    capacity: FieldOutputTypes['public']['Battery']['capacity'];
     createdAt: FieldOutputTypes['public']['Battery']['createdAt'];
     cycleCount: FieldOutputTypes['public']['Battery']['cycleCount'];
     id: FieldOutputTypes['public']['Battery']['id'];
@@ -516,12 +559,18 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['Battery']['updatedAt'];
     voltage: FieldOutputTypes['public']['Battery']['voltage'];
     bike: public_Bike | null;
+    inventoryItem: public_InventoryItem | null;
     newSwapTransactions: public_SwapTransaction[];
     oldSwapTransactions: public_SwapTransaction[];
     readings: public_BatteryReading[];
     station: public_Station | null;
     readonly [RelationKeys]?:
-      'bike' | 'newSwapTransactions' | 'oldSwapTransactions' | 'readings' | 'station';
+      | 'bike'
+      | 'inventoryItem'
+      | 'newSwapTransactions'
+      | 'oldSwapTransactions'
+      | 'readings'
+      | 'station';
   };
   export type public_BatteryReading = {
     batteryId: FieldOutputTypes['public']['BatteryReading']['batteryId'];
@@ -551,10 +600,12 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['Bike']['updatedAt'];
     userId: FieldOutputTypes['public']['Bike']['userId'];
     currentBattery: public_Battery | null;
-    owner: public_Owner;
+    inventoryItem: public_InventoryItem | null;
+    owner: public_Owner | null;
     transactions: public_SwapTransaction[];
     user: public_User | null;
-    readonly [RelationKeys]?: 'currentBattery' | 'owner' | 'transactions' | 'user';
+    readonly [RelationKeys]?:
+      'currentBattery' | 'inventoryItem' | 'owner' | 'transactions' | 'user';
   };
   export type public_CompanyAccount = {
     accountNumber: FieldOutputTypes['public']['CompanyAccount']['accountNumber'];
@@ -567,6 +618,33 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['CompanyAccount']['updatedAt'];
     ledgerLines: public_LedgerLine[];
     readonly [RelationKeys]?: 'ledgerLines';
+  };
+  export type public_InventoryItem = {
+    batteryId: FieldOutputTypes['public']['InventoryItem']['batteryId'];
+    bikeId: FieldOutputTypes['public']['InventoryItem']['bikeId'];
+    createdAt: FieldOutputTypes['public']['InventoryItem']['createdAt'];
+    id: FieldOutputTypes['public']['InventoryItem']['id'];
+    kind: FieldOutputTypes['public']['InventoryItem']['kind'];
+    notes: FieldOutputTypes['public']['InventoryItem']['notes'];
+    receivedAt: FieldOutputTypes['public']['InventoryItem']['receivedAt'];
+    updatedAt: FieldOutputTypes['public']['InventoryItem']['updatedAt'];
+    battery: public_Battery | null;
+    bike: public_Bike | null;
+    movements: public_InventoryMovement[];
+    readonly [RelationKeys]?: 'battery' | 'bike' | 'movements';
+  };
+  export type public_InventoryMovement = {
+    actorUserId: FieldOutputTypes['public']['InventoryMovement']['actorUserId'];
+    batteryId: FieldOutputTypes['public']['InventoryMovement']['batteryId'];
+    bikeId: FieldOutputTypes['public']['InventoryMovement']['bikeId'];
+    createdAt: FieldOutputTypes['public']['InventoryMovement']['createdAt'];
+    details: FieldOutputTypes['public']['InventoryMovement']['details'];
+    id: FieldOutputTypes['public']['InventoryMovement']['id'];
+    inventoryItemId: FieldOutputTypes['public']['InventoryMovement']['inventoryItemId'];
+    kind: FieldOutputTypes['public']['InventoryMovement']['kind'];
+    actor: public_User | null;
+    inventoryItem: public_InventoryItem | null;
+    readonly [RelationKeys]?: 'actor' | 'inventoryItem';
   };
   export type public_LedgerEntry = {
     amount: FieldOutputTypes['public']['LedgerEntry']['amount'];
@@ -664,13 +742,15 @@ export namespace Models {
   };
   export type public_Station = {
     address: FieldOutputTypes['public']['Station']['address'];
-    capacity: FieldOutputTypes['public']['Station']['capacity'];
+    chargingCapacity: FieldOutputTypes['public']['Station']['chargingCapacity'];
     code: FieldOutputTypes['public']['Station']['code'];
     createdAt: FieldOutputTypes['public']['Station']['createdAt'];
     id: FieldOutputTypes['public']['Station']['id'];
     latitude: FieldOutputTypes['public']['Station']['latitude'];
     longitude: FieldOutputTypes['public']['Station']['longitude'];
+    model: FieldOutputTypes['public']['Station']['model'];
     name: FieldOutputTypes['public']['Station']['name'];
+    photo: FieldOutputTypes['public']['Station']['photo'];
     status: FieldOutputTypes['public']['Station']['status'];
     updatedAt: FieldOutputTypes['public']['Station']['updatedAt'];
     batteries: public_Battery[];
@@ -749,6 +829,7 @@ export namespace Models {
     assignedBikes: public_Bike[];
     assignedStation: public_Station | null;
     fleetOwner: public_Owner | null;
+    inventoryMovements: public_InventoryMovement[];
     ledgerTransactions: public_LedgerTransaction[];
     nfcCards: public_NfcCard[];
     offendingViolations: public_Violation[];
@@ -763,6 +844,7 @@ export namespace Models {
       | 'assignedBikes'
       | 'assignedStation'
       | 'fleetOwner'
+      | 'inventoryMovements'
       | 'ledgerTransactions'
       | 'nfcCards'
       | 'offendingViolations'
@@ -820,6 +902,8 @@ export declare const models: {
     BatteryReading: Models.public_BatteryReading;
     Bike: Models.public_Bike;
     CompanyAccount: Models.public_CompanyAccount;
+    InventoryItem: Models.public_InventoryItem;
+    InventoryMovement: Models.public_InventoryMovement;
     LedgerEntry: Models.public_LedgerEntry;
     LedgerLine: Models.public_LedgerLine;
     LedgerTransaction: Models.public_LedgerTransaction;
@@ -1032,6 +1116,12 @@ type ContractBase = Omit<
                   };
                   readonly many: false;
                 };
+                readonly capacity: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly createdAt: {
                   readonly dataType: 'pg/timestamptz';
                   readonly codecId: 'pg/timestamptz-date@1';
@@ -1069,7 +1159,7 @@ type ContractBase = Omit<
                 readonly model: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly oem: {
@@ -1312,7 +1402,7 @@ type ContractBase = Omit<
                 readonly ownerId: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly plateNumber: {
@@ -1482,6 +1572,199 @@ type ContractBase = Omit<
               uniques: readonly [{ readonly columns: readonly ['accountNumber'] }];
               indexes: readonly [];
               foreignKeys: readonly [];
+            };
+            readonly InventoryItem: {
+              columns: {
+                readonly batteryId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly bikeId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly kind: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly notes: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly receivedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [
+                { readonly columns: readonly ['bikeId'] },
+                { readonly columns: readonly ['batteryId'] },
+              ];
+              indexes: readonly [];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'InventoryItem';
+                    readonly columns: readonly ['bikeId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Bike';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'InventoryItem';
+                    readonly columns: readonly ['batteryId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Battery';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly InventoryMovement: {
+              columns: {
+                readonly actorUserId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly batteryId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly bikeId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly details: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly inventoryItemId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly kind: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'InventoryMovement_actorUserId_idx_96dac96c';
+                  readonly prefix: 'InventoryMovement_actorUserId_idx';
+                  readonly columns: readonly ['actorUserId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'InventoryMovement_inventoryItemId_idx_ddbb7ccf';
+                  readonly prefix: 'InventoryMovement_inventoryItemId_idx';
+                  readonly columns: readonly ['inventoryItemId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'InventoryMovement';
+                    readonly columns: readonly ['inventoryItemId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'InventoryItem';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'InventoryMovement';
+                    readonly columns: readonly ['actorUserId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly LedgerEntry: {
               columns: {
@@ -2136,7 +2419,7 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
-                readonly capacity: {
+                readonly chargingCapacity: {
                   readonly dataType: 'pg/int4';
                   readonly codecId: 'pg/int4@1';
                   readonly nullable: false;
@@ -2182,10 +2465,22 @@ type ContractBase = Omit<
                   readonly nullable: true;
                   readonly many: false;
                 };
+                readonly model: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
                 readonly name: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly photo: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly status: {
@@ -2986,6 +3281,21 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['offline', 'available', 'charging', 'in_use', 'faulty'];
             };
+            readonly InventoryItemKind: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['bike', 'battery'];
+            };
+            readonly InventoryMovementKind: {
+              readonly kind: 'valueSet';
+              readonly values: readonly [
+                'receive',
+                'issue_to_owner',
+                'issue_to_station',
+                'issue_to_bike',
+                'return_to_stock',
+                'adjust',
+              ];
+            };
             readonly LedgerDirection: {
               readonly kind: 'valueSet';
               readonly values: readonly ['debit', 'credit'];
@@ -3058,6 +3368,14 @@ type ContractBase = Omit<
     readonly CompanyAccount: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'CompanyAccount';
+    };
+    readonly InventoryItem: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'InventoryItem';
+    };
+    readonly InventoryMovement: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'InventoryMovement';
     };
     readonly LedgerEntry: {
       readonly namespace: 'public' & NamespaceId;
@@ -3250,6 +3568,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly capacity: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -3271,7 +3593,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly model: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly oem: {
@@ -3319,6 +3641,18 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['currentBatteryId'];
+                };
+              };
+              readonly inventoryItem: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InventoryItem';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['batteryId'];
                 };
               };
               readonly newSwapTransactions: {
@@ -3372,6 +3706,7 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly batteryType: { readonly column: 'batteryType' };
+                readonly capacity: { readonly column: 'capacity' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly cycleCount: { readonly column: 'cycleCount' };
                 readonly id: { readonly column: 'id' };
@@ -3504,7 +3839,7 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly ownerId: {
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly plateNumber: {
@@ -3545,13 +3880,25 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly inventoryItem: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InventoryItem';
+                };
+                readonly cardinality: '1:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['bikeId'];
+                };
+              };
               readonly owner: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
                   readonly model: 'Owner';
                 };
                 readonly cardinality: 'N:1';
-                readonly nullable: false;
+                readonly nullable: true;
                 readonly on: {
                   readonly localFields: readonly ['ownerId'];
                   readonly targetFields: readonly ['id'];
@@ -3669,6 +4016,179 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly name: { readonly column: 'name' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly InventoryItem: {
+            readonly fields: {
+              readonly batteryId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly bikeId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly kind: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly notes: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly receivedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: {
+              readonly battery: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Battery';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['batteryId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly bike: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'Bike' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['bikeId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly movements: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InventoryMovement';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['inventoryItemId'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'InventoryItem';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly batteryId: { readonly column: 'batteryId' };
+                readonly bikeId: { readonly column: 'bikeId' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly id: { readonly column: 'id' };
+                readonly kind: { readonly column: 'kind' };
+                readonly notes: { readonly column: 'notes' };
+                readonly receivedAt: { readonly column: 'receivedAt' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly InventoryMovement: {
+            readonly fields: {
+              readonly actorUserId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly batteryId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly bikeId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly details: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly inventoryItemId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly kind: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly actor: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['actorUserId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly inventoryItem: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InventoryItem';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['inventoryItemId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'InventoryMovement';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly actorUserId: { readonly column: 'actorUserId' };
+                readonly batteryId: { readonly column: 'batteryId' };
+                readonly bikeId: { readonly column: 'bikeId' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly details: { readonly column: 'details' };
+                readonly id: { readonly column: 'id' };
+                readonly inventoryItemId: { readonly column: 'inventoryItemId' };
+                readonly kind: { readonly column: 'kind' };
               };
             };
           };
@@ -4277,7 +4797,7 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
-              readonly capacity: {
+              readonly chargingCapacity: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
@@ -4305,8 +4825,16 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
               };
+              readonly model: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly name: {
                 readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly photo: {
+                readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly status: {
@@ -4370,13 +4898,15 @@ type ContractBase = Omit<
               readonly namespaceId: 'public';
               readonly fields: {
                 readonly address: { readonly column: 'address' };
-                readonly capacity: { readonly column: 'capacity' };
+                readonly chargingCapacity: { readonly column: 'chargingCapacity' };
                 readonly code: { readonly column: 'code' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly id: { readonly column: 'id' };
                 readonly latitude: { readonly column: 'latitude' };
                 readonly longitude: { readonly column: 'longitude' };
+                readonly model: { readonly column: 'model' };
                 readonly name: { readonly column: 'name' };
+                readonly photo: { readonly column: 'photo' };
                 readonly status: { readonly column: 'status' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
@@ -4787,6 +5317,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly inventoryMovements: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'InventoryMovement';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['actorUserId'];
+                };
+              };
               readonly ledgerTransactions: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -5175,6 +5716,24 @@ type ContractBase = Omit<
               { readonly name: 'faulty'; readonly value: 'faulty' },
             ];
           };
+          readonly InventoryItemKind: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'bike'; readonly value: 'bike' },
+              { readonly name: 'battery'; readonly value: 'battery' },
+            ];
+          };
+          readonly InventoryMovementKind: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'receive'; readonly value: 'receive' },
+              { readonly name: 'issue_to_owner'; readonly value: 'issue_to_owner' },
+              { readonly name: 'issue_to_station'; readonly value: 'issue_to_station' },
+              { readonly name: 'issue_to_bike'; readonly value: 'issue_to_bike' },
+              { readonly name: 'return_to_stock'; readonly value: 'return_to_stock' },
+              { readonly name: 'adjust'; readonly value: 'adjust' },
+            ];
+          };
           readonly LedgerDirection: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -5259,6 +5818,18 @@ type ContractBase = Omit<
             { readonly name: 'charging'; readonly value: 'charging' },
             { readonly name: 'in_use'; readonly value: 'in_use' },
             { readonly name: 'faulty'; readonly value: 'faulty' },
+          ];
+          readonly InventoryItemKind: readonly [
+            { readonly name: 'bike'; readonly value: 'bike' },
+            { readonly name: 'battery'; readonly value: 'battery' },
+          ];
+          readonly InventoryMovementKind: readonly [
+            { readonly name: 'receive'; readonly value: 'receive' },
+            { readonly name: 'issue_to_owner'; readonly value: 'issue_to_owner' },
+            { readonly name: 'issue_to_station'; readonly value: 'issue_to_station' },
+            { readonly name: 'issue_to_bike'; readonly value: 'issue_to_bike' },
+            { readonly name: 'return_to_stock'; readonly value: 'return_to_stock' },
+            { readonly name: 'adjust'; readonly value: 'adjust' },
           ];
           readonly LedgerDirection: readonly [
             { readonly name: 'debit'; readonly value: 'debit' },
@@ -5412,6 +5983,23 @@ type ContractBase = Omit<
           };
           readonly ref: {
             readonly entry: 'CompanyAccount';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly onUpdate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'InventoryItem';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

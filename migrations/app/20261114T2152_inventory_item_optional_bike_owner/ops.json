@@ -1,0 +1,547 @@
+[
+  {
+    "id": "table.InventoryItem",
+    "label": "Create table \"InventoryItem\"",
+    "summary": "Creates table \"InventoryItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "InventoryItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"InventoryItem\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryItem\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"InventoryItem\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"InventoryItem\"",
+        "sql": "CREATE TABLE \"public\".\"InventoryItem\" (\n  \"batteryId\" int4,\n  \"bikeId\" int4,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"kind\" text NOT NULL,\n  \"notes\" text,\n  \"receivedAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"InventoryItem_kind_check_97e84ffd\" CHECK (\"kind\" IN ('bike', 'battery'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"InventoryItem\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryItem\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"InventoryItem\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.InventoryMovement",
+    "label": "Create table \"InventoryMovement\"",
+    "summary": "Creates table \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"InventoryMovement\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryMovement\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"InventoryMovement\"",
+        "sql": "CREATE TABLE \"public\".\"InventoryMovement\" (\n  \"actorUserId\" int4,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"details\" text,\n  \"id\" SERIAL NOT NULL,\n  \"inventoryItemId\" int4 NOT NULL,\n  \"kind\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"InventoryMovement_kind_check_b69a5042\" CHECK (\"kind\" IN ('receive', 'issue_to_owner', 'issue_to_station', 'issue_to_bike', 'return_to_stock', 'adjust'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"InventoryMovement\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryMovement\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"InventoryMovement\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.dropNotNull.Bike.ownerId",
+    "label": "Drop NOT NULL on \"Bike\".\"ownerId\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "ownerId",
+        "table": "Bike"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"ownerId\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "ownerId"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"ownerId\" on \"Bike\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"ownerId\"",
+        "sql": "ALTER TABLE \"public\".\"Bike\" ALTER COLUMN \"ownerId\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"ownerId\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Bike",
+          "ownerId",
+          "YES"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.InventoryItem.InventoryItem_bikeId_key",
+    "label": "Add unique constraint on \"InventoryItem\" (bikeId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "InventoryItem_bikeId_key",
+        "table": "InventoryItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"InventoryItem_bikeId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryItem_bikeId_key",
+          "public",
+          "\"public\".\"InventoryItem\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"InventoryItem_bikeId_key\" on \"InventoryItem\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"InventoryItem_bikeId_key\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryItem\" ADD CONSTRAINT \"InventoryItem_bikeId_key\" UNIQUE (\"bikeId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"InventoryItem_bikeId_key\" exists on (bikeId)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "InventoryItem_bikeId_key",
+          "public",
+          "\"public\".\"InventoryItem\"",
+          "u",
+          "[\"bikeId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.InventoryItem.InventoryItem_batteryId_key",
+    "label": "Add unique constraint on \"InventoryItem\" (batteryId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "InventoryItem_batteryId_key",
+        "table": "InventoryItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"InventoryItem_batteryId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryItem_batteryId_key",
+          "public",
+          "\"public\".\"InventoryItem\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"InventoryItem_batteryId_key\" on \"InventoryItem\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"InventoryItem_batteryId_key\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryItem\" ADD CONSTRAINT \"InventoryItem_batteryId_key\" UNIQUE (\"batteryId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"InventoryItem_batteryId_key\" exists on (batteryId)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "InventoryItem_batteryId_key",
+          "public",
+          "\"public\".\"InventoryItem\"",
+          "u",
+          "[\"batteryId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.InventoryMovement.InventoryMovement_actorUserId_idx_96dac96c",
+    "label": "Create index \"InventoryMovement_actorUserId_idx_96dac96c\" on \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "InventoryMovement_actorUserId_idx_96dac96c",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"InventoryMovement_actorUserId_idx_96dac96c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryMovement_actorUserId_idx_96dac96c\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"InventoryMovement_actorUserId_idx_96dac96c\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"InventoryMovement_actorUserId_idx_96dac96c\"",
+        "sql": "CREATE INDEX \"InventoryMovement_actorUserId_idx_96dac96c\" ON \"public\".\"InventoryMovement\" (\"actorUserId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"InventoryMovement_actorUserId_idx_96dac96c\" exists on \"InventoryMovement\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryMovement_actorUserId_idx_96dac96c\"",
+          "i",
+          "I",
+          "\"public\".\"InventoryMovement\"",
+          "btree",
+          "[\"actorUserId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.InventoryMovement.InventoryMovement_inventoryItemId_idx_ddbb7ccf",
+    "label": "Create index \"InventoryMovement_inventoryItemId_idx_ddbb7ccf\" on \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "InventoryMovement_inventoryItemId_idx_ddbb7ccf",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"InventoryMovement_inventoryItemId_idx_ddbb7ccf\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryMovement_inventoryItemId_idx_ddbb7ccf\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"InventoryMovement_inventoryItemId_idx_ddbb7ccf\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"InventoryMovement_inventoryItemId_idx_ddbb7ccf\"",
+        "sql": "CREATE INDEX \"InventoryMovement_inventoryItemId_idx_ddbb7ccf\" ON \"public\".\"InventoryMovement\" (\"inventoryItemId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"InventoryMovement_inventoryItemId_idx_ddbb7ccf\" exists on \"InventoryMovement\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"InventoryMovement_inventoryItemId_idx_ddbb7ccf\"",
+          "i",
+          "I",
+          "\"public\".\"InventoryMovement\"",
+          "btree",
+          "[\"inventoryItemId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.InventoryItem.InventoryItem_bikeId_fkey",
+    "label": "Add foreign key \"InventoryItem_bikeId_fkey\" on \"InventoryItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "InventoryItem_bikeId_fkey",
+        "table": "InventoryItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"InventoryItem_bikeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryItem_bikeId_fkey",
+          "public",
+          "\"public\".\"InventoryItem\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"InventoryItem_bikeId_fkey\" on \"InventoryItem\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"InventoryItem_bikeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryItem\"\nADD CONSTRAINT \"InventoryItem_bikeId_fkey\"\nFOREIGN KEY (\"bikeId\")\nREFERENCES \"public\".\"Bike\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"InventoryItem_bikeId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "InventoryItem_bikeId_fkey",
+          "public",
+          "\"public\".\"InventoryItem\"",
+          "f",
+          "[\"bikeId\"]",
+          "\"public\".\"Bike\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.InventoryItem.InventoryItem_batteryId_fkey",
+    "label": "Add foreign key \"InventoryItem_batteryId_fkey\" on \"InventoryItem\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "InventoryItem_batteryId_fkey",
+        "table": "InventoryItem"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"InventoryItem_batteryId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryItem_batteryId_fkey",
+          "public",
+          "\"public\".\"InventoryItem\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"InventoryItem_batteryId_fkey\" on \"InventoryItem\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"InventoryItem_batteryId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryItem\"\nADD CONSTRAINT \"InventoryItem_batteryId_fkey\"\nFOREIGN KEY (\"batteryId\")\nREFERENCES \"public\".\"Battery\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"InventoryItem_batteryId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "InventoryItem_batteryId_fkey",
+          "public",
+          "\"public\".\"InventoryItem\"",
+          "f",
+          "[\"batteryId\"]",
+          "\"public\".\"Battery\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.InventoryMovement.InventoryMovement_inventoryItemId_fkey",
+    "label": "Add foreign key \"InventoryMovement_inventoryItemId_fkey\" on \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "InventoryMovement_inventoryItemId_fkey",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"InventoryMovement_inventoryItemId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryMovement_inventoryItemId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"InventoryMovement_inventoryItemId_fkey\" on \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"InventoryMovement_inventoryItemId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryMovement\"\nADD CONSTRAINT \"InventoryMovement_inventoryItemId_fkey\"\nFOREIGN KEY (\"inventoryItemId\")\nREFERENCES \"public\".\"InventoryItem\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"InventoryMovement_inventoryItemId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "InventoryMovement_inventoryItemId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\"",
+          "f",
+          "[\"inventoryItemId\"]",
+          "\"public\".\"InventoryItem\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.InventoryMovement.InventoryMovement_actorUserId_fkey",
+    "label": "Add foreign key \"InventoryMovement_actorUserId_fkey\" on \"InventoryMovement\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "InventoryMovement_actorUserId_fkey",
+        "table": "InventoryMovement"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"InventoryMovement_actorUserId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "InventoryMovement_actorUserId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"InventoryMovement_actorUserId_fkey\" on \"InventoryMovement\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"InventoryMovement_actorUserId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"InventoryMovement\"\nADD CONSTRAINT \"InventoryMovement_actorUserId_fkey\"\nFOREIGN KEY (\"actorUserId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"InventoryMovement_actorUserId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "InventoryMovement_actorUserId_fkey",
+          "public",
+          "\"public\".\"InventoryMovement\"",
+          "f",
+          "[\"actorUserId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

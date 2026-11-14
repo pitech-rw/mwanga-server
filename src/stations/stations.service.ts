@@ -14,10 +14,22 @@ const CREATE_CODE_MAX_ATTEMPTS = 5;
 export class StationsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private stationListQuery() {
+    return this.prisma.db.orm.public.Station.include('operators');
+  }
+
+  private async stationTransactions(stationId: number) {
+    return this.prisma.db.orm.public.SwapTransaction.include('user')
+      .include('bike')
+      .where({ stationId })
+      .orderBy((swap) => swap.createdAt.desc())
+      .all();
+  }
+
   async findAll(ctx: ReadScopeContext): Promise<Station[]> {
     const filter = stationReadFilter(ctx);
 
-    const ordered = this.prisma.db.orm.public.Station.include('operators').orderBy(
+    const ordered = this.stationListQuery().orderBy(
       (station) => station.createdAt.desc(),
     );
 
@@ -29,7 +41,9 @@ export class StationsService {
   }
 
   async findOne(id: number, ctx: ReadScopeContext): Promise<Station> {
-    const station = await this.prisma.db.orm.public.Station.include('operators').first({ id });
+    const station = await this.prisma.db.orm.public.Station.include('operators')
+      .include('batteries')
+      .first({ id });
 
     if (!station) {
       throw new NotFoundException(`Station with id ${id} not found`);
@@ -40,7 +54,8 @@ export class StationsService {
       denyOrNotFoundForScopedRead(ctx, 'wrong_station');
     }
 
-    return station;
+    const transactions = await this.stationTransactions(id);
+    return Object.assign(station, { transactions });
   }
 
   async previewNextCode(ctx: ReadScopeContext): Promise<{ code: string }> {
@@ -63,7 +78,9 @@ export class StationsService {
           latitude: data.latitude,
           longitude: data.longitude,
           status: data.status ?? 'active',
-          capacity: data.capacity ?? 0,
+          chargingCapacity: data.chargingCapacity ?? 0,
+          model: data.model,
+          photo: data.photo,
         });
       } catch (error) {
         if (isUniqueViolation(error) && attempt < CREATE_CODE_MAX_ATTEMPTS - 1) {
@@ -92,7 +109,9 @@ export class StationsService {
           latitude: data.latitude,
           longitude: data.longitude,
           status: data.status,
-          capacity: data.capacity,
+          chargingCapacity: data.chargingCapacity,
+          model: data.model,
+          photo: data.photo,
         }),
       );
 

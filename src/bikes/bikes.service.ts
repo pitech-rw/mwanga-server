@@ -7,6 +7,7 @@ import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Bike } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { syncBikeInventory } from '../inventory/inventory-lifecycle.js';
 import { CreateBikeDto } from './create-bike.dto.js';
 import { UpdateBikeDto } from './update-bike.dto.js';
 
@@ -99,26 +100,45 @@ export class BikesService {
   }
 
   async create(data: CreateBikeDto): Promise<Bike> {
-    const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
-    if (!owner) {
-      throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+    if (data.userId != null && data.ownerId == null) {
+      throw new BadRequestException('Assign a fleet owner before attaching a rider');
     }
 
-    if (data.userId != null) {
+    if (data.ownerId != null) {
+      const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
+      if (!owner) {
+        throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+      }
+    }
+
+    if (data.userId != null && data.ownerId != null) {
       await assertRiderBelongsToOwner(this.prisma, data.userId, data.ownerId);
     }
 
+    if (data.currentBatteryId != null && data.ownerId == null) {
+      throw new BadRequestException('Warehouse bikes cannot be created with a battery installed');
+    }
+
     try {
-      return await this.bikeQuery().create({
-        plateNumber: data.plateNumber,
-        chassisNumber: data.chassisNumber,
-        serialNumber: data.serialNumber,
-        model: data.model,
-        image: data.image,
-        status: data.status ?? 'active',
-        ownerId: data.ownerId,
-        userId: data.userId,
-        currentBatteryId: data.currentBatteryId,
+      return await this.prisma.db.transaction(async (tx) => {
+        const bike = await tx.orm.public.Bike.include('user')
+          .include('owner')
+          .include('currentBattery')
+          .create({
+            plateNumber: data.plateNumber,
+            chassisNumber: data.chassisNumber,
+            serialNumber: data.serialNumber,
+            model: data.model,
+            image: data.image,
+            status: data.status ?? 'active',
+            ownerId: data.ownerId ?? null,
+            userId: data.userId,
+            currentBatteryId: data.currentBatteryId,
+          });
+
+        await syncBikeInventory(tx, bike);
+
+        return bike;
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
@@ -134,7 +154,7 @@ export class BikesService {
   async update(id: number, data: UpdateBikeDto, ctx: ReadScopeContext): Promise<Bike> {
     const existing = await this.findOne(id, ctx);
 
-  const nextOwnerId = data.ownerId ?? existing.ownerId;
+    const nextOwnerId = data.ownerId === undefined ? existing.ownerId : data.ownerId;
     if (data.ownerId != null) {
       const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
       if (!owner) {
@@ -143,31 +163,45 @@ export class BikesService {
     }
 
     const nextUserId = data.userId === undefined ? existing.userId : data.userId;
-    if (nextUserId != null) {
+    if (nextUserId != null && nextOwnerId == null) {
+      throw new BadRequestException('Assign a fleet owner before attaching a rider');
+    }
+    if (nextUserId != null && nextOwnerId != null) {
       await assertRiderBelongsToOwner(this.prisma, nextUserId, nextOwnerId);
+    }
+    const nextBatteryId =
+      data.currentBatteryId === undefined ? existing.currentBatteryId : data.currentBatteryId;
+    if (nextOwnerId == null && nextBatteryId != null) {
+      throw new BadRequestException('Warehouse bikes cannot have a battery installed');
     }
 
     try {
-      const bike = await this.bikeQuery()
-        .where({ id })
-        .update(
-          withoutUndefined({
-            plateNumber: data.plateNumber,
-            chassisNumber: data.chassisNumber,
-            serialNumber: data.serialNumber,
-            model: data.model,
-            image: data.image,
-            status: data.status,
-            ownerId: data.ownerId,
-            // Allow null to unassign the rider (withoutUndefined strips undefined only).
-            userId: data.userId === undefined ? undefined : data.userId,
-            currentBatteryId: data.currentBatteryId,
-          }),
-        );
+      const bike = await this.prisma.db.transaction(async (tx) => {
+        const updated = await tx.orm.public.Bike.include('user')
+          .include('owner')
+          .include('currentBattery')
+          .where({ id })
+          .update(
+            withoutUndefined({
+              plateNumber: data.plateNumber,
+              chassisNumber: data.chassisNumber,
+              serialNumber: data.serialNumber,
+              model: data.model,
+              image: data.image,
+              status: data.status,
+              ownerId: data.ownerId === undefined ? undefined : data.ownerId,
+              userId: data.userId === undefined ? undefined : data.userId,
+              currentBatteryId: data.currentBatteryId,
+            }),
+          );
 
-      if (!bike) {
-        throw new NotFoundException(`Bike with id ${id} not found`);
-      }
+        if (!updated) {
+          throw new NotFoundException(`Bike with id ${id} not found`);
+        }
+
+        await syncBikeInventory(tx, updated);
+        return updated;
+      });
 
       return bike;
     } catch (error) {

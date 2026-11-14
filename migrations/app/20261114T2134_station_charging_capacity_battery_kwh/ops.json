@@ -1,0 +1,305 @@
+[
+  {
+    "id": "renameColumn.Station.capacity",
+    "label": "Rename column \"Station\".\"capacity\" to \"chargingCapacity\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "chargingCapacity",
+        "table": "Station"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"capacity\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "capacity"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"capacity\" on \"Station\""
+        }
+      },
+      {
+        "description": "ensure column \"chargingCapacity\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "chargingCapacity"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"chargingCapacity\" on \"Station\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "rename column \"capacity\" to \"chargingCapacity\"",
+        "sql": "ALTER TABLE \"public\".\"Station\" RENAME COLUMN \"capacity\" TO \"chargingCapacity\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"chargingCapacity\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "chargingCapacity"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"chargingCapacity\" on \"Station\""
+        }
+      },
+      {
+        "description": "verify column \"capacity\" no longer exists",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "capacity"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"capacity\" on \"Station\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "column.public.Battery.capacity",
+    "label": "Add column \"capacity\" to \"Battery\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "capacity",
+        "table": "Battery"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"capacity\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Battery",
+          "capacity"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"capacity\" on \"Battery\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"capacity\"",
+        "sql": "ALTER TABLE \"public\".\"Battery\" ADD COLUMN \"capacity\" float8"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"capacity\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Battery",
+          "capacity"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"capacity\" on \"Battery\""
+        }
+      },
+      {
+        "description": "verify column \"capacity\" has type \"double precision\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Battery",
+          "capacity",
+          "double precision"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Station.model",
+    "label": "Add column \"model\" to \"Station\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "model",
+        "table": "Station"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"model\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "model"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"model\" on \"Station\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"model\"",
+        "sql": "ALTER TABLE \"public\".\"Station\" ADD COLUMN \"model\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"model\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "model"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"model\" on \"Station\""
+        }
+      },
+      {
+        "description": "verify column \"model\" has type \"text\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "model",
+          "text"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "column.public.Station.photo",
+    "label": "Add column \"photo\" to \"Station\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "photo",
+        "table": "Station"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"photo\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "photo"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"photo\" on \"Station\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"photo\"",
+        "sql": "ALTER TABLE \"public\".\"Station\" ADD COLUMN \"photo\" text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"photo\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "photo"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"photo\" on \"Station\""
+        }
+      },
+      {
+        "description": "verify column \"photo\" has type \"text\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "Station",
+          "photo",
+          "text"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alterNullability.dropNotNull.Battery.model",
+    "label": "Drop NOT NULL on \"Battery\".\"model\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "model",
+        "table": "Battery"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"model\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Battery",
+          "model"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"model\" on \"Battery\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop NOT NULL on \"model\"",
+        "sql": "ALTER TABLE \"public\".\"Battery\" ALTER COLUMN \"model\" DROP NOT NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"model\" is nullable",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3 AND \"is_nullable\" = $4)) AS \"result\"",
+        "params": [
+          "public",
+          "Battery",
+          "model",
+          "YES"
+        ]
+      }
+    ]
+  }
+]

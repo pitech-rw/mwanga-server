@@ -25,4 +25,12 @@ export class PermissionsService {
 
     return required.every((permission) => permissionNames.has(permission));
   }
+
+  satisfiesAny(permissionNames: Set<string>, required: readonly string[]): boolean {
+    if (this.hasAdminBypass(permissionNames)) {
+      return true;
+    }
+
+    return required.some((permission) => permissionNames.has(permission));
+  }
 }

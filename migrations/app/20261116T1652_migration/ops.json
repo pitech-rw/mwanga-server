@@ -1,0 +1,948 @@
+[
+  {
+    "id": "table.Incident",
+    "label": "Create table \"Incident\"",
+    "summary": "Creates table \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Incident\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Incident\"",
+        "sql": "CREATE TABLE \"public\".\"Incident\" (\n  \"batteryId\" int4 NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"damagedAt\" timestamptz(3),\n  \"damagedById\" int4,\n  \"dismissedAt\" timestamptz(3),\n  \"dismissedById\" int4,\n  \"id\" SERIAL NOT NULL,\n  \"image\" text,\n  \"reporterId\" int4 NOT NULL,\n  \"stationId\" int4 NOT NULL,\n  \"status\" text DEFAULT 'open' NOT NULL,\n  \"swapTransactionId\" int4,\n  \"trackId\" text NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"Incident_status_check_cea09e09\" CHECK (\"status\" IN ('open', 'awaiting_swapper', 'awaiting_review', 'damaged', 'dismissed'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Incident\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"Incident\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"Incident\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.IncidentMessage",
+    "label": "Create table \"IncidentMessage\"",
+    "summary": "Creates table \"IncidentMessage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "IncidentMessage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"IncidentMessage\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"IncidentMessage\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"IncidentMessage\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"IncidentMessage\"",
+        "sql": "CREATE TABLE \"public\".\"IncidentMessage\" (\n  \"authorId\" int4 NOT NULL,\n  \"body\" text NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"incidentId\" int4 NOT NULL,\n  \"kind\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"IncidentMessage_kind_check_c1a5d38a\" CHECK (\"kind\" IN ('initial', 'question', 'reply', 'resolution', 'note'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"IncidentMessage\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"IncidentMessage\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"IncidentMessage\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.Incident.Incident_trackId_key",
+    "label": "Add unique constraint on \"Incident\" (trackId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "Incident_trackId_key",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Incident_trackId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Incident_trackId_key",
+          "public",
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Incident_trackId_key\" on \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"Incident_trackId_key\"",
+        "sql": "ALTER TABLE \"public\".\"Incident\" ADD CONSTRAINT \"Incident_trackId_key\" UNIQUE (\"trackId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"Incident_trackId_key\" exists on (trackId)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "Incident_trackId_key",
+          "public",
+          "\"public\".\"Incident\"",
+          "u",
+          "[\"trackId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Incident.Incident_batteryId_idx_87376261",
+    "label": "Create index \"Incident_batteryId_idx_87376261\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Incident_batteryId_idx_87376261",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Incident_batteryId_idx_87376261\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_batteryId_idx_87376261\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Incident_batteryId_idx_87376261\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Incident_batteryId_idx_87376261\"",
+        "sql": "CREATE INDEX \"Incident_batteryId_idx_87376261\" ON \"public\".\"Incident\" (\"batteryId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Incident_batteryId_idx_87376261\" exists on \"Incident\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_batteryId_idx_87376261\"",
+          "i",
+          "I",
+          "\"public\".\"Incident\"",
+          "btree",
+          "[\"batteryId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Incident.Incident_damagedById_idx_e34fe774",
+    "label": "Create index \"Incident_damagedById_idx_e34fe774\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Incident_damagedById_idx_e34fe774",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Incident_damagedById_idx_e34fe774\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_damagedById_idx_e34fe774\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Incident_damagedById_idx_e34fe774\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Incident_damagedById_idx_e34fe774\"",
+        "sql": "CREATE INDEX \"Incident_damagedById_idx_e34fe774\" ON \"public\".\"Incident\" (\"damagedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Incident_damagedById_idx_e34fe774\" exists on \"Incident\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_damagedById_idx_e34fe774\"",
+          "i",
+          "I",
+          "\"public\".\"Incident\"",
+          "btree",
+          "[\"damagedById\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Incident.Incident_dismissedById_idx_2aa6c68a",
+    "label": "Create index \"Incident_dismissedById_idx_2aa6c68a\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Incident_dismissedById_idx_2aa6c68a",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Incident_dismissedById_idx_2aa6c68a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_dismissedById_idx_2aa6c68a\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Incident_dismissedById_idx_2aa6c68a\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Incident_dismissedById_idx_2aa6c68a\"",
+        "sql": "CREATE INDEX \"Incident_dismissedById_idx_2aa6c68a\" ON \"public\".\"Incident\" (\"dismissedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Incident_dismissedById_idx_2aa6c68a\" exists on \"Incident\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_dismissedById_idx_2aa6c68a\"",
+          "i",
+          "I",
+          "\"public\".\"Incident\"",
+          "btree",
+          "[\"dismissedById\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Incident.Incident_reporterId_idx_aa245831",
+    "label": "Create index \"Incident_reporterId_idx_aa245831\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Incident_reporterId_idx_aa245831",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Incident_reporterId_idx_aa245831\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_reporterId_idx_aa245831\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Incident_reporterId_idx_aa245831\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Incident_reporterId_idx_aa245831\"",
+        "sql": "CREATE INDEX \"Incident_reporterId_idx_aa245831\" ON \"public\".\"Incident\" (\"reporterId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Incident_reporterId_idx_aa245831\" exists on \"Incident\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_reporterId_idx_aa245831\"",
+          "i",
+          "I",
+          "\"public\".\"Incident\"",
+          "btree",
+          "[\"reporterId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Incident.Incident_stationId_idx_0626a60c",
+    "label": "Create index \"Incident_stationId_idx_0626a60c\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Incident_stationId_idx_0626a60c",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Incident_stationId_idx_0626a60c\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_stationId_idx_0626a60c\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Incident_stationId_idx_0626a60c\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Incident_stationId_idx_0626a60c\"",
+        "sql": "CREATE INDEX \"Incident_stationId_idx_0626a60c\" ON \"public\".\"Incident\" (\"stationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Incident_stationId_idx_0626a60c\" exists on \"Incident\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_stationId_idx_0626a60c\"",
+          "i",
+          "I",
+          "\"public\".\"Incident\"",
+          "btree",
+          "[\"stationId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Incident.Incident_swapTransactionId_idx_64f4df5e",
+    "label": "Create index \"Incident_swapTransactionId_idx_64f4df5e\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Incident_swapTransactionId_idx_64f4df5e",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Incident_swapTransactionId_idx_64f4df5e\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_swapTransactionId_idx_64f4df5e\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Incident_swapTransactionId_idx_64f4df5e\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Incident_swapTransactionId_idx_64f4df5e\"",
+        "sql": "CREATE INDEX \"Incident_swapTransactionId_idx_64f4df5e\" ON \"public\".\"Incident\" (\"swapTransactionId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Incident_swapTransactionId_idx_64f4df5e\" exists on \"Incident\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Incident_swapTransactionId_idx_64f4df5e\"",
+          "i",
+          "I",
+          "\"public\".\"Incident\"",
+          "btree",
+          "[\"swapTransactionId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.IncidentMessage.IncidentMessage_authorId_idx_e47547ed",
+    "label": "Create index \"IncidentMessage_authorId_idx_e47547ed\" on \"IncidentMessage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "IncidentMessage_authorId_idx_e47547ed",
+        "table": "IncidentMessage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"IncidentMessage_authorId_idx_e47547ed\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"IncidentMessage_authorId_idx_e47547ed\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"IncidentMessage_authorId_idx_e47547ed\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"IncidentMessage_authorId_idx_e47547ed\"",
+        "sql": "CREATE INDEX \"IncidentMessage_authorId_idx_e47547ed\" ON \"public\".\"IncidentMessage\" (\"authorId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"IncidentMessage_authorId_idx_e47547ed\" exists on \"IncidentMessage\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"IncidentMessage_authorId_idx_e47547ed\"",
+          "i",
+          "I",
+          "\"public\".\"IncidentMessage\"",
+          "btree",
+          "[\"authorId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.IncidentMessage.IncidentMessage_incidentId_idx_20b6f3c9",
+    "label": "Create index \"IncidentMessage_incidentId_idx_20b6f3c9\" on \"IncidentMessage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "IncidentMessage_incidentId_idx_20b6f3c9",
+        "table": "IncidentMessage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"IncidentMessage_incidentId_idx_20b6f3c9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"IncidentMessage_incidentId_idx_20b6f3c9\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"IncidentMessage_incidentId_idx_20b6f3c9\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"IncidentMessage_incidentId_idx_20b6f3c9\"",
+        "sql": "CREATE INDEX \"IncidentMessage_incidentId_idx_20b6f3c9\" ON \"public\".\"IncidentMessage\" (\"incidentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"IncidentMessage_incidentId_idx_20b6f3c9\" exists on \"IncidentMessage\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"IncidentMessage_incidentId_idx_20b6f3c9\"",
+          "i",
+          "I",
+          "\"public\".\"IncidentMessage\"",
+          "btree",
+          "[\"incidentId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Incident.Incident_batteryId_fkey",
+    "label": "Add foreign key \"Incident_batteryId_fkey\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Incident_batteryId_fkey",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Incident_batteryId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Incident_batteryId_fkey",
+          "public",
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Incident_batteryId_fkey\" on \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Incident_batteryId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Incident\"\nADD CONSTRAINT \"Incident_batteryId_fkey\"\nFOREIGN KEY (\"batteryId\")\nREFERENCES \"public\".\"Battery\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Incident_batteryId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Incident_batteryId_fkey",
+          "public",
+          "\"public\".\"Incident\"",
+          "f",
+          "[\"batteryId\"]",
+          "\"public\".\"Battery\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Incident.Incident_stationId_fkey",
+    "label": "Add foreign key \"Incident_stationId_fkey\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Incident_stationId_fkey",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Incident_stationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Incident_stationId_fkey",
+          "public",
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Incident_stationId_fkey\" on \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Incident_stationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Incident\"\nADD CONSTRAINT \"Incident_stationId_fkey\"\nFOREIGN KEY (\"stationId\")\nREFERENCES \"public\".\"Station\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Incident_stationId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Incident_stationId_fkey",
+          "public",
+          "\"public\".\"Incident\"",
+          "f",
+          "[\"stationId\"]",
+          "\"public\".\"Station\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Incident.Incident_reporterId_fkey",
+    "label": "Add foreign key \"Incident_reporterId_fkey\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Incident_reporterId_fkey",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Incident_reporterId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Incident_reporterId_fkey",
+          "public",
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Incident_reporterId_fkey\" on \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Incident_reporterId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Incident\"\nADD CONSTRAINT \"Incident_reporterId_fkey\"\nFOREIGN KEY (\"reporterId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Incident_reporterId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Incident_reporterId_fkey",
+          "public",
+          "\"public\".\"Incident\"",
+          "f",
+          "[\"reporterId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Incident.Incident_swapTransactionId_fkey",
+    "label": "Add foreign key \"Incident_swapTransactionId_fkey\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Incident_swapTransactionId_fkey",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Incident_swapTransactionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Incident_swapTransactionId_fkey",
+          "public",
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Incident_swapTransactionId_fkey\" on \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Incident_swapTransactionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Incident\"\nADD CONSTRAINT \"Incident_swapTransactionId_fkey\"\nFOREIGN KEY (\"swapTransactionId\")\nREFERENCES \"public\".\"SwapTransaction\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Incident_swapTransactionId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Incident_swapTransactionId_fkey",
+          "public",
+          "\"public\".\"Incident\"",
+          "f",
+          "[\"swapTransactionId\"]",
+          "\"public\".\"SwapTransaction\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Incident.Incident_damagedById_fkey",
+    "label": "Add foreign key \"Incident_damagedById_fkey\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Incident_damagedById_fkey",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Incident_damagedById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Incident_damagedById_fkey",
+          "public",
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Incident_damagedById_fkey\" on \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Incident_damagedById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Incident\"\nADD CONSTRAINT \"Incident_damagedById_fkey\"\nFOREIGN KEY (\"damagedById\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Incident_damagedById_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Incident_damagedById_fkey",
+          "public",
+          "\"public\".\"Incident\"",
+          "f",
+          "[\"damagedById\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Incident.Incident_dismissedById_fkey",
+    "label": "Add foreign key \"Incident_dismissedById_fkey\" on \"Incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Incident_dismissedById_fkey",
+        "table": "Incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Incident_dismissedById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Incident_dismissedById_fkey",
+          "public",
+          "\"public\".\"Incident\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Incident_dismissedById_fkey\" on \"Incident\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Incident_dismissedById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Incident\"\nADD CONSTRAINT \"Incident_dismissedById_fkey\"\nFOREIGN KEY (\"dismissedById\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Incident_dismissedById_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Incident_dismissedById_fkey",
+          "public",
+          "\"public\".\"Incident\"",
+          "f",
+          "[\"dismissedById\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.IncidentMessage.IncidentMessage_incidentId_fkey",
+    "label": "Add foreign key \"IncidentMessage_incidentId_fkey\" on \"IncidentMessage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "IncidentMessage_incidentId_fkey",
+        "table": "IncidentMessage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"IncidentMessage_incidentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "IncidentMessage_incidentId_fkey",
+          "public",
+          "\"public\".\"IncidentMessage\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"IncidentMessage_incidentId_fkey\" on \"IncidentMessage\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"IncidentMessage_incidentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"IncidentMessage\"\nADD CONSTRAINT \"IncidentMessage_incidentId_fkey\"\nFOREIGN KEY (\"incidentId\")\nREFERENCES \"public\".\"Incident\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"IncidentMessage_incidentId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "IncidentMessage_incidentId_fkey",
+          "public",
+          "\"public\".\"IncidentMessage\"",
+          "f",
+          "[\"incidentId\"]",
+          "\"public\".\"Incident\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.IncidentMessage.IncidentMessage_authorId_fkey",
+    "label": "Add foreign key \"IncidentMessage_authorId_fkey\" on \"IncidentMessage\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "IncidentMessage_authorId_fkey",
+        "table": "IncidentMessage"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"IncidentMessage_authorId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "IncidentMessage_authorId_fkey",
+          "public",
+          "\"public\".\"IncidentMessage\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"IncidentMessage_authorId_fkey\" on \"IncidentMessage\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"IncidentMessage_authorId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"IncidentMessage\"\nADD CONSTRAINT \"IncidentMessage_authorId_fkey\"\nFOREIGN KEY (\"authorId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"IncidentMessage_authorId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "IncidentMessage_authorId_fkey",
+          "public",
+          "\"public\".\"IncidentMessage\"",
+          "f",
+          "[\"authorId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

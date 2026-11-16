@@ -82,6 +82,11 @@ export const PERMISSIONS = {
     write: 'violations:write',
     delete: 'violations:delete',
   },
+  incidents: {
+    read: 'incidents:read',
+    write: 'incidents:write',
+    review: 'incidents:review',
+  },
   inventory: {
     read: 'inventory:read',
     write: 'inventory:write',
@@ -104,6 +109,7 @@ export type PermissionName =
   | (typeof PERMISSIONS.companyAccounts)[keyof typeof PERMISSIONS.companyAccounts]
   | (typeof PERMISSIONS.swaps)[keyof typeof PERMISSIONS.swaps]
   | (typeof PERMISSIONS.violations)[keyof typeof PERMISSIONS.violations]
+  | (typeof PERMISSIONS.incidents)[keyof typeof PERMISSIONS.incidents]
   | (typeof PERMISSIONS.inventory)[keyof typeof PERMISSIONS.inventory];
 
 const readPermissions = [
@@ -120,6 +126,7 @@ const readPermissions = [
   PERMISSIONS.companyAccounts.read,
   PERMISSIONS.swaps.read,
   PERMISSIONS.violations.read,
+  PERMISSIONS.incidents.read,
   PERMISSIONS.inventory.read,
 ] as const;
 
@@ -167,6 +174,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.swaps.write,
     PERMISSIONS.swaps.delete,
     PERMISSIONS.violations.delete,
+    PERMISSIONS.incidents.review,
     PERMISSIONS.inventory.delete,
   ],
 
@@ -182,6 +190,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     PERMISSIONS.wallets.read,
     PERMISSIONS.violations.read,
     PERMISSIONS.violations.write,
+    PERMISSIONS.incidents.read,
+    PERMISSIONS.incidents.write,
   ],
 
   /** Field agent: own float wallet, top-ups into rider or owner wallets */

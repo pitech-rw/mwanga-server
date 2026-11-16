@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'edb1c8d64cd2fe3d7492eb2d9c836cb9ec06681a05c7bc9806ceea05050e9f19'>;
+  StorageHashBase<'0f5451dd2a46d1997c07c95a46bc8b98e7fdb54b968f6ea65dccbbdbb8ae79be'>;
 export type ExecutionHash =
-  ExecutionHashBase<'3ed804fa5738d21585316ebf673035dced9773413830f387d73f01c903141061'>;
+  ExecutionHashBase<'30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -287,6 +287,19 @@ type FieldTypeOverrides = {
       readonly BatteryReading: {
         readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
       };
+      readonly Incident: {
+        readonly status: {
+          readonly output:
+            'open' | 'awaiting_swapper' | 'awaiting_review' | 'damaged' | 'dismissed';
+          readonly input: 'open' | 'awaiting_swapper' | 'awaiting_review' | 'damaged' | 'dismissed';
+        };
+      };
+      readonly IncidentMessage: {
+        readonly kind: {
+          readonly output: 'initial' | 'question' | 'reply' | 'resolution' | 'note';
+          readonly input: 'initial' | 'question' | 'reply' | 'resolution' | 'note';
+        };
+      };
       readonly InventoryItem: {
         readonly kind: { readonly output: 'bike' | 'battery'; readonly input: 'bike' | 'battery' };
       };
@@ -407,6 +420,18 @@ type ColumnTypeOverrides = {
     };
     readonly BatteryReading: {
       readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
+    };
+    readonly Incident: {
+      readonly status: {
+        readonly output: 'open' | 'awaiting_swapper' | 'awaiting_review' | 'damaged' | 'dismissed';
+        readonly input: 'open' | 'awaiting_swapper' | 'awaiting_review' | 'damaged' | 'dismissed';
+      };
+    };
+    readonly IncidentMessage: {
+      readonly kind: {
+        readonly output: 'initial' | 'question' | 'reply' | 'resolution' | 'note';
+        readonly input: 'initial' | 'question' | 'reply' | 'resolution' | 'note';
+      };
     };
     readonly InventoryItem: {
       readonly kind: { readonly output: 'bike' | 'battery'; readonly input: 'bike' | 'battery' };
@@ -559,6 +584,7 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['Battery']['updatedAt'];
     voltage: FieldOutputTypes['public']['Battery']['voltage'];
     bike: public_Bike | null;
+    incidents: public_Incident[];
     inventoryItem: public_InventoryItem | null;
     newSwapTransactions: public_SwapTransaction[];
     oldSwapTransactions: public_SwapTransaction[];
@@ -566,6 +592,7 @@ export namespace Models {
     station: public_Station | null;
     readonly [RelationKeys]?:
       | 'bike'
+      | 'incidents'
       | 'inventoryItem'
       | 'newSwapTransactions'
       | 'oldSwapTransactions'
@@ -618,6 +645,48 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['CompanyAccount']['updatedAt'];
     ledgerLines: public_LedgerLine[];
     readonly [RelationKeys]?: 'ledgerLines';
+  };
+  export type public_Incident = {
+    batteryId: FieldOutputTypes['public']['Incident']['batteryId'];
+    createdAt: FieldOutputTypes['public']['Incident']['createdAt'];
+    damagedAt: FieldOutputTypes['public']['Incident']['damagedAt'];
+    damagedById: FieldOutputTypes['public']['Incident']['damagedById'];
+    dismissedAt: FieldOutputTypes['public']['Incident']['dismissedAt'];
+    dismissedById: FieldOutputTypes['public']['Incident']['dismissedById'];
+    id: FieldOutputTypes['public']['Incident']['id'];
+    image: FieldOutputTypes['public']['Incident']['image'];
+    reporterId: FieldOutputTypes['public']['Incident']['reporterId'];
+    stationId: FieldOutputTypes['public']['Incident']['stationId'];
+    status: FieldOutputTypes['public']['Incident']['status'];
+    swapTransactionId: FieldOutputTypes['public']['Incident']['swapTransactionId'];
+    trackId: FieldOutputTypes['public']['Incident']['trackId'];
+    updatedAt: FieldOutputTypes['public']['Incident']['updatedAt'];
+    battery: public_Battery;
+    damagedBy: public_User | null;
+    dismissedBy: public_User | null;
+    messages: public_IncidentMessage[];
+    reporter: public_User;
+    station: public_Station;
+    swapTransaction: public_SwapTransaction | null;
+    readonly [RelationKeys]?:
+      | 'battery'
+      | 'damagedBy'
+      | 'dismissedBy'
+      | 'messages'
+      | 'reporter'
+      | 'station'
+      | 'swapTransaction';
+  };
+  export type public_IncidentMessage = {
+    authorId: FieldOutputTypes['public']['IncidentMessage']['authorId'];
+    body: FieldOutputTypes['public']['IncidentMessage']['body'];
+    createdAt: FieldOutputTypes['public']['IncidentMessage']['createdAt'];
+    id: FieldOutputTypes['public']['IncidentMessage']['id'];
+    incidentId: FieldOutputTypes['public']['IncidentMessage']['incidentId'];
+    kind: FieldOutputTypes['public']['IncidentMessage']['kind'];
+    author: public_User;
+    incident: public_Incident;
+    readonly [RelationKeys]?: 'author' | 'incident';
   };
   export type public_InventoryItem = {
     batteryId: FieldOutputTypes['public']['InventoryItem']['batteryId'];
@@ -754,10 +823,12 @@ export namespace Models {
     status: FieldOutputTypes['public']['Station']['status'];
     updatedAt: FieldOutputTypes['public']['Station']['updatedAt'];
     batteries: public_Battery[];
+    incidents: public_Incident[];
     operators: public_User[];
     transactions: public_SwapTransaction[];
     violations: public_Violation[];
-    readonly [RelationKeys]?: 'batteries' | 'operators' | 'transactions' | 'violations';
+    readonly [RelationKeys]?:
+      'batteries' | 'incidents' | 'operators' | 'transactions' | 'violations';
   };
   export type public_SwapTransaction = {
     assignedAt: FieldOutputTypes['public']['SwapTransaction']['assignedAt'];
@@ -785,6 +856,7 @@ export namespace Models {
     auditLogs: public_AuditLog[];
     bike: public_Bike;
     card: public_NfcCard;
+    incidents: public_Incident[];
     ledgerEntries: public_LedgerEntry[];
     ledgerTransactions: public_LedgerTransaction[];
     newBattery: public_Battery | null;
@@ -797,6 +869,7 @@ export namespace Models {
       | 'auditLogs'
       | 'bike'
       | 'card'
+      | 'incidents'
       | 'ledgerEntries'
       | 'ledgerTransactions'
       | 'newBattery'
@@ -828,13 +901,17 @@ export namespace Models {
     username: FieldOutputTypes['public']['User']['username'];
     assignedBikes: public_Bike[];
     assignedStation: public_Station | null;
+    damagedIncidents: public_Incident[];
+    dismissedIncidents: public_Incident[];
     fleetOwner: public_Owner | null;
+    incidentMessages: public_IncidentMessage[];
     inventoryMovements: public_InventoryMovement[];
     ledgerTransactions: public_LedgerTransaction[];
     nfcCards: public_NfcCard[];
     offendingViolations: public_Violation[];
     portalAgent: public_Agent | null;
     proprietorOwner: public_Owner | null;
+    reportedIncidents: public_Incident[];
     reportedViolations: public_Violation[];
     riderSwaps: public_SwapTransaction[];
     riderWallet: public_Wallet | null;
@@ -843,13 +920,17 @@ export namespace Models {
     readonly [RelationKeys]?:
       | 'assignedBikes'
       | 'assignedStation'
+      | 'damagedIncidents'
+      | 'dismissedIncidents'
       | 'fleetOwner'
+      | 'incidentMessages'
       | 'inventoryMovements'
       | 'ledgerTransactions'
       | 'nfcCards'
       | 'offendingViolations'
       | 'portalAgent'
       | 'proprietorOwner'
+      | 'reportedIncidents'
       | 'reportedViolations'
       | 'riderSwaps'
       | 'riderWallet'
@@ -902,6 +983,8 @@ export declare const models: {
     BatteryReading: Models.public_BatteryReading;
     Bike: Models.public_Bike;
     CompanyAccount: Models.public_CompanyAccount;
+    Incident: Models.public_Incident;
+    IncidentMessage: Models.public_IncidentMessage;
     InventoryItem: Models.public_InventoryItem;
     InventoryMovement: Models.public_InventoryMovement;
     LedgerEntry: Models.public_LedgerEntry;
@@ -1572,6 +1655,309 @@ type ContractBase = Omit<
               uniques: readonly [{ readonly columns: readonly ['accountNumber'] }];
               indexes: readonly [];
               foreignKeys: readonly [];
+            };
+            readonly Incident: {
+              columns: {
+                readonly batteryId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly damagedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly damagedById: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly dismissedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly dismissedById: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly image: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly reporterId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly stationId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'open'>;
+                  };
+                  readonly many: false;
+                };
+                readonly swapTransactionId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly trackId: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [{ readonly columns: readonly ['trackId'] }];
+              indexes: readonly [
+                {
+                  readonly name: 'Incident_batteryId_idx_87376261';
+                  readonly prefix: 'Incident_batteryId_idx';
+                  readonly columns: readonly ['batteryId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Incident_damagedById_idx_e34fe774';
+                  readonly prefix: 'Incident_damagedById_idx';
+                  readonly columns: readonly ['damagedById'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Incident_dismissedById_idx_2aa6c68a';
+                  readonly prefix: 'Incident_dismissedById_idx';
+                  readonly columns: readonly ['dismissedById'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Incident_reporterId_idx_aa245831';
+                  readonly prefix: 'Incident_reporterId_idx';
+                  readonly columns: readonly ['reporterId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Incident_stationId_idx_0626a60c';
+                  readonly prefix: 'Incident_stationId_idx';
+                  readonly columns: readonly ['stationId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'Incident_swapTransactionId_idx_64f4df5e';
+                  readonly prefix: 'Incident_swapTransactionId_idx';
+                  readonly columns: readonly ['swapTransactionId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Incident';
+                    readonly columns: readonly ['batteryId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Battery';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Incident';
+                    readonly columns: readonly ['stationId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Station';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Incident';
+                    readonly columns: readonly ['reporterId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Incident';
+                    readonly columns: readonly ['swapTransactionId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'SwapTransaction';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Incident';
+                    readonly columns: readonly ['damagedById'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Incident';
+                    readonly columns: readonly ['dismissedById'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
+            };
+            readonly IncidentMessage: {
+              columns: {
+                readonly authorId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly body: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly incidentId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly kind: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'IncidentMessage_authorId_idx_e47547ed';
+                  readonly prefix: 'IncidentMessage_authorId_idx';
+                  readonly columns: readonly ['authorId'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'IncidentMessage_incidentId_idx_20b6f3c9';
+                  readonly prefix: 'IncidentMessage_incidentId_idx';
+                  readonly columns: readonly ['incidentId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'IncidentMessage';
+                    readonly columns: readonly ['incidentId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'Incident';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'IncidentMessage';
+                    readonly columns: readonly ['authorId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly InventoryItem: {
               columns: {
@@ -3281,6 +3667,20 @@ type ContractBase = Omit<
               readonly kind: 'valueSet';
               readonly values: readonly ['offline', 'available', 'charging', 'in_use', 'faulty'];
             };
+            readonly IncidentMessageKind: {
+              readonly kind: 'valueSet';
+              readonly values: readonly ['initial', 'question', 'reply', 'resolution', 'note'];
+            };
+            readonly IncidentStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly [
+                'open',
+                'awaiting_swapper',
+                'awaiting_review',
+                'damaged',
+                'dismissed',
+              ];
+            };
             readonly InventoryItemKind: {
               readonly kind: 'valueSet';
               readonly values: readonly ['bike', 'battery'];
@@ -3368,6 +3768,11 @@ type ContractBase = Omit<
     readonly CompanyAccount: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'CompanyAccount';
+    };
+    readonly Incident: { readonly namespace: 'public' & NamespaceId; readonly model: 'Incident' };
+    readonly IncidentMessage: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'IncidentMessage';
     };
     readonly InventoryItem: {
       readonly namespace: 'public' & NamespaceId;
@@ -3641,6 +4046,17 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['currentBatteryId'];
+                };
+              };
+              readonly incidents: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['batteryId'];
                 };
               };
               readonly inventoryItem: {
@@ -4016,6 +4432,245 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly name: { readonly column: 'name' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly Incident: {
+            readonly fields: {
+              readonly batteryId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly damagedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly damagedById: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly dismissedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly dismissedById: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly image: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly reporterId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly stationId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly swapTransactionId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly trackId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+            };
+            readonly relations: {
+              readonly battery: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Battery';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['batteryId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly damagedBy: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['damagedById'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly dismissedBy: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['dismissedById'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly messages: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'IncidentMessage';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['incidentId'];
+                };
+              };
+              readonly reporter: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['reporterId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly station: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Station';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['stationId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly swapTransaction: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'SwapTransaction';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['swapTransactionId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'Incident';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly batteryId: { readonly column: 'batteryId' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly damagedAt: { readonly column: 'damagedAt' };
+                readonly damagedById: { readonly column: 'damagedById' };
+                readonly dismissedAt: { readonly column: 'dismissedAt' };
+                readonly dismissedById: { readonly column: 'dismissedById' };
+                readonly id: { readonly column: 'id' };
+                readonly image: { readonly column: 'image' };
+                readonly reporterId: { readonly column: 'reporterId' };
+                readonly stationId: { readonly column: 'stationId' };
+                readonly status: { readonly column: 'status' };
+                readonly swapTransactionId: { readonly column: 'swapTransactionId' };
+                readonly trackId: { readonly column: 'trackId' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly IncidentMessage: {
+            readonly fields: {
+              readonly authorId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly body: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly incidentId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly kind: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+            };
+            readonly relations: {
+              readonly author: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['authorId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly incident: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['incidentId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'IncidentMessage';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly authorId: { readonly column: 'authorId' };
+                readonly body: { readonly column: 'body' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly id: { readonly column: 'id' };
+                readonly incidentId: { readonly column: 'incidentId' };
+                readonly kind: { readonly column: 'kind' };
               };
             };
           };
@@ -4862,6 +5517,17 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['stationId'];
                 };
               };
+              readonly incidents: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['stationId'];
+                };
+              };
               readonly operators: {
                 readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
                 readonly cardinality: '1:N';
@@ -5074,6 +5740,17 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['cardId'];
                   readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly incidents: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['swapTransactionId'];
                 };
               };
               readonly ledgerEntries: {
@@ -5305,6 +5982,28 @@ type ContractBase = Omit<
                   readonly targetFields: readonly ['id'];
                 };
               };
+              readonly damagedIncidents: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['damagedById'];
+                };
+              };
+              readonly dismissedIncidents: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['dismissedById'];
+                };
+              };
               readonly fleetOwner: {
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
@@ -5315,6 +6014,17 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['ownerId'];
                   readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly incidentMessages: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'IncidentMessage';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['authorId'];
                 };
               };
               readonly inventoryMovements: {
@@ -5383,6 +6093,17 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['userId'];
+                };
+              };
+              readonly reportedIncidents: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'Incident';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['reporterId'];
                 };
               };
               readonly reportedViolations: {
@@ -5716,6 +6437,26 @@ type ContractBase = Omit<
               { readonly name: 'faulty'; readonly value: 'faulty' },
             ];
           };
+          readonly IncidentMessageKind: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'initial'; readonly value: 'initial' },
+              { readonly name: 'question'; readonly value: 'question' },
+              { readonly name: 'reply'; readonly value: 'reply' },
+              { readonly name: 'resolution'; readonly value: 'resolution' },
+              { readonly name: 'note'; readonly value: 'note' },
+            ];
+          };
+          readonly IncidentStatus: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'open'; readonly value: 'open' },
+              { readonly name: 'awaiting_swapper'; readonly value: 'awaiting_swapper' },
+              { readonly name: 'awaiting_review'; readonly value: 'awaiting_review' },
+              { readonly name: 'damaged'; readonly value: 'damaged' },
+              { readonly name: 'dismissed'; readonly value: 'dismissed' },
+            ];
+          };
           readonly InventoryItemKind: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -5818,6 +6559,20 @@ type ContractBase = Omit<
             { readonly name: 'charging'; readonly value: 'charging' },
             { readonly name: 'in_use'; readonly value: 'in_use' },
             { readonly name: 'faulty'; readonly value: 'faulty' },
+          ];
+          readonly IncidentMessageKind: readonly [
+            { readonly name: 'initial'; readonly value: 'initial' },
+            { readonly name: 'question'; readonly value: 'question' },
+            { readonly name: 'reply'; readonly value: 'reply' },
+            { readonly name: 'resolution'; readonly value: 'resolution' },
+            { readonly name: 'note'; readonly value: 'note' },
+          ];
+          readonly IncidentStatus: readonly [
+            { readonly name: 'open'; readonly value: 'open' },
+            { readonly name: 'awaiting_swapper'; readonly value: 'awaiting_swapper' },
+            { readonly name: 'awaiting_review'; readonly value: 'awaiting_review' },
+            { readonly name: 'damaged'; readonly value: 'damaged' },
+            { readonly name: 'dismissed'; readonly value: 'dismissed' },
           ];
           readonly InventoryItemKind: readonly [
             { readonly name: 'bike'; readonly value: 'bike' },
@@ -5983,6 +6738,23 @@ type ContractBase = Omit<
           };
           readonly ref: {
             readonly entry: 'CompanyAccount';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly onUpdate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'Incident';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

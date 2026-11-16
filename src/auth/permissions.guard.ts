@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { AuthenticatedUser } from './auth.types.js';
 import { IS_PUBLIC_KEY } from './public.decorator.js';
-import { PERMISSIONS_KEY } from './require-permissions.decorator.js';
+import { PERMISSIONS_ANY_KEY, PERMISSIONS_KEY } from './require-permissions.decorator.js';
 import { PermissionsService } from './permissions.service.js';
 
 @Injectable()
@@ -27,12 +27,16 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const required = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
+    const requiredAll = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    const requiredAny = this.reflector.getAllAndOverride<string[]>(PERMISSIONS_ANY_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (!required?.length) {
+    if (!requiredAll?.length && !requiredAny?.length) {
       return true;
     }
 
@@ -45,7 +49,14 @@ export class PermissionsGuard implements CanActivate {
 
     const rolePermissions = await this.permissionsService.getPermissionNamesForRole(user.roleId);
 
-    if (this.permissionsService.satisfiesRequired(rolePermissions, required)) {
+    if (requiredAny?.length) {
+      if (this.permissionsService.satisfiesAny(rolePermissions, requiredAny)) {
+        return true;
+      }
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
+    if (this.permissionsService.satisfiesRequired(rolePermissions, requiredAll)) {
       return true;
     }
 

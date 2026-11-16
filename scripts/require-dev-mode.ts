@@ -1,7 +1,7 @@
 /**
  * One-off alignment scripts must not run against production.
  * Default role permissions are applied on server startup.
- * `bootstrap:admin` may run in production; it still refuses once any user exists.
+ * `bootstrap:admin` is compiled into dist and may run in production; it still refuses once any user exists.
  * npm scripts set NODE_ENV=development; direct invocation must do the same.
  */
 export function requireDevMode(scriptLabel: string): void {

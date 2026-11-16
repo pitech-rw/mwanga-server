@@ -27,8 +27,9 @@
     "db:migrate:show": "prisma db migrate --show",
     "migration:plan": "prisma migration plan",
     "migration:status": "prisma migration status",
-    "bootstrap:admin": "tsx scripts/bootstrap-admin.ts",
-    "seed:permissions": "tsx scripts/seed-permissions.ts",
+    "bootstrap:admin": "node dist/bootstrap-admin.js",
+    "seed:permissions": "node dist/seed-permissions.js",
+    "seed:permissions-dev": "tsx scripts/seed-permissions.ts",
     "seed:ledger-accounts": "NODE_ENV=development tsx scripts/seed-ledger-accounts.ts",
     "align:user-types": "NODE_ENV=development tsx scripts/align-user-types.ts"
   },

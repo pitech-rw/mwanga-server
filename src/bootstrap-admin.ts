@@ -3,11 +3,11 @@ import {
   PERMISSIONS,
   USER_TYPE_NAMES,
   type UserTypeName,
-} from '../src/auth/permission-catalog.js';
-import { syncRolePermissions } from '../src/auth/sync-role-permissions.js';
-import { hashPassword } from '../src/auth/password.js';
-import { db } from '../src/prisma/db.js';
-import type { UserType } from '../src/prisma/types.js';
+} from './auth/permission-catalog.js';
+import { syncRolePermissions } from './auth/sync-role-permissions.js';
+import { hashPassword } from './auth/password.js';
+import { db } from './prisma/db.js';
+import type { UserType } from './prisma/types.js';
 
 function parseBootstrapRoleName(raw: string | undefined): UserTypeName {
   const name = raw ?? 'admin';

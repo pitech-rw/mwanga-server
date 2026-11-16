@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS } from '../src/auth/permission-catalog.js';
-import { syncAllDefaultRolePermissions } from '../src/auth/sync-role-permissions.js';
-import { db } from '../src/prisma/db.js';
+import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS } from './auth/permission-catalog.js';
+import { syncAllDefaultRolePermissions } from './auth/sync-role-permissions.js';
+import { db } from './prisma/db.js';
 
 async function main() {
   await db.connect({ url: process.env['DATABASE_URL']! });

@@ -137,7 +137,8 @@ const crmWritePermissions = [
 ] as const;
 
 /**
- * Default permission sets keyed by Role.name (created/updated by seed script).
+ * Default permission sets keyed by Role.name.
+ * Applied on server startup and by `npm run seed:permissions`.
  */
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]> = {
   /** Full platform access */

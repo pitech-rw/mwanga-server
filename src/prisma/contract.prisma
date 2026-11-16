@@ -40,6 +40,10 @@ model User {
   swapsAsSwapper      SwapTransaction[] @relation("SwapperUser")
   reportedViolations  Violation[]       @relation("ViolationReporter")
   offendingViolations Violation[]       @relation("ViolationOffender")
+  reportedIncidents   Incident[]        @relation("IncidentReporter")
+  damagedIncidents    Incident[]        @relation("IncidentDamagedBy")
+  dismissedIncidents  Incident[]        @relation("IncidentDismissedBy")
+  incidentMessages    IncidentMessage[] @relation("IncidentMessageAuthor")
   // Swapper station operator assignment (one station at a time)
   stationId           Int?
   assignedStation     Station?          @relation("StationOperators", fields: [stationId], references: [id])
@@ -108,6 +112,22 @@ enum ViolationSeverity {
   medium
   high
   critical
+}
+
+enum IncidentStatus {
+  open
+  awaiting_swapper
+  awaiting_review
+  damaged
+  dismissed
+}
+
+enum IncidentMessageKind {
+  initial
+  question
+  reply
+  resolution
+  note
 }
 
 enum LedgerTransactionKind {
@@ -204,6 +224,7 @@ model Station {
   batteries    Battery[]
   transactions SwapTransaction[]
   violations   Violation[]
+  incidents    Incident[]
   operators    User[]            @relation("StationOperators")
 }
 
@@ -230,6 +251,7 @@ model Battery {
   newSwapTransactions SwapTransaction[] @relation("NewBattery")
   readings            BatteryReading[]
   inventoryItem       InventoryItem?
+  incidents           Incident[]
 }
 
 model InventoryItem {
@@ -386,6 +408,7 @@ model SwapTransaction {
   ledgerEntries LedgerEntry[]
   ledgerTransactions LedgerTransaction[]
   auditLogs    AuditLog[]
+  incidents    Incident[]
 }
 
 model BatteryReading {
@@ -447,4 +470,41 @@ model Violation {
   station  Station? @relation(fields: [stationId], references: [id])
   reporter User     @relation("ViolationReporter", fields: [reporterId], references: [id])
   offender User     @relation("ViolationOffender", fields: [offenderId], references: [id])
+}
+
+model Incident {
+  id                Int            @id @default(autoincrement())
+  trackId           String         @unique
+  batteryId         Int
+  stationId         Int
+  reporterId        Int
+  swapTransactionId Int?
+  status            IncidentStatus @default(open)
+  image             String?
+  damagedAt         DateTime?
+  damagedById       Int?
+  dismissedAt       DateTime?
+  dismissedById     Int?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @onCreate(now()) @onUpdate(now())
+
+  battery         Battery          @relation(fields: [batteryId], references: [id])
+  station         Station          @relation(fields: [stationId], references: [id])
+  reporter        User             @relation("IncidentReporter", fields: [reporterId], references: [id])
+  swapTransaction SwapTransaction? @relation(fields: [swapTransactionId], references: [id])
+  damagedBy       User?            @relation("IncidentDamagedBy", fields: [damagedById], references: [id])
+  dismissedBy     User?            @relation("IncidentDismissedBy", fields: [dismissedById], references: [id])
+  messages        IncidentMessage[]
+}
+
+model IncidentMessage {
+  id         Int                 @id @default(autoincrement())
+  incidentId Int
+  authorId   Int
+  body       String
+  kind       IncidentMessageKind
+  createdAt  DateTime            @default(now())
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  author   User     @relation("IncidentMessageAuthor", fields: [authorId], references: [id])
 }

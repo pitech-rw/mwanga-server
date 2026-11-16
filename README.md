@@ -51,6 +51,7 @@ Permission strings use `{resource}:{action}` and are stored on each `Role` in th
 | system | `system:admin` (bypasses all checks) |
 | users, roles, bikes, cards, batteries, stations, wallets | `{resource}:read`, `:write`, `:delete` |
 | swaps | `swaps:read`, `swaps:operate` (assign + complete), `swaps:write`, `swaps:delete`, `swaps:override` (manual assignment override) |
+| incidents | `incidents:read`, `incidents:write` (swapper: open + reply), `incidents:review` (office_manager: Q&A + mark damaged / dismiss) |
 
 Default roles (synced with `npm run seed:permissions`):
 
@@ -111,6 +112,35 @@ How to make changes to the model
 If the planner refuses (rename vs drop, type changes, required fields on existing rows), use flags from prisma migration plan --help: --rename, --delete, --convert, --backfill.
 
 Do not use db update for production if you want versioned migrations; use plan + migrate.
+
+## Battery incidents (swapper → office review)
+
+Swappers report a faulty pack at their station. Office managers (or admin) review on the web console: ask follow-up questions, **mark damaged** (battery → `faulty`, returned to warehouse, not swappable), or dismiss.
+
+```bash
+# Open incident (swapper JWT)
+curl -s -X POST http://localhost:3005/incidents \
+  -H "Authorization: Bearer $SWAPPER_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"batteryId":1,"description":"Cracked casing and erratic voltage"}'
+
+# Swapper reply when status is awaiting_swapper
+curl -s -X POST http://localhost:3005/incidents/1/messages \
+  -H "Authorization: Bearer $SWAPPER_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"body":"Photo attached at intake; pack was dropped."}'
+
+# Office manager: ask a question, mark damaged, or dismiss
+curl -s -X POST http://localhost:3005/incidents/1/messages \
+  -H "Authorization: Bearer $MANAGER_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"body":"Can you confirm the serial matches the label?"}'
+
+curl -s -X POST http://localhost:3005/incidents/1/mark-damaged \
+  -H "Authorization: Bearer $MANAGER_TOKEN"
+```
+
+Optional photo: `POST /uploads/incident-photo` (multipart, `incidents:write`).
 
 ## Quick post-migrate check
 

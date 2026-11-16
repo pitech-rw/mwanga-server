@@ -202,6 +202,24 @@ export type ViolationReadScope =
   | { mode: 'participant'; userId: number }
   | { mode: 'swapper_station'; stationId: number; userId: number };
 
+/** Incidents: reporter may read; station swapper may read rows for their station. */
+export type IncidentReadScope =
+  | { mode: 'unrestricted' }
+  | { mode: 'swapper_station'; stationId: number; userId: number };
+
+export function incidentReadScope(ctx: ReadScopeContext): IncidentReadScope {
+  if (isUnrestrictedRead(ctx)) {
+    return { mode: 'unrestricted' };
+  }
+  if (ctx.user.type === 'swapper') {
+    if (ctx.user.stationId == null) {
+      throw new ForbiddenException('Swapper is not assigned to a station');
+    }
+    return { mode: 'swapper_station', stationId: ctx.user.stationId, userId: ctx.user.sub };
+  }
+  throw new ForbiddenException('Insufficient scope to read incidents');
+}
+
 export function violationReadScope(ctx: ReadScopeContext): ViolationReadScope {
   if (isUnrestrictedRead(ctx)) {
     return { mode: 'unrestricted' };

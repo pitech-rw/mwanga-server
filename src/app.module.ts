@@ -17,6 +17,7 @@ import { StationsModule } from './stations/stations.module.js';
 import { SwapsModule } from './swaps/swaps.module.js';
 import { UsersModule } from './users/users.module.js';
 import { ViolationsModule } from './violations/violations.module.js';
+import { IncidentsModule } from './incidents/incidents.module.js';
 import { UploadsModule } from './uploads/uploads.module.js';
 import { WalletsModule } from './wallets/wallets.module.js';
 import { LedgerModule } from './ledger/ledger.module.js';
@@ -44,6 +45,7 @@ import { InventoryModule } from './inventory/inventory.module.js';
     CompanyAccountsModule,
     SwapsModule,
     ViolationsModule,
+    IncidentsModule,
     UploadsModule,
   ],
   controllers: [AppController],

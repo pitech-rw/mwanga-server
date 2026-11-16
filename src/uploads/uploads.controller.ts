@@ -47,4 +47,28 @@ export class UploadsController {
   uploadStationPhoto(@UploadedFile() file: Express.Multer.File) {
     return this.uploadsService.saveStationPhoto(file);
   }
+
+  @Post('incident-photo')
+  @RequirePermissions(PERMISSIONS.incidents.write)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  @ApiOperation({ summary: 'Upload a battery incident photo' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiCreatedResponse({ description: 'Public path to the stored image' })
+  uploadIncidentPhoto(@UploadedFile() file: Express.Multer.File) {
+    return this.uploadsService.saveIncidentPhoto(file);
+  }
 }

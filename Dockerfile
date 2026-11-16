@@ -27,6 +27,7 @@ COPY --from=builder --chown=app:app /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=app:app /app/migrations ./migrations
 COPY --from=builder --chown=app:app /app/src/prisma/* ./src/prisma/
 COPY --chown=app:app docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --from=builder --chown=app:app /app/scripts ./scripts
 RUN chmod +x docker-entrypoint.sh
 USER app
 EXPOSE 3005

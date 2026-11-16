@@ -25,7 +25,7 @@ RUN npm ci --omit=dev \
 COPY --from=builder --chown=app:app /app/dist ./dist
 COPY --from=builder --chown=app:app /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=app:app /app/migrations ./migrations
-COPY --from=builder --chown=app:app /app/src/prisma/contract.prisma ./src/prisma/contract.prisma
+COPY --from=builder --chown=app:app /app/src/prisma/* ./src/prisma/
 COPY --chown=app:app docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 USER app

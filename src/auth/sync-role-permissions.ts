@@ -1,3 +1,4 @@
+import { isUniqueViolation } from '../prisma/errors.js';
 import { db } from '../prisma/db.js';
 import {
   ALL_KNOWN_PERMISSIONS,
@@ -11,7 +12,19 @@ export async function syncRolePermissions(database: Database, roleName: string, 
   let role = await database.orm.public.Role.first({ name: roleName });
 
   if (!role) {
-    role = await database.orm.public.Role.create({ name: roleName });
+    try {
+      role = await database.orm.public.Role.create({ name: roleName });
+    } catch (error) {
+      if (!isUniqueViolation(error)) {
+        throw error;
+      }
+
+      role = await database.orm.public.Role.first({ name: roleName });
+
+      if (!role) {
+        throw error;
+      }
+    }
   }
 
   const existing = await database.orm.public.Permission.where({ roleId: role.id }).all();
@@ -27,10 +40,16 @@ export async function syncRolePermissions(database: Database, roleName: string, 
 
   for (const name of desired) {
     if (!existingNames.has(name)) {
-      await database.orm.public.Permission.create({
-        name,
-        roleId: role.id,
-      });
+      try {
+        await database.orm.public.Permission.create({
+          name,
+          roleId: role.id,
+        });
+      } catch (error) {
+        if (!isUniqueViolation(error)) {
+          throw error;
+        }
+      }
     }
   }
 

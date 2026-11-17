@@ -1,8 +1,11 @@
 import {
+  BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -10,20 +13,31 @@ import { UsersService } from '../users/users.service.js';
 import type { JwtPayload } from './auth.types.js';
 import { LoginDto } from './login.dto.js';
 import { PermissionsService } from './permissions.service.js';
-import { verifyPassword } from './password.js';
+import { hashPassword, verifyPassword } from './password.js';
+import type { PasswordResetJwtPayload } from './password-reset.types.js';
+import { MailService } from '../mail/mail.service.js';
+import type { ForgotPasswordDto } from './forgot-password.dto.js';
+import type { ResetPasswordDto } from './reset-password.dto.js';
 import { buildMeProfile, type MeProfileView } from './me-profile.js';
 import { SIGNUP_USER_TYPE } from './sign-up.constants.js';
 import type { SignUpDto } from './sign-up.dto.js';
 
 type UserWithRole = User & { role: { id: number; name: string } };
 
+const PASSWORD_RESET_RESPONSE =
+  'If an account exists for that email, we sent password reset instructions.';
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly permissionsService: PermissionsService,
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   private userQuery() {
@@ -118,6 +132,67 @@ export class AuthService {
       tokenType: 'Bearer' as const,
       user: buildMeProfile(user, [...permissionNames], 'persona'),
     };
+  }
+
+  async requestPasswordReset(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const user = await this.userQuery().first({ email: normalizedEmail });
+
+    if (!user?.passwordHash || !user.isActive) {
+      return { message: PASSWORD_RESET_RESPONSE };
+    }
+
+    const token = await this.jwtService.signAsync(
+      { sub: user.id, purpose: 'password-reset' } satisfies PasswordResetJwtPayload,
+      { expiresIn: '1h' },
+    );
+
+    const webBase =
+      this.config.get<string>('APP_WEB_URL')?.replace(/\/$/, '') ?? 'http://localhost:5000';
+    const resetUrl = `${webBase}/reset-password?token=${encodeURIComponent(token)}`;
+
+    try {
+      await this.mailService.sendPasswordResetEmail({
+        to: user.email,
+        firstName: user.firstName,
+        resetUrl,
+      });
+    } catch (err) {
+      this.logger.error(
+        `Failed to send password reset email for user ${user.id}`,
+        err instanceof Error ? err.stack : String(err),
+      );
+    }
+
+    return { message: PASSWORD_RESET_RESPONSE };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    let payload: PasswordResetJwtPayload;
+
+    try {
+      payload = await this.jwtService.verifyAsync<PasswordResetJwtPayload>(dto.token);
+    } catch {
+      throw new BadRequestException('Invalid or expired reset link.');
+    }
+
+    if (payload.purpose !== 'password-reset' || typeof payload.sub !== 'number') {
+      throw new BadRequestException('Invalid or expired reset link.');
+    }
+
+    const user = await this.userQuery().first({ id: payload.sub });
+
+    if (!user?.isActive) {
+      throw new BadRequestException('Invalid or expired reset link.');
+    }
+
+    const passwordHash = await hashPassword(dto.password);
+
+    await this.prisma.db.orm.public.User.where({ id: user.id }).update({
+      passwordHash,
+    });
+
+    return { message: 'Password updated. You can sign in now.' };
   }
 
   async getProfile(userId: number, view: MeProfileView = 'persona') {

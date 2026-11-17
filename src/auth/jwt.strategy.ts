@@ -20,7 +20,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<JwtPayload> {
+  async validate(payload: JwtPayload & { purpose?: string }): Promise<JwtPayload> {
+    if (payload.purpose === 'password-reset') {
+      throw new UnauthorizedException();
+    }
+
     const user = await this.prisma.db.orm.public.User.first({ id: payload.sub });
 
     if (!user?.isActive) {

@@ -8,7 +8,7 @@ RUN npm ci
 FROM deps AS development
 COPY . .
 RUN chmod +x docker-entrypoint.sh
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "docker-entrypoint.sh"]
 CMD ["npm", "run", "start:dev"]
 
 FROM deps AS builder
@@ -32,5 +32,5 @@ RUN chmod +x docker-entrypoint.sh
 USER app
 EXPOSE 3005
 ENV PORT=3005
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "docker-entrypoint.sh"]
 CMD ["npm", "run", "start:prod"]

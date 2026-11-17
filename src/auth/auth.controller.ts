@@ -16,6 +16,8 @@ import { CurrentUser } from './current-user.decorator.js';
 import { LoginDto } from './login.dto.js';
 import { MeQueryDto } from './me-query.dto.js';
 import { Public } from './public.decorator.js';
+import { ForgotPasswordDto } from './forgot-password.dto.js';
+import { ResetPasswordDto } from './reset-password.dto.js';
 import { SignUpDto } from './sign-up.dto.js';
 
 @ApiTags('Auth')
@@ -45,6 +47,23 @@ export class AuthController {
   @ApiBadRequestResponse({ description: 'Validation error or duplicate username/email/phone' })
   signUp(@Body() signUpDto: SignUpDto): ReturnType<AuthService['signUp']> {
     return this.authService.signUp(signUpDto);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request a password reset email' })
+  @ApiOkResponse({ description: 'Generic acknowledgment (does not reveal whether the email exists)' })
+  forgotPassword(@Body() dto: ForgotPasswordDto): ReturnType<AuthService['requestPasswordReset']> {
+    return this.authService.requestPasswordReset(dto);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Set a new password using a reset token from email' })
+  @ApiOkResponse({ description: 'Password updated' })
+  @ApiBadRequestResponse({ description: 'Invalid or expired reset token' })
+  resetPassword(@Body() dto: ResetPasswordDto): ReturnType<AuthService['resetPassword']> {
+    return this.authService.resetPassword(dto);
   }
 
   @Get('me')

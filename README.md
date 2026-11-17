@@ -9,7 +9,7 @@ With the server running (`npm run start:dev`), open:
 
 ## Authentication
 
-All API routes require a **Bearer JWT** except `GET /health`, `POST /auth/login`, and `POST /auth/signup`.
+All API routes require a **Bearer JWT** except `GET /health`, `POST /auth/login`, `POST /auth/signup`, `POST /auth/forgot-password`, and `POST /auth/reset-password`.
 
 1. Set `JWT_SECRET` (and optionally `JWT_EXPIRES_IN`) in `.env` — see `.env.example`.
 2. If the database has no users yet, create the first admin:

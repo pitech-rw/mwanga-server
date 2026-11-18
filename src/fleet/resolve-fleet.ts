@@ -1,4 +1,6 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { FleetCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { isUnrestrictedRead } from '../auth/read-scope.js';
 import type { PrismaService } from '../prisma.service.js';
@@ -24,7 +26,7 @@ export async function resolveFleetOwnerId(
       throw new NotFoundException(`User with id ${userId} not found`);
     }
     if (rider.ownerId == null) {
-      throw new BadRequestException('Rider is not assigned to a fleet owner');
+      apiBadRequest(FleetCodes.riderNoFleetOwner);
     }
     return rider.ownerId;
   }

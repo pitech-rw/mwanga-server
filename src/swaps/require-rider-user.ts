@@ -1,5 +1,7 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import type { PrismaService } from '../prisma.service.js';
+import { apiBadRequest } from '../errors/api-error.js';
+import { SwapsCodes } from '../errors/codes.js';
 
 export async function requireRiderUser(prisma: PrismaService, userId: number) {
   const user = await prisma.db.orm.public.User.where({ id: userId })
@@ -11,11 +13,11 @@ export async function requireRiderUser(prisma: PrismaService, userId: number) {
   }
 
   if (user.type !== 'rider') {
-    throw new BadRequestException('User is not a rider account');
+    apiBadRequest(SwapsCodes.riderAccountRequired);
   }
 
   if (!user.isActive) {
-    throw new BadRequestException('Rider account is not active');
+    apiBadRequest(SwapsCodes.riderInactive);
   }
 
   return user;

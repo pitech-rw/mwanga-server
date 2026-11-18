@@ -1,5 +1,7 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import type { PrismaService } from '../prisma.service.js';
+import { apiBadRequest } from '../errors/api-error.js';
+import { SwapsCodes } from '../errors/codes.js';
 
 /** Rider or fleet proprietor (owner type) performing a swap. */
 export async function requireSwapOperator(prisma: PrismaService, userId: number) {
@@ -14,18 +16,18 @@ export async function requireSwapOperator(prisma: PrismaService, userId: number)
 
   if (user.type === 'rider') {
     if (user.ownerId == null) {
-      throw new BadRequestException('Rider is not assigned to an owner fleet');
+      apiBadRequest(SwapsCodes.riderNoFleetOwnerShort);
     }
   } else if (user.type === 'owner') {
     if (!user.proprietorOwner) {
-      throw new BadRequestException('Owner user is not linked to an owner record');
+      apiBadRequest(SwapsCodes.ownerUserNotLinked);
     }
   } else {
-    throw new BadRequestException('User cannot operate swaps for this account');
+    apiBadRequest(SwapsCodes.cannotOperateSwap);
   }
 
   if (!user.isActive) {
-    throw new BadRequestException('User account is not active');
+    apiBadRequest(SwapsCodes.accountInactive);
   }
 
   return user;

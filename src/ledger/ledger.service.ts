@@ -1,9 +1,6 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { LedgerCodes } from '../errors/codes.js';
 import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
 import type { LedgerTransaction, Wallet } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -22,7 +19,7 @@ export class LedgerService {
       (id) => id != null,
     );
     if (targets.length !== 1) {
-      throw new BadRequestException('Each ledger line must reference exactly one account');
+      apiBadRequest(LedgerCodes.lineSingleAccount);
     }
     if (line.companyAccountId != null) {
       return 'company';
@@ -35,24 +32,24 @@ export class LedgerService {
 
   private validateLines(lines: readonly [LedgerLineInput, LedgerLineInput]) {
     if (lines.length !== 2) {
-      throw new BadRequestException('Ledger transactions require exactly two lines');
+      apiBadRequest(LedgerCodes.exactlyTwoLines);
     }
 
     const [a, b] = lines;
     for (const line of lines) {
       if (!(line.amount > 0)) {
-        throw new BadRequestException('Ledger line amount must be positive');
+        apiBadRequest(LedgerCodes.positiveAmount);
       }
       this.lineAccountKind(line);
     }
 
     if (a.amount !== b.amount) {
-      throw new BadRequestException('Debit and credit amounts must match');
+      apiBadRequest(LedgerCodes.debitCreditMatch);
     }
 
     const directions = new Set(lines.map((line) => line.direction));
     if (!directions.has('debit') || !directions.has('credit')) {
-      throw new BadRequestException('Ledger transactions require one debit and one credit line');
+      apiBadRequest(LedgerCodes.oneDebitOneCredit);
     }
   }
 
@@ -67,7 +64,7 @@ export class LedgerService {
       }
       const next = Number(account.balance) + delta;
       if (next < 0) {
-        throw new BadRequestException('Insufficient company account balance');
+        apiBadRequest(LedgerCodes.insufficientCompanyBalance);
       }
       await tx.orm.public.CompanyAccount.where({ id: account.id }).update({
         balance: asNumeric(next),
@@ -82,7 +79,7 @@ export class LedgerService {
       }
       const next = Number(wallet.balance) + delta;
       if (next < 0) {
-        throw new BadRequestException('Insufficient wallet balance');
+        apiBadRequest(LedgerCodes.insufficientWalletBalance);
       }
       await tx.orm.public.Wallet.where({ id: wallet.id }).update({
         balance: asNumeric(next),
@@ -115,10 +112,10 @@ export class LedgerService {
         (line) => line.direction === 'credit' && line.walletId != null,
       );
       if (!hasCompanyDebit || !hasWalletCredit) {
-        throw new BadRequestException('Float top-up must debit company account and credit wallet');
+        apiBadRequest(LedgerCodes.floatTopUpAccounts);
       }
       if (!input.externalReference?.trim()) {
-        throw new BadRequestException('externalReference is required for float top-up');
+        apiBadRequest(LedgerCodes.floatTopUpReferenceRequired);
       }
     }
 
@@ -134,12 +131,10 @@ export class LedgerService {
         creditWallet?.walletId == null ||
         debitWallet.walletId === creditWallet.walletId
       ) {
-        throw new BadRequestException(
-          'Agent top-up must debit the agent wallet and credit a different wallet',
-        );
+        apiBadRequest(LedgerCodes.agentTopUpWalletPair);
       }
       if (!input.externalReference?.trim()) {
-        throw new BadRequestException('externalReference is required for agent top-up');
+        apiBadRequest(LedgerCodes.agentTopUpReferenceRequired);
       }
     }
 
@@ -151,7 +146,7 @@ export class LedgerService {
         (line) => line.direction === 'credit' && line.revenueAccountId != null,
       );
       if (!hasWalletDebit || !hasRevenueCredit) {
-        throw new BadRequestException('Swap fee must debit wallet and credit revenue account');
+        apiBadRequest(LedgerCodes.swapFeeAccounts);
       }
     }
 
@@ -224,7 +219,7 @@ export class LedgerService {
     }
 
     if (wallet.currency !== company.currency) {
-      throw new BadRequestException('Wallet and company account currency must match');
+      apiBadRequest(LedgerCodes.currencyMismatchWalletCompany);
     }
 
     this.assertCompanyAccountSolvent(company, params.amount);
@@ -262,7 +257,7 @@ export class LedgerService {
     },
   ): Promise<LedgerTransaction> {
     if (!(params.amount > 0)) {
-      throw new BadRequestException('Top-up amount must be positive');
+      apiBadRequest(LedgerCodes.topUpPositive);
     }
 
     const source = await tx.orm.public.Wallet.first({ id: params.agentWalletId });
@@ -270,12 +265,12 @@ export class LedgerService {
       throw new NotFoundException(`Wallet ${params.agentWalletId} not found`);
     }
     if (source.agentId == null) {
-      throw new BadRequestException('Source wallet is not an agent float');
+      apiBadRequest(LedgerCodes.sourceNotAgentFloat);
     }
 
     const agent = await tx.orm.public.Agent.first({ id: source.agentId });
     if (!agent || agent.userId !== params.actorUserId) {
-      throw new BadRequestException('Agent float does not belong to the acting user');
+      apiBadRequest(LedgerCodes.agentFloatWrongUser);
     }
 
     const target = await tx.orm.public.Wallet.first({ id: params.targetWalletId });
@@ -286,11 +281,11 @@ export class LedgerService {
     const targetIsRider = target.userId != null && target.ownerId == null && target.agentId == null;
     const targetIsOwner = target.ownerId != null && target.userId == null && target.agentId == null;
     if (!targetIsRider && !targetIsOwner) {
-      throw new BadRequestException('Top-up target must be a rider or owner wallet');
+      apiBadRequest(LedgerCodes.topUpTargetRiderOrOwner);
     }
 
     if (source.currency !== target.currency) {
-      throw new BadRequestException('Agent float and target wallet currency must match');
+      apiBadRequest(LedgerCodes.agentTargetCurrencyMismatch);
     }
 
     this.assertWalletSolvent(source, params.amount);
@@ -322,9 +317,7 @@ export class LedgerService {
     }).first();
 
     if (!revenue) {
-      throw new BadRequestException(
-        `Revenue account "${DEFAULT_REVENUE_ACCOUNT_CODE}" is not configured. Run seed:ledger-accounts.`,
-      );
+      apiBadRequest(LedgerCodes.revenueAccountMissing, { params: { code: DEFAULT_REVENUE_ACCOUNT_CODE } });
     }
 
     return revenue;
@@ -340,7 +333,7 @@ export class LedgerService {
     },
   ): Promise<{ ledgerTransaction: LedgerTransaction; walletBalanceAfter: number }> {
     if (!(params.amount > 0)) {
-      throw new BadRequestException('Swap fee amount must be positive');
+      apiBadRequest(LedgerCodes.swapFeePositive);
     }
 
     const wallet = await tx.orm.public.Wallet.first({ id: params.walletId });
@@ -352,7 +345,7 @@ export class LedgerService {
 
     const revenue = await this.resolveDefaultRevenueAccount(tx);
     if (wallet.currency !== revenue.currency) {
-      throw new BadRequestException('Wallet and revenue account currency must match');
+      apiBadRequest(LedgerCodes.currencyMismatchWalletRevenue);
     }
 
     const ledgerTransaction = await this.postTransaction(tx, {
@@ -388,7 +381,7 @@ export class LedgerService {
   assertWalletSolvent(wallet: Wallet, debitAmount: number): void {
     const balance = Number(wallet.balance);
     if (balance < debitAmount) {
-      throw new BadRequestException('Insufficient wallet balance');
+      apiBadRequest(LedgerCodes.insufficientWalletBalance);
     }
   }
 
@@ -398,11 +391,11 @@ export class LedgerService {
     debitAmount: number,
   ): void {
     if (!(debitAmount > 0)) {
-      throw new BadRequestException('Top-up amount must be positive');
+      apiBadRequest(LedgerCodes.topUpPositive);
     }
     const balance = Number(company.balance);
     if (balance < debitAmount) {
-      throw new BadRequestException('Insufficient company account balance');
+      apiBadRequest(LedgerCodes.insufficientCompanyBalance);
     }
   }
 

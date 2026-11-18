@@ -1,4 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { InventoryCodes } from '../errors/codes.js';
 import type { PrismaService } from '../prisma.service.js';
 import type { InventoryMovementKind } from '../prisma/types.js';
 
@@ -37,7 +38,7 @@ export async function batteryBelongsInInventory(
 
 export function assertBikeWarehouseEligible(bike: Pick<BikeInventoryShape, 'currentBatteryId'>): void {
   if (bike.currentBatteryId != null) {
-    throw new BadRequestException('Warehouse bikes cannot have a battery installed');
+    apiBadRequest(InventoryCodes.warehouseBikeNoBattery);
   }
 }
 

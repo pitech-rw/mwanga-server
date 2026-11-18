@@ -1,5 +1,6 @@
-import { BadRequestException } from '@nestjs/common';
 import type { ValidationError } from 'class-validator';
+import { apiBadRequest } from '../errors/api-error.js';
+import { ValidationCodes } from '../errors/codes.js';
 
 function isMissing(value: unknown): boolean {
   return value === undefined || value === null || value === '';
@@ -44,29 +45,35 @@ function flattenValidationErrors(errors: ValidationError[], parentPath = ''): Va
   return flattened;
 }
 
-export function formatValidationErrorMessage(error: ValidationError): string {
-  const { property, value, constraints } = error;
+export function pickValidationRule(error: ValidationError): string {
+  const { value, constraints } = error;
 
   if (!constraints || Object.keys(constraints).length === 0) {
-    return `${property} is invalid`;
+    return 'invalid';
   }
 
   if (isMissing(value)) {
-    return `${property} is required`;
+    return 'required';
   }
 
   for (const key of constraintPriority) {
-    const message = constraints[key];
-    if (message) {
-      return message;
+    if (constraints[key]) {
+      if (key === 'isNotEmpty' || key === 'isDefined') {
+        return 'required';
+      }
+      return key;
     }
   }
 
-  return Object.values(constraints)[0] ?? `${property} is invalid`;
+  return 'invalid';
 }
 
 export function validationExceptionFactory(errors: ValidationError[]) {
-  const messages = flattenValidationErrors(errors).map(formatValidationErrorMessage);
+  const flat = flattenValidationErrors(errors);
+  const issues = flat.map((error) => ({
+    field: error.property,
+    rule: pickValidationRule(error),
+  }));
 
-  return new BadRequestException(messages.length === 1 ? messages[0] : messages);
+  return apiBadRequest(ValidationCodes.failed, { errors: issues });
 }

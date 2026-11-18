@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { BikesCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { bikeReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
 import { assertRiderBelongsToOwner } from '../fleet/fleet-rules.js';
@@ -101,13 +103,13 @@ export class BikesService {
 
   async create(data: CreateBikeDto): Promise<Bike> {
     if (data.userId != null && data.ownerId == null) {
-      throw new BadRequestException('Assign a fleet owner before attaching a rider');
+      apiBadRequest(BikesCodes.assignOwnerBeforeRider);
     }
 
     if (data.ownerId != null) {
       const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
       if (!owner) {
-        throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+        apiBadRequest(BikesCodes.ownerNotFound, { params: { ownerId: data.ownerId } });
       }
     }
 
@@ -116,7 +118,7 @@ export class BikesService {
     }
 
     if (data.currentBatteryId != null && data.ownerId == null) {
-      throw new BadRequestException('Warehouse bikes cannot be created with a battery installed');
+      apiBadRequest(BikesCodes.warehouseNoBatteryOnCreate);
     }
 
     try {
@@ -142,9 +144,7 @@ export class BikesService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException(
-          'A bike with this plate number, chassis number, serial number, or current battery already exists',
-        );
+        apiBadRequest(BikesCodes.duplicateIdentity);
       }
 
       throw error;
@@ -158,13 +158,13 @@ export class BikesService {
     if (data.ownerId != null) {
       const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
       if (!owner) {
-        throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+        apiBadRequest(BikesCodes.ownerNotFound, { params: { ownerId: data.ownerId } });
       }
     }
 
     const nextUserId = data.userId === undefined ? existing.userId : data.userId;
     if (nextUserId != null && nextOwnerId == null) {
-      throw new BadRequestException('Assign a fleet owner before attaching a rider');
+      apiBadRequest(BikesCodes.assignOwnerBeforeRider);
     }
     if (nextUserId != null && nextOwnerId != null) {
       await assertRiderBelongsToOwner(this.prisma, nextUserId, nextOwnerId);
@@ -172,7 +172,7 @@ export class BikesService {
     const nextBatteryId =
       data.currentBatteryId === undefined ? existing.currentBatteryId : data.currentBatteryId;
     if (nextOwnerId == null && nextBatteryId != null) {
-      throw new BadRequestException('Warehouse bikes cannot have a battery installed');
+      apiBadRequest(BikesCodes.warehouseNoBattery);
     }
 
     try {
@@ -206,9 +206,7 @@ export class BikesService {
       return bike;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException(
-          'A bike with this plate number, chassis number, serial number, or current battery already exists',
-        );
+        apiBadRequest(BikesCodes.duplicateIdentity);
       }
 
       throw error;

@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { UploadsCodes } from '../errors/codes.js';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -20,16 +22,16 @@ const EXT_BY_MIME: Record<string, string> = {
 export class UploadsService {
   async saveStationPhoto(file: Express.Multer.File): Promise<{ path: string }> {
     if (!file?.buffer?.length) {
-      throw new BadRequestException('A photo file is required');
+      apiBadRequest(UploadsCodes.photoRequired);
     }
 
     if (file.size > MAX_BYTES) {
-      throw new BadRequestException('Photo must be 5 MB or smaller');
+      apiBadRequest(UploadsCodes.photoTooLarge);
     }
 
     const mime = file.mimetype;
     if (!ALLOWED_MIME.has(mime)) {
-      throw new BadRequestException('Photo must be a JPEG, PNG, WebP, or GIF image');
+      apiBadRequest(UploadsCodes.photoInvalidType);
     }
 
     const ext = extname(file.originalname).toLowerCase() || EXT_BY_MIME[mime] || '.jpg';
@@ -45,16 +47,16 @@ export class UploadsService {
 
   async saveIncidentPhoto(file: Express.Multer.File): Promise<{ path: string }> {
     if (!file?.buffer?.length) {
-      throw new BadRequestException('A photo file is required');
+      apiBadRequest(UploadsCodes.photoRequired);
     }
 
     if (file.size > MAX_BYTES) {
-      throw new BadRequestException('Photo must be 5 MB or smaller');
+      apiBadRequest(UploadsCodes.photoTooLarge);
     }
 
     const mime = file.mimetype;
     if (!ALLOWED_MIME.has(mime)) {
-      throw new BadRequestException('Photo must be a JPEG, PNG, WebP, or GIF image');
+      apiBadRequest(UploadsCodes.photoInvalidType);
     }
 
     const ext = extname(file.originalname).toLowerCase() || EXT_BY_MIME[mime] || '.jpg';

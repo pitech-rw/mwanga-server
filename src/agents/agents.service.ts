@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { AgentsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { agentReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
 import { LedgerService } from '../ledger/ledger.service.js';
@@ -86,7 +88,7 @@ export class AgentsService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An agent with this portal user or wallet already exists');
+        apiBadRequest(AgentsCodes.duplicateAgent);
       }
       throw error;
     }
@@ -119,7 +121,7 @@ export class AgentsService {
       return agent;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An agent with this portal user already exists');
+        apiBadRequest(AgentsCodes.duplicatePortalUser);
       }
       throw error;
     }
@@ -140,7 +142,7 @@ export class AgentsService {
   async findTopUpTarget(query: string): Promise<TopUpTarget> {
     const trimmed = query.trim();
     if (trimmed.length < 2) {
-      throw new BadRequestException('Enter at least 2 characters');
+      apiBadRequest(AgentsCodes.searchTooShort);
     }
 
     try {
@@ -238,7 +240,7 @@ export class AgentsService {
       return { kind: match.kind, name: match.name, walletId: match.walletId };
     }
     if (exactMatches.length > 1) {
-      throw new BadRequestException('Multiple riders or owners match that name — use phone instead.');
+      apiBadRequest(AgentsCodes.multipleNameMatches);
     }
 
     const partialMatches = candidates.filter((candidate) => !candidate.exact);
@@ -247,7 +249,7 @@ export class AgentsService {
       return { kind: match.kind, name: match.name, walletId: match.walletId };
     }
     if (partialMatches.length > 1) {
-      throw new BadRequestException('Multiple riders or owners match that name — narrow the search or use phone.');
+      apiBadRequest(AgentsCodes.multipleNameMatchesNarrow);
     }
 
     throw new NotFoundException('No rider or owner matches that phone or name');
@@ -260,7 +262,7 @@ export class AgentsService {
   async topUp(actorUserId: number, dto: AgentTopUpDto): Promise<LedgerTransaction> {
     const agent = await this.prisma.db.orm.public.Agent.include('wallet').first({ userId: actorUserId });
     if (!agent?.wallet) {
-      throw new BadRequestException('Agent float wallet is not set up');
+      apiBadRequest(AgentsCodes.floatWalletMissing);
     }
 
     return this.prisma.db.transaction((tx) =>
@@ -286,17 +288,17 @@ export class AgentsService {
   private async assertPortalUser(userId: number): Promise<SafeUser> {
     const user = await this.prisma.db.orm.public.User.first({ id: userId });
     if (!user) {
-      throw new BadRequestException(`User with id ${userId} not found`);
+      apiBadRequest(AgentsCodes.userNotFound, { params: { userId } });
     }
     if (user.type !== 'agent') {
-      throw new BadRequestException('Linked account must have type agent');
+      apiBadRequest(AgentsCodes.linkedMustBeAgent);
     }
     if (user.ownerId != null) {
-      throw new BadRequestException('Agent portal users must not have ownerId set');
+      apiBadRequest(AgentsCodes.portalNoOwnerId);
     }
     const existingAgent = await this.prisma.db.orm.public.Agent.first({ userId });
     if (existingAgent) {
-      throw new BadRequestException('This user already has an agent profile');
+      apiBadRequest(AgentsCodes.profileExists);
     }
     return user;
   }

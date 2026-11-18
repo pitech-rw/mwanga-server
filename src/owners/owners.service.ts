@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { OwnersCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { denyOrNotFoundForScopedRead, ownerReadScope } from '../auth/read-scope.js';
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
@@ -45,13 +47,13 @@ export class OwnersService {
     if (data.userId != null) {
       const user = await this.prisma.db.orm.public.User.first({ id: data.userId });
       if (!user) {
-        throw new BadRequestException(`User with id ${data.userId} not found`);
+        apiBadRequest(OwnersCodes.userNotFound, { params: { userId: data.userId } });
       }
       if (user.type !== 'owner') {
-        throw new BadRequestException('Portal user must have type owner');
+        apiBadRequest(OwnersCodes.portalUserMustBeOwner);
       }
       if (user.ownerId != null) {
-        throw new BadRequestException('Owner portal users must not have ownerId set');
+        apiBadRequest(OwnersCodes.portalUserMustNotHaveOwnerId);
       }
     }
 
@@ -99,9 +101,7 @@ export class OwnersService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException(
-          'An owner with this portal user or wallet already exists, or a fleet bike plate/serial is already registered',
-        );
+        apiBadRequest(OwnersCodes.duplicateIdentity);
       }
       throw error;
     }
@@ -113,10 +113,10 @@ export class OwnersService {
     if (data.userId !== undefined && data.userId != null) {
       const user = await this.prisma.db.orm.public.User.first({ id: data.userId });
       if (!user) {
-        throw new BadRequestException(`User with id ${data.userId} not found`);
+        apiBadRequest(OwnersCodes.userNotFound, { params: { userId: data.userId } });
       }
       if (user.type !== 'owner') {
-        throw new BadRequestException('Portal user must have type owner');
+        apiBadRequest(OwnersCodes.portalUserMustBeOwner);
       }
     }
 
@@ -140,7 +140,7 @@ export class OwnersService {
       return owner;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An owner with this portal user already exists');
+        apiBadRequest(OwnersCodes.duplicatePortalUser);
       }
       throw error;
     }

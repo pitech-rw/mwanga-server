@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { RolesCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { assertCanReadRoles } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
@@ -36,7 +38,7 @@ export class RolesService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A role with this name already exists');
+        apiBadRequest(RolesCodes.duplicateRole);
       }
 
       throw error;
@@ -60,7 +62,7 @@ export class RolesService {
       return role;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A role with this name already exists');
+        apiBadRequest(RolesCodes.duplicateRole);
       }
 
       throw error;

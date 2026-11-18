@@ -1,5 +1,7 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import type { PrismaService } from '../prisma.service.js';
+import { apiBadRequest } from '../errors/api-error.js';
+import { SwapsCodes } from '../errors/codes.js';
 
 const swapOperatorTypes = new Set(['swapper', 'office']);
 
@@ -11,11 +13,11 @@ export async function requireSwapper(prisma: PrismaService, swapperId: number) {
   }
 
   if (!user.isActive) {
-    throw new BadRequestException('Swap operator account is not active');
+    apiBadRequest(SwapsCodes.operatorInactive);
   }
 
   if (!swapOperatorTypes.has(user.type)) {
-    throw new BadRequestException('User is not allowed to operate swaps');
+    apiBadRequest(SwapsCodes.operatorNotAllowed);
   }
 
   return user;

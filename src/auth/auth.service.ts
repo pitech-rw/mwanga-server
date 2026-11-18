@@ -1,10 +1,6 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { apiBadRequest, apiError } from '../errors/api-error.js';
+import { AuthCodes } from '../errors/codes.js';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User } from '../prisma/types.js';
@@ -25,9 +21,6 @@ import { SIGNUP_USER_TYPE } from './sign-up.constants.js';
 import type { SignUpDto } from './sign-up.dto.js';
 
 type UserWithRole = User & { role: { id: number; name: string } };
-
-const PASSWORD_RESET_RESPONSE =
-  'If an account exists for that email, we sent password reset instructions.';
 
 @Injectable()
 export class AuthService {
@@ -76,13 +69,13 @@ export class AuthService {
     const user = await this.findUserByLoginIdentifier(dto.identifier);
 
     if (!user?.passwordHash || !user.isActive) {
-      throw new UnauthorizedException('Invalid credentials');
+      apiError(AuthCodes.invalidCredentials, { status: HttpStatus.UNAUTHORIZED });
     }
 
     const valid = await verifyPassword(dto.password, user.passwordHash);
 
     if (!valid) {
-      throw new UnauthorizedException('Invalid credentials');
+      apiError(AuthCodes.invalidCredentials, { status: HttpStatus.UNAUTHORIZED });
     }
 
     await this.prisma.db.orm.public.User.where({ id: user.id }).update({
@@ -136,12 +129,12 @@ export class AuthService {
     };
   }
 
-  async requestPasswordReset(dto: ForgotPasswordDto): Promise<{ message: string }> {
+  async requestPasswordReset(dto: ForgotPasswordDto): Promise<{ code: string }> {
     const normalizedEmail = dto.email.trim().toLowerCase();
     const user = await this.userQuery().first({ email: normalizedEmail });
 
     if (!user?.passwordHash || !user.isActive) {
-      return { message: PASSWORD_RESET_RESPONSE };
+      return { code: AuthCodes.passwordResetEmailSent };
     }
 
     const token = await this.jwtService.signAsync(
@@ -166,26 +159,26 @@ export class AuthService {
       );
     }
 
-    return { message: PASSWORD_RESET_RESPONSE };
+    return { code: AuthCodes.passwordResetEmailSent };
   }
 
-  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+  async resetPassword(dto: ResetPasswordDto): Promise<{ code: string }> {
     let payload: PasswordResetJwtPayload;
 
     try {
       payload = await this.jwtService.verifyAsync<PasswordResetJwtPayload>(dto.token);
     } catch {
-      throw new BadRequestException('Invalid or expired reset link.');
+      apiBadRequest(AuthCodes.invalidResetToken);
     }
 
     if (payload.purpose !== 'password-reset' || typeof payload.sub !== 'number') {
-      throw new BadRequestException('Invalid or expired reset link.');
+      apiBadRequest(AuthCodes.invalidResetToken);
     }
 
     const user = await this.userQuery().first({ id: payload.sub });
 
     if (!user?.isActive) {
-      throw new BadRequestException('Invalid or expired reset link.');
+      apiBadRequest(AuthCodes.invalidResetToken);
     }
 
     const passwordHash = await hashPassword(dto.password);
@@ -194,7 +187,7 @@ export class AuthService {
       passwordHash,
     });
 
-    return { message: 'Password updated. You can sign in now.' };
+    return { code: AuthCodes.passwordUpdated };
   }
 
   async getProfile(userId: number, view: MeProfileView = 'persona') {
@@ -226,23 +219,23 @@ export class AuthService {
       dto.image !== undefined;
 
     if (!hasProfileChange && dto.password === undefined) {
-      throw new BadRequestException('Provide at least one field to update.');
+      apiBadRequest(AuthCodes.profileNoFields);
     }
 
     let passwordHash: string | undefined;
     if (dto.password !== undefined) {
       if (!user.passwordHash) {
-        throw new BadRequestException('This account has no password set. Use the forgot-password flow.');
+        apiBadRequest(AuthCodes.profileNoPassword);
       }
 
       if (dto.currentPassword === undefined) {
-        throw new BadRequestException('Current password is required to set a new password.');
+        apiBadRequest(AuthCodes.profileCurrentPasswordRequired);
       }
 
       const currentValid = await verifyPassword(dto.currentPassword, user.passwordHash);
 
       if (!currentValid) {
-        throw new BadRequestException('Current password is incorrect.');
+        apiBadRequest(AuthCodes.profileCurrentPasswordIncorrect);
       }
 
       passwordHash = await hashPassword(dto.password);
@@ -273,9 +266,7 @@ export class AuthService {
       return buildMeProfile(updated, [...permissionNames], 'full');
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException(
-          'A user with this email, username, or phone already exists',
-        );
+        apiBadRequest(AuthCodes.profileDuplicateIdentity);
       }
 
       throw error;

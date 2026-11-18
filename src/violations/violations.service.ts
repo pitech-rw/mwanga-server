@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { ViolationsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { denyOrNotFoundForScopedRead, violationReadScope } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
@@ -77,7 +79,7 @@ export class ViolationsService {
     const user = await this.prisma.db.orm.public.User.first({ id });
 
     if (!user) {
-      throw new BadRequestException(`${label} with id ${id} not found`);
+      apiBadRequest(ViolationsCodes.entityNotFound, { params: { label, id } });
     }
   }
 
@@ -85,7 +87,7 @@ export class ViolationsService {
     const station = await this.prisma.db.orm.public.Station.first({ id });
 
     if (!station) {
-      throw new BadRequestException(`Station with id ${id} not found`);
+      apiBadRequest(ViolationsCodes.stationNotFound, { params: { id } });
     }
   }
 
@@ -112,7 +114,7 @@ export class ViolationsService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A violation with this track ID already exists');
+        apiBadRequest(ViolationsCodes.duplicateTrackId);
       }
 
       throw error;
@@ -161,7 +163,7 @@ export class ViolationsService {
       return violation;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A violation with this track ID already exists');
+        apiBadRequest(ViolationsCodes.duplicateTrackId);
       }
 
       throw error;

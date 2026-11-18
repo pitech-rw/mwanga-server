@@ -1,4 +1,6 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { StationsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { denyOrNotFoundForScopedRead, stationReadFilter } from '../auth/read-scope.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
@@ -88,14 +90,14 @@ export class StationsService {
         }
 
         if (isUniqueViolation(error)) {
-          throw new BadRequestException('Could not assign a unique station code; try again');
+          apiBadRequest(StationsCodes.uniqueCodeFailed);
         }
 
         throw error;
       }
     }
 
-    throw new BadRequestException('Could not assign a unique station code; try again');
+    apiBadRequest(StationsCodes.uniqueCodeFailed);
   }
 
   async update(id: number, data: UpdateStationDto, ctx: ReadScopeContext): Promise<Station> {
@@ -122,7 +124,7 @@ export class StationsService {
       return station;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A station with this code already exists');
+        apiBadRequest(StationsCodes.duplicateCode);
       }
 
       throw error;
@@ -149,7 +151,9 @@ export class StationsService {
       return formatStationCode(sequence);
     } catch (error) {
       if (error instanceof RangeError) {
-        throw new BadRequestException(error.message);
+        apiBadRequest(StationsCodes.invalidUpdate, {
+          message: error instanceof Error ? error.message : String(error),
+        });
       }
 
       throw error;

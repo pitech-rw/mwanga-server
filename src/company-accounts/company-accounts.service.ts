@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { CompanyAccountsCodes } from '../errors/codes.js';
 import { LedgerService } from '../ledger/ledger.service.js';
 import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
 import type { CompanyAccount, LedgerTransaction } from '../prisma/types.js';
@@ -40,7 +42,7 @@ export class CompanyAccountsService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A company account with this account number already exists');
+        apiBadRequest(CompanyAccountsCodes.duplicateAccount);
       }
       throw error;
     }

@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { FleetCodes, SwapsCodes } from '../errors/codes.js';
 import { asNumeric } from '../prisma/errors.js';
 import type { SwapStatus } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -52,7 +54,7 @@ export class AssignmentService {
 
     const normalizedSerial = serialNumber.trim();
     if (normalizedSerial === '') {
-      throw new BadRequestException('Incoming battery serial number is required');
+      apiBadRequest(SwapsCodes.incomingSerialRequired);
     }
 
     const incoming = await this.prisma.db.orm.public.Battery.where({
@@ -64,9 +66,7 @@ export class AssignmentService {
     }
 
     if (incoming.id !== bike.currentBatteryId) {
-      throw new BadRequestException(
-        'This serial does not match the battery currently installed on the selected bike',
-      );
+      apiBadRequest(SwapsCodes.incomingSerialMismatch);
     }
   }
 
@@ -92,25 +92,23 @@ export class AssignmentService {
     if (bike.currentBatteryId != null) {
       const serial = dto.incomingBatterySerialNumber?.trim();
       if (!serial) {
-        throw new BadRequestException(
-          'incomingBatterySerialNumber is required when the bike has a mounted battery',
-        );
+        apiBadRequest(SwapsCodes.incomingSerialRequiredWhenMounted);
       }
       await this.assertIncomingSerialMatchesBike(dto.bikeId, serial);
     }
 
     if (bike.userId !== rider.id) {
-      throw new BadRequestException('Selected user is not assigned to this bike');
+      apiBadRequest(SwapsCodes.userNotOnBike);
     }
 
     if (bike.ownerId == null) {
-      throw new BadRequestException('This bike is not assigned to a fleet owner');
+      apiBadRequest(SwapsCodes.bikeNoFleetOwner);
     }
     await assertRiderBelongsToOwner(this.prisma, rider.id, bike.ownerId);
 
     const activeCard = rider.nfcCards.find((card) => card.status === 'active');
     if (!activeCard) {
-      throw new BadRequestException('Rider has no active NFC card for this swap');
+      apiBadRequest(SwapsCodes.riderNoCard);
     }
 
     const availableBattery = await this.prisma.db.orm.public.Battery.where({
@@ -121,7 +119,7 @@ export class AssignmentService {
       .first();
 
     if (!availableBattery) {
-      throw new BadRequestException('No available battery at the selected station');
+      apiBadRequest(SwapsCodes.noBatteryAtStation);
     }
 
     const assignedAt = new Date();
@@ -237,7 +235,7 @@ export class AssignmentService {
         }
         const ownerWallet = await tx.orm.public.Wallet.where({ ownerId: paidBike.ownerId }).first();
         if (!ownerWallet) {
-          throw new BadRequestException('Owner wallet not found for payment capture');
+          apiBadRequest(FleetCodes.ownerWalletMissing);
         }
 
         const fee = Number(loaded.fee);
@@ -311,7 +309,7 @@ export class AssignmentService {
 
   private async transferCustody(tx: Tx, swap: SwapCustody) {
     if (swap.oldBatteryId != null && swap.oldBatteryId === swap.newBatteryId) {
-      throw new BadRequestException('A swap cannot return and issue the same battery');
+      apiBadRequest(SwapsCodes.sameBatteryReturnIssue);
     }
 
     if (swap.newBatteryId != null) {
@@ -320,7 +318,7 @@ export class AssignmentService {
       }).first();
 
       if (otherBike && otherBike.id !== swap.bikeId) {
-        throw new BadRequestException('Issued battery is already mounted on another bike');
+        apiBadRequest(SwapsCodes.batteryOnAnotherBike);
       }
 
       await tx.orm.public.Bike.where({ id: swap.bikeId }).update({

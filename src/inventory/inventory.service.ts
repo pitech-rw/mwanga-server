@@ -1,4 +1,6 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { InventoryCodes } from '../errors/codes.js';
 import { assertRiderBelongsToOwner } from '../fleet/fleet-rules.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { isUnrestrictedRead } from '../auth/read-scope.js';
@@ -121,7 +123,7 @@ export class InventoryService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A bike with this plate number, chassis number, or serial already exists');
+        apiBadRequest(InventoryCodes.duplicateBike);
       }
       throw error;
     }
@@ -175,7 +177,7 @@ export class InventoryService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A battery with this serial number already exists');
+        apiBadRequest(InventoryCodes.duplicateBattery);
       }
       throw error;
     }
@@ -184,12 +186,12 @@ export class InventoryService {
   async issueBike(id: number, data: IssueInventoryBikeDto, ctx: ReadScopeContext): Promise<Bike> {
     const item = await this.findOne(id, ctx);
     if (item.kind !== 'bike' || item.bikeId == null) {
-      throw new BadRequestException('This inventory record is not a bike');
+      apiBadRequest(InventoryCodes.notBike);
     }
 
     const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
     if (!owner) {
-      throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+      apiBadRequest(InventoryCodes.ownerNotFound, { params: { ownerId: data.ownerId } });
     }
 
     if (data.userId != null) {
@@ -213,12 +215,12 @@ export class InventoryService {
   ): Promise<Battery> {
     const item = await this.findOne(id, ctx);
     if (item.kind !== 'battery' || item.batteryId == null) {
-      throw new BadRequestException('This inventory record is not a battery');
+      apiBadRequest(InventoryCodes.notBattery);
     }
 
     const station = await this.prisma.db.orm.public.Station.first({ id: data.stationId });
     if (!station) {
-      throw new BadRequestException(`Station with id ${data.stationId} not found`);
+      apiBadRequest(InventoryCodes.stationNotFound, { params: { stationId: data.stationId } });
     }
 
     return this.batteriesService.update(item.batteryId, { stationId: data.stationId }, ctx);
@@ -231,7 +233,7 @@ export class InventoryService {
   ): Promise<Battery> {
     const item = await this.findOne(id, ctx);
     if (item.kind !== 'battery' || item.batteryId == null) {
-      throw new BadRequestException('This inventory record is not a battery');
+      apiBadRequest(InventoryCodes.notBattery);
     }
 
     return this.batteriesService.update(item.batteryId, { bikeId: data.bikeId }, ctx);

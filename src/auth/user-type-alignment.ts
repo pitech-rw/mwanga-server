@@ -1,4 +1,6 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { AuthCodes } from '../errors/codes.js';
 import type { UserTypeName } from './permission-catalog.js';
 import type { PrismaService } from '../prisma.service.js';
 
@@ -17,9 +19,7 @@ export async function resolveRoleIdForType(
   const role = await prisma.db.orm.public.Role.first({ name: type });
 
   if (!role) {
-    throw new BadRequestException(
-      `Role "${type}" is not provisioned. Run npm run seed:permissions.`,
-    );
+    apiBadRequest(AuthCodes.roleNotProvisioned, { params: { type } });
   }
 
   return role.id;

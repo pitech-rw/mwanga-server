@@ -1,4 +1,6 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { FleetCodes } from '../errors/codes.js';
 import type { PrismaService } from '../prisma.service.js';
 
 export async function resolveWalletForBikeOwner(prisma: PrismaService, bikeId: number) {
@@ -9,7 +11,7 @@ export async function resolveWalletForBikeOwner(prisma: PrismaService, bikeId: n
 
   const wallet = await prisma.db.orm.public.Wallet.where({ ownerId: bike.ownerId }).first();
   if (!wallet) {
-    throw new BadRequestException('Owner wallet not found for payment capture');
+    apiBadRequest(FleetCodes.ownerWalletMissing);
   }
 
   return { bike, wallet };

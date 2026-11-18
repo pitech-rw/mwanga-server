@@ -1,4 +1,6 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { BatteriesCodes } from '../errors/codes.js';
 import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { batteryReadFilter, isUnrestrictedRead } from '../auth/read-scope.js';
@@ -113,7 +115,7 @@ export class BatteriesService {
   async findOneBySerial(serialNumber: string, ctx: ReadScopeContext): Promise<BatteryDetail> {
     const normalized = serialNumber.trim();
     if (normalized === '') {
-      throw new BadRequestException('serialNumber query is required');
+      apiBadRequest(BatteriesCodes.serialQueryRequired);
     }
 
     // Confirm caller may use battery reads (swapper station / role gate)
@@ -157,7 +159,7 @@ export class BatteriesService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A battery with this serial number already exists');
+        apiBadRequest(BatteriesCodes.duplicateSerial);
       }
 
       throw error;
@@ -174,9 +176,7 @@ export class BatteriesService {
     const wantsStation = stationPresent && data.stationId !== null;
 
     if (wantsBikeAttach && wantsStation) {
-      throw new BadRequestException(
-        'A battery cannot be attached to a bike and a station at the same time',
-      );
+      apiBadRequest(BatteriesCodes.bikeAndStation);
     }
 
     const stationIdAfterPatch =
@@ -240,7 +240,7 @@ export class BatteriesService {
       return battery;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A battery with this serial number already exists');
+        apiBadRequest(BatteriesCodes.duplicateSerial);
       }
 
       throw error;
@@ -331,15 +331,11 @@ export class BatteriesService {
     }
 
     if (bike.currentBatteryId != null && bike.currentBatteryId !== batteryId) {
-      throw new BadRequestException(
-        'That bike already has a different battery installed. Remove it before assigning this pack.',
-      );
+      apiBadRequest(BatteriesCodes.bikeHasDifferentBattery);
     }
 
     if (bikeBelongsInInventory(bike)) {
-      throw new BadRequestException(
-        'Cannot install a battery on a bike that is still in warehouse stock. Issue the bike to a fleet owner first.',
-      );
+      apiBadRequest(BatteriesCodes.warehouseBikeInstall);
     }
 
     await this.clearBatteryFromBikes(tx, batteryId);

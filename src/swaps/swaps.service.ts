@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { SwapsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { denyOrNotFoundForScopedRead, swapReadScope } from '../auth/read-scope.js';
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
@@ -88,7 +90,7 @@ export class SwapsService {
       : 'pending';
 
     if (!status || !paymentStatus) {
-      throw new BadRequestException('Invalid swap or payment status');
+      apiBadRequest(SwapsCodes.invalidSwapOrPaymentStatus);
     }
 
     if (data.swapperId !== undefined) {
@@ -135,7 +137,7 @@ export class SwapsService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('Could not create swap transaction');
+        apiBadRequest(SwapsCodes.createFailed);
       }
 
       throw error;
@@ -151,11 +153,11 @@ export class SwapsService {
       : undefined;
 
     if (data.status && !status) {
-      throw new BadRequestException('Invalid swap status');
+      apiBadRequest(SwapsCodes.invalidSwapStatus);
     }
 
     if (data.paymentStatus && !paymentStatus) {
-      throw new BadRequestException('Invalid payment status');
+      apiBadRequest(SwapsCodes.invalidPaymentStatus);
     }
 
     if (data.swapperId !== undefined) {
@@ -223,7 +225,7 @@ export class SwapsService {
       return swap;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('Could not update swap transaction');
+        apiBadRequest(SwapsCodes.updateFailed);
       }
 
       throw error;

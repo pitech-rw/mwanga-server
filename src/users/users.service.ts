@@ -1,4 +1,6 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { UsersCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { assertCanReadUserId, isUnrestrictedRead } from '../auth/read-scope.js';
 import { assertOwnerTypeInvariant } from '../fleet/fleet-rules.js';
@@ -136,11 +138,11 @@ export class UsersService {
 
     if (data.type === 'rider') {
       if (data.ownerId == null) {
-        throw new BadRequestException('Riders must be assigned to an owner (ownerId)');
+        apiBadRequest(UsersCodes.riderRequiresOwner);
       }
       const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
       if (!owner) {
-        throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+        apiBadRequest(UsersCodes.ownerNotFound, { params: { ownerId: data.ownerId } });
       }
     }
 
@@ -250,9 +252,7 @@ export class UsersService {
       return sanitizeUser(user);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException(
-          'A user with this email, username, phone, or national ID already exists',
-        );
+        apiBadRequest(UsersCodes.duplicateIdentity);
       }
 
       throw error;
@@ -289,7 +289,7 @@ export class UsersService {
     if (nextType === 'rider' && nextOwnerId != null) {
       const owner = await this.prisma.db.orm.public.Owner.first({ id: nextOwnerId });
       if (!owner) {
-        throw new BadRequestException(`Owner with id ${nextOwnerId} not found`);
+        apiBadRequest(UsersCodes.ownerNotFound, { params: { ownerId: nextOwnerId } });
       }
     }
 
@@ -339,9 +339,7 @@ export class UsersService {
       return sanitizeUser(user);
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException(
-          'A user with this email, username, phone, or national ID already exists',
-        );
+        apiBadRequest(UsersCodes.duplicateIdentity);
       }
 
       throw error;
@@ -352,7 +350,7 @@ export class UsersService {
     await this.findOne(id, ctx);
 
     if (id === ctx.user.sub) {
-      throw new BadRequestException('You cannot deactivate your own account');
+      apiBadRequest(UsersCodes.cannotDeactivateSelf);
     }
 
     const user = await this.userQuery().where({ id }).update({

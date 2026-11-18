@@ -1,9 +1,6 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { IncidentsCodes } from '../errors/codes.js';
 import { randomUUID } from 'node:crypto';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import {
@@ -124,7 +121,7 @@ export class IncidentsService {
 
   private assertTerminal(status: IncidentStatus): void {
     if (status === 'damaged' || status === 'dismissed') {
-      throw new BadRequestException('This incident is already closed');
+      apiBadRequest(IncidentsCodes.alreadyClosed);
     }
   }
 
@@ -152,13 +149,13 @@ export class IncidentsService {
 
     const battery = await this.prisma.db.orm.public.Battery.first({ id: data.batteryId });
     if (!battery) {
-      throw new BadRequestException(`Battery with id ${data.batteryId} not found`);
+      apiBadRequest(IncidentsCodes.batteryNotFound, { params: { batteryId: data.batteryId } });
     }
     if (battery.stationId !== stationId) {
-      throw new BadRequestException('Battery is not at your assigned station');
+      apiBadRequest(IncidentsCodes.batteryWrongStation);
     }
     if (battery.status === 'faulty') {
-      throw new BadRequestException('Battery is already marked faulty');
+      apiBadRequest(IncidentsCodes.batteryAlreadyFaulty);
     }
 
     const openRows = await this.prisma.db.orm.public.Incident.where({
@@ -168,7 +165,7 @@ export class IncidentsService {
       (OPEN_INCIDENT_STATUSES as readonly string[]).includes(row.status),
     );
     if (hasOpen) {
-      throw new BadRequestException('An open incident already exists for this battery');
+      apiBadRequest(IncidentsCodes.openIncidentExists);
     }
 
     if (data.swapTransactionId != null) {
@@ -176,10 +173,10 @@ export class IncidentsService {
         id: data.swapTransactionId,
       });
       if (!swap) {
-        throw new BadRequestException(`Swap transaction with id ${data.swapTransactionId} not found`);
+        apiBadRequest(IncidentsCodes.swapNotFound, { params: { swapId: data.swapTransactionId } });
       }
       if (swap.stationId !== stationId) {
-        throw new BadRequestException('Swap transaction is not at your station');
+        apiBadRequest(IncidentsCodes.swapWrongStation);
       }
     }
 
@@ -219,7 +216,7 @@ export class IncidentsService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('Could not allocate incident track ID; retry');
+        apiBadRequest(IncidentsCodes.trackIdFailed);
       }
       throw error;
     }
@@ -254,9 +251,7 @@ export class IncidentsService {
       kind = 'reply';
       nextStatus = 'awaiting_review';
     } else {
-      throw new BadRequestException(
-        'You cannot post a message on this incident in its current state',
-      );
+      apiBadRequest(IncidentsCodes.cannotPostMessage);
     }
 
     await this.prisma.db.transaction(async (tx) => {
@@ -288,21 +283,17 @@ export class IncidentsService {
 
     const battery = await this.prisma.db.orm.public.Battery.first({ id: incident.batteryId });
     if (!battery) {
-      throw new BadRequestException('Battery not found');
+      apiBadRequest(IncidentsCodes.batteryMissing);
     }
     if (battery.stationId !== incident.stationId) {
-      throw new BadRequestException(
-        'Battery is no longer at the reporting station; cannot mark damaged',
-      );
+      apiBadRequest(IncidentsCodes.batteryLeftStation);
     }
 
     const mounted = await this.prisma.db.orm.public.Bike.where({
       currentBatteryId: battery.id,
     }).first();
     if (mounted) {
-      throw new BadRequestException(
-        'Battery is mounted on a bike; complete the swap before marking damaged',
-      );
+      apiBadRequest(IncidentsCodes.batteryMountedOnBike);
     }
 
     const now = new Date();

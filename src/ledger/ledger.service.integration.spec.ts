@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { ConflictException, HttpException } from '@nestjs/common';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { asNumeric } from '../prisma/errors.js';
 import { db } from '../prisma/db.js';
@@ -104,7 +104,7 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
           externalReference,
         });
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(HttpException);
   });
 
   it('rejects duplicate externalReference', async () => {
@@ -152,7 +152,7 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
           swapTransactionId: 1,
         });
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(HttpException);
 
     const unchanged = await db.orm.public.Wallet.first({ id: walletId });
     expect(Number(unchanged?.balance)).toBe(Number(wallet.balance));
@@ -248,6 +248,6 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
           actorUserId: 1,
         });
       }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toBeInstanceOf(HttpException);
   });
 });

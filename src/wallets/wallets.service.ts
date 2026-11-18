@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { WalletsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { denyOrNotFoundForScopedRead, walletReadScope } from '../auth/read-scope.js';
 import { resolveFleetOwnerId } from '../fleet/resolve-fleet.js';
@@ -75,12 +77,12 @@ export class WalletsService {
   async create(data: CreateWalletDto): Promise<Wallet> {
     const owner = await this.prisma.db.orm.public.Owner.first({ id: data.ownerId });
     if (!owner) {
-      throw new BadRequestException(`Owner with id ${data.ownerId} not found`);
+      apiBadRequest(WalletsCodes.ownerNotFound, { params: { ownerId: data.ownerId } });
     }
 
     const existing = await this.prisma.db.orm.public.Wallet.where({ ownerId: data.ownerId }).first();
     if (existing) {
-      throw new BadRequestException('A wallet already exists for this owner');
+      apiBadRequest(WalletsCodes.walletExists);
     }
 
     try {
@@ -91,7 +93,7 @@ export class WalletsService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('A wallet already exists for this owner');
+        apiBadRequest(WalletsCodes.walletExists);
       }
 
       throw error;

@@ -1,4 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { apiBadRequest } from '../errors/api-error.js';
+import { CardsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { cardReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
 import { cardIdsSeenAtStation } from '../auth/swapper-station-assets.js';
@@ -84,7 +86,7 @@ export class CardsService {
       });
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An NFC card with this token or serial number already exists');
+        apiBadRequest(CardsCodes.duplicateCard);
       }
 
       throw error;
@@ -115,7 +117,7 @@ export class CardsService {
       return card;
     } catch (error) {
       if (isUniqueViolation(error)) {
-        throw new BadRequestException('An NFC card with this token or serial number already exists');
+        apiBadRequest(CardsCodes.duplicateCard);
       }
 
       throw error;

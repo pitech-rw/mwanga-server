@@ -2,6 +2,7 @@ import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
@@ -19,7 +20,7 @@ import { Public } from './public.decorator.js';
 import { ForgotPasswordDto } from './forgot-password.dto.js';
 import { ResetPasswordDto } from './reset-password.dto.js';
 import { SignUpDto } from './sign-up.dto.js';
-import { UpdateMeDto } from './update-me.dto.js';
+import { UpdateMyProfileDto } from './update-my-profile.dto.js';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -91,12 +92,22 @@ export class AuthController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update the signed-in user profile',
-    description: 'Self-service updates for name, contact details, image, and password.',
+    description:
+      'Self-service updates for username, contact fields, image URL, and password. Role, type, and active status are not accepted. When `password` is sent, `currentPassword` is required and must verify against the existing hash.',
   })
-  @ApiOkResponse({ description: 'Updated profile (view=full field set with role and permissions)' })
+  @ApiBody({ type: UpdateMyProfileDto })
+  @ApiOkResponse({
+    description: 'Updated profile (same shape as GET /auth/me?view=full)',
+  })
   @ApiUnauthorizedResponse()
-  @ApiBadRequestResponse({ description: 'Validation error or duplicate username/email/phone' })
-  updateMe(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateMeDto) {
-    return this.authService.updateProfile(user.sub, dto);
+  @ApiBadRequestResponse({
+    description:
+      'Validation error, no fields to update, incorrect current password, or duplicate username/email/phone',
+  })
+  updateMyProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateMyProfileDto,
+  ): ReturnType<AuthService['updateMyProfile']> {
+    return this.authService.updateMyProfile(user.sub, dto);
   }
 }

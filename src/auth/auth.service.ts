@@ -20,7 +20,7 @@ import type { ForgotPasswordDto } from './forgot-password.dto.js';
 import type { ResetPasswordDto } from './reset-password.dto.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import { buildMeProfile, type MeProfileView } from './me-profile.js';
-import type { UpdateMeDto } from './update-me.dto.js';
+import type { UpdateMyProfileDto } from './update-my-profile.dto.js';
 import { SIGNUP_USER_TYPE } from './sign-up.constants.js';
 import type { SignUpDto } from './sign-up.dto.js';
 
@@ -209,7 +209,7 @@ export class AuthService {
     return buildMeProfile(user, [...permissionNames], view);
   }
 
-  async updateProfile(userId: number, dto: UpdateMeDto) {
+  async updateMyProfile(userId: number, dto: UpdateMyProfileDto) {
     const user = await this.userQuery().first({ id: userId });
 
     if (!user?.isActive) {

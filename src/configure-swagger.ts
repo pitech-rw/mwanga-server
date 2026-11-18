@@ -16,7 +16,7 @@ export function configureSwagger(app: INestApplication) {
       'JWT-auth',
     )
     .addTag('App', 'Root and health checks')
-    .addTag('Auth', 'Sign in and session')
+    .addTag('Auth', 'Sign in, current profile (GET/PATCH /auth/me), and password reset')
     .addTag(
       'Batteries',
       'Battery inventory. **GET /batteries/serial/:serial** resolves a pack by barcode before **POST /swaps/assign**.',

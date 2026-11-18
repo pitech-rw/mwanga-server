@@ -18,7 +18,9 @@ import type { PasswordResetJwtPayload } from './password-reset.types.js';
 import { MailService } from '../mail/mail.service.js';
 import type { ForgotPasswordDto } from './forgot-password.dto.js';
 import type { ResetPasswordDto } from './reset-password.dto.js';
+import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import { buildMeProfile, type MeProfileView } from './me-profile.js';
+import type { UpdateMeDto } from './update-me.dto.js';
 import { SIGNUP_USER_TYPE } from './sign-up.constants.js';
 import type { SignUpDto } from './sign-up.dto.js';
 
@@ -205,6 +207,79 @@ export class AuthService {
     const permissionNames = await this.permissionsService.getPermissionNamesForRole(user.roleId);
 
     return buildMeProfile(user, [...permissionNames], view);
+  }
+
+  async updateProfile(userId: number, dto: UpdateMeDto) {
+    const user = await this.userQuery().first({ id: userId });
+
+    if (!user?.isActive) {
+      throw new UnauthorizedException();
+    }
+
+    const hasProfileChange =
+      dto.username !== undefined ||
+      dto.firstName !== undefined ||
+      dto.lastName !== undefined ||
+      dto.email !== undefined ||
+      dto.phone !== undefined ||
+      dto.address !== undefined ||
+      dto.image !== undefined;
+
+    if (!hasProfileChange && dto.password === undefined) {
+      throw new BadRequestException('Provide at least one field to update.');
+    }
+
+    let passwordHash: string | undefined;
+    if (dto.password !== undefined) {
+      if (!user.passwordHash) {
+        throw new BadRequestException('This account has no password set. Use the forgot-password flow.');
+      }
+
+      if (dto.currentPassword === undefined) {
+        throw new BadRequestException('Current password is required to set a new password.');
+      }
+
+      const currentValid = await verifyPassword(dto.currentPassword, user.passwordHash);
+
+      if (!currentValid) {
+        throw new BadRequestException('Current password is incorrect.');
+      }
+
+      passwordHash = await hashPassword(dto.password);
+    }
+
+    try {
+      const updated = await this.userQuery()
+        .where({ id: userId })
+        .update(
+          withoutUndefined({
+            username: dto.username,
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            email: dto.email?.trim().toLowerCase(),
+            phone: dto.phone,
+            address: dto.address,
+            image: dto.image,
+            passwordHash,
+          }),
+        );
+
+      if (!updated) {
+        throw new NotFoundException(`User with id ${userId} not found`);
+      }
+
+      const permissionNames = await this.permissionsService.getPermissionNamesForRole(updated.roleId);
+
+      return buildMeProfile(updated, [...permissionNames], 'full');
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new BadRequestException(
+          'A user with this email, username, or phone already exists',
+        );
+      }
+
+      throw error;
+    }
   }
 
   private async signToken(user: UserWithRole): Promise<string> {

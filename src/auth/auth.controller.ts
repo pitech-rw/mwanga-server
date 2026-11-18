@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -19,6 +19,7 @@ import { Public } from './public.decorator.js';
 import { ForgotPasswordDto } from './forgot-password.dto.js';
 import { ResetPasswordDto } from './reset-password.dto.js';
 import { SignUpDto } from './sign-up.dto.js';
+import { UpdateMeDto } from './update-me.dto.js';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -84,5 +85,18 @@ export class AuthController {
   @ApiForbiddenResponse({ description: 'User.type does not match Role.name' })
   me(@CurrentUser() user: AuthenticatedUser, @Query() query: MeQueryDto) {
     return this.authService.getProfile(user.sub, query.view ?? 'persona');
+  }
+
+  @Patch('me')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Update the signed-in user profile',
+    description: 'Self-service updates for name, contact details, image, and password.',
+  })
+  @ApiOkResponse({ description: 'Updated profile (view=full field set with role and permissions)' })
+  @ApiUnauthorizedResponse()
+  @ApiBadRequestResponse({ description: 'Validation error or duplicate username/email/phone' })
+  updateMe(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateMeDto) {
+    return this.authService.updateProfile(user.sub, dto);
   }
 }

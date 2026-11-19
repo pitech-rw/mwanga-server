@@ -6,6 +6,7 @@ import { denyOrNotFoundForScopedRead, ownerReadScope } from '../auth/read-scope.
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Owner } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
 import { CreateOwnerDto } from './create-owner.dto.js';
 import { UpdateOwnerDto } from './update-owner.dto.js';
 
@@ -55,6 +56,7 @@ export class OwnersService {
       if (user.ownerId != null) {
         apiBadRequest(OwnersCodes.portalUserMustNotHaveOwnerId);
       }
+      await assertUserActiveForAssignment(this.prisma, data.userId);
     }
 
     try {
@@ -118,6 +120,7 @@ export class OwnersService {
       if (user.type !== 'owner') {
         apiBadRequest(OwnersCodes.portalUserMustBeOwner);
       }
+      await assertUserActiveForAssignment(this.prisma, data.userId);
     }
 
     try {

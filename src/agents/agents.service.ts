@@ -8,6 +8,7 @@ import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors
 import type { Agent, LedgerTransaction, SafeUser } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import type { AgentTopUpDto } from './agent-top-up.dto.js';
+import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
 import { CreateAgentDto } from './create-agent.dto.js';
 import { UpdateAgentDto } from './update-agent.dto.js';
 
@@ -296,6 +297,7 @@ export class AgentsService {
     if (user.ownerId != null) {
       apiBadRequest(AgentsCodes.portalNoOwnerId);
     }
+    await assertUserActiveForAssignment(this.prisma, userId);
     const existingAgent = await this.prisma.db.orm.public.Agent.first({ userId });
     if (existingAgent) {
       apiBadRequest(AgentsCodes.profileExists);

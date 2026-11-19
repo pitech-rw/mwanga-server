@@ -21,6 +21,9 @@ export const UsersCodes = {
   userNotFound: 'users.userNotFound',
   swapperStationOnly: 'users.swapperStationOnly',
   stationNotFound: 'users.stationNotFound',
+  inactiveAccount: 'users.inactiveAccount',
+  reactivationRequiresPassword: 'users.reactivationRequiresPassword',
+  inactiveCannotAssignOnCreate: 'users.inactiveCannotAssignOnCreate',
 } as const;
 
 export const OwnersCodes = {

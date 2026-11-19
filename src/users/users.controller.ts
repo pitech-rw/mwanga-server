@@ -57,15 +57,21 @@ export class UsersController {
     enum: USER_TYPE_NAMES,
     description: 'Filter by user type (e.g. rider)',
   })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    type: Boolean,
+    description: 'When true, omit deactivated accounts (for assignment pickers)',
+  })
   @ApiOkResponse({ description: 'Users matching the filter, or all users when type is omitted' })
   findAll(
     @Query() query: ListUsersQueryDto,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<SafeUser[]> {
-    return this.usersService.findAll(
-      this.readCtx(user),
-      query.type !== undefined ? { type: query.type as UserType } : undefined,
-    );
+    return this.usersService.findAll(this.readCtx(user), {
+      type: query.type !== undefined ? (query.type as UserType) : undefined,
+      activeOnly: query.activeOnly === true,
+    });
   }
 
   @Get(':id')

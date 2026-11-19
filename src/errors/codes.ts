@@ -46,6 +46,8 @@ export const BikesCodes = {
   warehouseNoBatteryOnCreate: 'bikes.warehouseNoBatteryOnCreate',
   warehouseNoBattery: 'bikes.warehouseNoBattery',
   duplicateIdentity: 'bikes.duplicateIdentity',
+  riderRequiresBattery: 'bikes.riderRequiresBattery',
+  batteryViaSwapOnly: 'bikes.batteryViaSwapOnly',
 } as const;
 
 export const BatteriesCodes = {
@@ -54,6 +56,8 @@ export const BatteriesCodes = {
   bikeAndStation: 'batteries.bikeAndStation',
   bikeHasDifferentBattery: 'batteries.bikeHasDifferentBattery',
   warehouseBikeInstall: 'batteries.warehouseBikeInstall',
+  stationRequiresInventory: 'batteries.stationRequiresInventory',
+  bikeViaSwapOnly: 'batteries.bikeViaSwapOnly',
 } as const;
 
 export const StationsCodes = {
@@ -116,6 +120,7 @@ export const InventoryCodes = {
   ownerNotFound: 'inventory.ownerNotFound',
   notBattery: 'inventory.notBattery',
   stationNotFound: 'inventory.stationNotFound',
+  bikeReturnRequiresStation: 'inventory.bikeReturnRequiresStation',
 } as const;
 
 export const IncidentsCodes = {

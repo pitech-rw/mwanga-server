@@ -105,6 +105,10 @@
             "codecId": "pg/text@1",
             "members": [
               {
+                "name": "warehouse",
+                "value": "warehouse"
+              },
+              {
                 "name": "offline",
                 "value": "offline"
               },
@@ -4795,8 +4799,8 @@
             "Battery": {
               "checks": [
                 {
-                  "expression": "\"status\" IN ('offline', 'available', 'charging', 'in_use', 'faulty')",
-                  "name": "Battery_status_check_d1516b84",
+                  "expression": "\"status\" IN ('warehouse', 'offline', 'available', 'charging', 'in_use', 'faulty')",
+                  "name": "Battery_status_check_2185796a",
                   "prefix": "Battery_status_check"
                 }
               ],
@@ -8010,6 +8014,7 @@
             "BatteryStatus": {
               "kind": "valueSet",
               "values": [
+                "warehouse",
                 "offline",
                 "available",
                 "charging",
@@ -8137,7 +8142,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "9570bf9ae95a535f3fbf64f5567b21c79bae7a926b6644a2c67b3d6844489ad4"
+    "storageHash": "0ea8e8c990d74e01c68ad2dfa9543594c49243f40b13bf1f10a5bf6b6ceaa1f5"
   },
   "execution": {
     "executionHash": "30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0",

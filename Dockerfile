@@ -13,6 +13,7 @@ CMD ["npm", "run", "start:dev"]
 
 FROM deps AS builder
 COPY . .
+ENV APP_WEB_URL=https://staging-bn.mwanga.app
 RUN npm run build
 
 FROM node:24-slim AS production

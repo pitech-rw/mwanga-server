@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'cd327018516c3a7826e14e38511919c9be27c5561824cf32ab71b370e904247d'>;
+  StorageHashBase<'0ea8e8c990d74e01c68ad2dfa9543594c49243f40b13bf1f10a5bf6b6ceaa1f5'>;
 export type ExecutionHash =
   ExecutionHashBase<'30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0'>;
 export type ProfileHash =
@@ -280,8 +280,8 @@ type FieldTypeOverrides = {
     readonly models: {
       readonly Battery: {
         readonly status: {
-          readonly output: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
-          readonly input: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+          readonly output: 'warehouse' | 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+          readonly input: 'warehouse' | 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
         };
       };
       readonly BatteryReading: {
@@ -414,8 +414,8 @@ type ColumnTypeOverrides = {
   readonly public: {
     readonly Battery: {
       readonly status: {
-        readonly output: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
-        readonly input: 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+        readonly output: 'warehouse' | 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
+        readonly input: 'warehouse' | 'offline' | 'available' | 'charging' | 'in_use' | 'faulty';
       };
     };
     readonly BatteryReading: {
@@ -1622,7 +1622,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'CDF'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'USD'>;
                   };
                   readonly many: false;
                 };
@@ -2739,7 +2739,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'CDF'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'USD'>;
                   };
                   readonly many: false;
                 };
@@ -3570,7 +3570,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'CDF'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'USD'>;
                   };
                   readonly many: false;
                 };
@@ -3654,7 +3654,14 @@ type ContractBase = Omit<
           readonly valueSet: {
             readonly BatteryStatus: {
               readonly kind: 'valueSet';
-              readonly values: readonly ['offline', 'available', 'charging', 'in_use', 'faulty'];
+              readonly values: readonly [
+                'warehouse',
+                'offline',
+                'available',
+                'charging',
+                'in_use',
+                'faulty',
+              ];
             };
             readonly IncidentMessageKind: {
               readonly kind: 'valueSet';
@@ -6414,6 +6421,7 @@ type ContractBase = Omit<
           readonly BatteryStatus: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
+              { readonly name: 'warehouse'; readonly value: 'warehouse' },
               { readonly name: 'offline'; readonly value: 'offline' },
               { readonly name: 'available'; readonly value: 'available' },
               { readonly name: 'charging'; readonly value: 'charging' },
@@ -6538,6 +6546,7 @@ type ContractBase = Omit<
         };
         readonly enumMemberTypes?: {
           readonly BatteryStatus: readonly [
+            { readonly name: 'warehouse'; readonly value: 'warehouse' },
             { readonly name: 'offline'; readonly value: 'offline' },
             { readonly name: 'available'; readonly value: 'available' },
             { readonly name: 'charging'; readonly value: 'charging' },

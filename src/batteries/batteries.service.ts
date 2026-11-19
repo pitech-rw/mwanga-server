@@ -12,7 +12,11 @@ import {
   type BatteryDetail,
 } from './battery-detail.query.js';
 import { batteryStatusAtStation } from './battery-status.js';
-import { bikeBelongsInInventory, syncBatteryInventory, syncBikeInventory } from '../inventory/inventory-lifecycle.js';
+import {
+  batteryBelongsInInventory,
+  syncBatteryInventory,
+  syncBikeInventory,
+} from '../inventory/inventory-lifecycle.js';
 import { CreateBatteryDto } from './create-battery.dto.js';
 import { UpdateBatteryDto } from './update-battery.dto.js';
 
@@ -133,9 +137,12 @@ export class BatteriesService {
   }
 
   async create(data: CreateBatteryDto): Promise<Battery> {
+    if (data.stationId != null) {
+      apiBadRequest(BatteriesCodes.stationRequiresInventory);
+    }
+
     const soc = data.soc ?? 100;
-    const defaultStatus =
-      data.stationId != null ? batteryStatusAtStation(soc) : ('offline' as const);
+    const defaultStatus = 'warehouse' as const;
 
     try {
       return await this.prisma.db.transaction(async (tx) => {
@@ -195,7 +202,8 @@ export class BatteriesService {
         stationIdAfterPatch != null &&
         existing.status !== 'in_use' &&
         existing.status !== 'faulty' &&
-        existing.status !== 'offline'
+        existing.status !== 'offline' &&
+        existing.status !== 'warehouse'
           ? batteryStatusAtStation(data.soc)
           : undefined),
       soc: data.soc,
@@ -265,7 +273,22 @@ export class BatteriesService {
     stationId: number | null,
     scalarPatch: ReturnType<typeof withoutUndefined>,
   ): Promise<Battery> {
-    await this.clearBatteryFromBikes(tx, batteryId);
+    if (stationId != null) {
+      const mounted = await tx.orm.public.Bike.where({ currentBatteryId: batteryId }).first();
+      if (mounted) {
+        apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
+      }
+
+      const pack = await tx.orm.public.Battery.first({ id: batteryId });
+      if (
+        pack == null ||
+        !(await batteryBelongsInInventory(tx, { id: batteryId, stationId: pack.stationId }))
+      ) {
+        apiBadRequest(BatteriesCodes.stationRequiresInventory);
+      }
+    } else {
+      await this.clearBatteryFromBikes(tx, batteryId);
+    }
 
     const existing = await tx.orm.public.Battery.first({ id: batteryId });
     const soc =
@@ -319,51 +342,12 @@ export class BatteriesService {
   }
 
   private async applyAttachToBike(
-    tx: Tx,
-    batteryId: number,
-    bikeId: number,
-    scalarPatch: ReturnType<typeof withoutUndefined>,
+    _tx: Tx,
+    _batteryId: number,
+    _bikeId: number,
+    _scalarPatch: ReturnType<typeof withoutUndefined>,
   ): Promise<Battery> {
-    const bike = await tx.orm.public.Bike.where({ id: bikeId }).first();
-
-    if (!bike) {
-      throw new NotFoundException(`Bike with id ${bikeId} not found`);
-    }
-
-    if (bike.currentBatteryId != null && bike.currentBatteryId !== batteryId) {
-      apiBadRequest(BatteriesCodes.bikeHasDifferentBattery);
-    }
-
-    if (bikeBelongsInInventory(bike)) {
-      apiBadRequest(BatteriesCodes.warehouseBikeInstall);
-    }
-
-    await this.clearBatteryFromBikes(tx, batteryId);
-
-    await tx.orm.public.Bike.where({ id: bikeId }).update({
-      currentBatteryId: batteryId,
-    });
-
-    const battery = await tx.orm.public.Battery.where({ id: batteryId })
-      .include('station')
-      .include('bike')
-      .update({
-        ...scalarPatch,
-        stationId: null,
-      });
-
-    if (!battery) {
-      throw new NotFoundException(`Battery with id ${batteryId} not found`);
-    }
-
-    await syncBatteryInventory(tx, battery);
-
-    const bikeAfter = await tx.orm.public.Bike.where({ id: bikeId }).first();
-    if (bikeAfter) {
-      await syncBikeInventory(tx, bikeAfter);
-    }
-
-    return battery;
+    apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
   }
 
   async remove(id: number, ctx: ReadScopeContext): Promise<Battery> {

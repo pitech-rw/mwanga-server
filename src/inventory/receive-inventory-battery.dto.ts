@@ -1,5 +1,4 @@
-import { IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
-import { BATTERY_STATUS_VALUES } from '../batteries/battery-status.js';
+import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 
 export class ReceiveInventoryBatteryDto {
   @IsString()
@@ -32,10 +31,6 @@ export class ReceiveInventoryBatteryDto {
   @IsString()
   @MaxLength(30)
   batteryType?: string;
-
-  @IsOptional()
-  @IsIn(BATTERY_STATUS_VALUES)
-  status?: (typeof BATTERY_STATUS_VALUES)[number];
 
   @IsOptional()
   @IsInt()

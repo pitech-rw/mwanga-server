@@ -92,6 +92,7 @@ enum ReadingDirection {
 }
 
 enum BatteryStatus {
+  warehouse
   offline
   available
   charging

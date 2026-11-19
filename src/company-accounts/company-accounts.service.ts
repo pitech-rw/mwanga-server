@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { apiBadRequest } from '../errors/api-error.js';
 import { CompanyAccountsCodes } from '../errors/codes.js';
 import { LedgerService } from '../ledger/ledger.service.js';
@@ -37,7 +38,7 @@ export class CompanyAccountsService {
         name: data.name,
         bankName: data.bankName,
         accountNumber: data.accountNumber,
-        currency: data.currency ?? 'CDF',
+        currency: data.currency ?? DEFAULT_CURRENCY,
         balance: asNumeric(0),
       });
     } catch (error) {

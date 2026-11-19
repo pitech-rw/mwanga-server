@@ -303,7 +303,7 @@ model Wallet {
   userId    Int?     @unique
   agentId   Int?     @unique
   balance   Numeric(10,2)  @default(0)
-  currency  String   @default("CDF")
+  currency  String   @default("USD")
   createdAt DateTime @default(now())
   updatedAt DateTime @onCreate(now()) @onUpdate(now())
 
@@ -319,7 +319,7 @@ model CompanyAccount {
   name          String
   bankName      String?
   accountNumber String?  @unique
-  currency      String   @default("CDF")
+  currency      String   @default("USD")
   balance       Numeric(10, 2) @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @onCreate(now()) @onUpdate(now())
@@ -331,7 +331,7 @@ model RevenueAccount {
   id        Int      @id @default(autoincrement())
   code      String   @unique
   name      String
-  currency  String   @default("CDF")
+  currency  String   @default("USD")
   balance   Numeric(10, 2) @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @onCreate(now()) @onUpdate(now())

@@ -8,6 +8,7 @@ import {
   assertUserInFleet,
   resolveFleetOwnerId,
 } from '../fleet/resolve-fleet.js';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { asNumeric } from '../prisma/errors.js';
 import type { UserTypeName } from '../auth/permission-catalog.js';
 import { resolveRoleIdForType } from '../auth/user-type-alignment.js';
@@ -214,7 +215,7 @@ export class UsersService {
           await tx.orm.public.Wallet.create({
             ownerId: owner.id,
             balance: asNumeric(0),
-            currency: 'CDF',
+            currency: DEFAULT_CURRENCY,
           });
 
           return created;
@@ -248,7 +249,7 @@ export class UsersService {
           await tx.orm.public.Wallet.create({
             userId: created.id,
             balance: asNumeric(0),
-            currency: 'CDF',
+            currency: DEFAULT_CURRENCY,
           });
 
           return created;

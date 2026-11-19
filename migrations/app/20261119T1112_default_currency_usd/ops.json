@@ -1,0 +1,160 @@
+[
+  {
+    "id": "dropColumn.User.kycStatus",
+    "label": "Drop column \"kycStatus\" from \"User\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "kycStatus",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"kycStatus\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "kycStatus"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"kycStatus\" on \"User\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop column \"kycStatus\"",
+        "sql": "ALTER TABLE \"public\".\"User\" DROP COLUMN \"kycStatus\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"kycStatus\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "kycStatus"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"kycStatus\" on \"User\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "setDefault.CompanyAccount.currency",
+    "label": "Set default on \"CompanyAccount\".\"currency\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "currency",
+        "table": "CompanyAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"currency\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "CompanyAccount",
+          "currency"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"currency\" on \"CompanyAccount\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"currency\"",
+        "sql": "ALTER TABLE \"public\".\"CompanyAccount\" ALTER COLUMN \"currency\" SET DEFAULT 'USD'"
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "setDefault.RevenueAccount.currency",
+    "label": "Set default on \"RevenueAccount\".\"currency\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "currency",
+        "table": "RevenueAccount"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"currency\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "RevenueAccount",
+          "currency"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"currency\" on \"RevenueAccount\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"currency\"",
+        "sql": "ALTER TABLE \"public\".\"RevenueAccount\" ALTER COLUMN \"currency\" SET DEFAULT 'USD'"
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "setDefault.Wallet.currency",
+    "label": "Set default on \"Wallet\".\"currency\"",
+    "operationClass": "widening",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "currency",
+        "table": "Wallet"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"currency\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "Wallet",
+          "currency"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"currency\" on \"Wallet\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "set default on \"currency\"",
+        "sql": "ALTER TABLE \"public\".\"Wallet\" ALTER COLUMN \"currency\" SET DEFAULT 'USD'"
+      }
+    ],
+    "postcheck": []
+  }
+]

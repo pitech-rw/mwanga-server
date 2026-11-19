@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'cd327018516c3a7826e14e38511919c9be27c5561824cf32ab71b370e904247d'>;
+  StorageHashBase<'9570bf9ae95a535f3fbf64f5567b21c79bae7a926b6644a2c67b3d6844489ad4'>;
 export type ExecutionHash =
   ExecutionHashBase<'30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0'>;
 export type ProfileHash =
@@ -1622,7 +1622,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'CDF'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'USD'>;
                   };
                   readonly many: false;
                 };
@@ -2739,7 +2739,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'CDF'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'USD'>;
                   };
                   readonly many: false;
                 };
@@ -3570,7 +3570,7 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly default: {
                     readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'CDF'>;
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'USD'>;
                   };
                   readonly many: false;
                 };

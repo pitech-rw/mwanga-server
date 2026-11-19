@@ -5335,7 +5335,7 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "CDF"
+                    "value": "USD"
                   },
                   "nullable": false
                 },
@@ -6825,7 +6825,7 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "CDF"
+                    "value": "USD"
                   },
                   "nullable": false
                 },
@@ -7884,7 +7884,7 @@
                   "dataType": "pg/text",
                   "default": {
                     "kind": "literal",
-                    "value": "CDF"
+                    "value": "USD"
                   },
                   "nullable": false
                 },
@@ -8137,7 +8137,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "cd327018516c3a7826e14e38511919c9be27c5561824cf32ab71b370e904247d"
+    "storageHash": "9570bf9ae95a535f3fbf64f5567b21c79bae7a926b6644a2c67b3d6844489ad4"
   },
   "execution": {
     "executionHash": "30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0",

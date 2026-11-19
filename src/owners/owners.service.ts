@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { apiBadRequest } from '../errors/api-error.js';
 import { OwnersCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
@@ -72,7 +73,7 @@ export class OwnersService {
         await tx.orm.public.Wallet.create({
           ownerId: owner.id,
           balance: asNumeric(0),
-          currency: data.currency ?? 'CDF',
+          currency: data.currency ?? DEFAULT_CURRENCY,
         });
 
         if (data.bikes?.length) {

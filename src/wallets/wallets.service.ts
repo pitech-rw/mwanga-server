@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { apiBadRequest } from '../errors/api-error.js';
 import { WalletsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
@@ -89,7 +90,7 @@ export class WalletsService {
       return await this.walletQuery().create({
         ownerId: data.ownerId,
         balance: asNumeric(0),
-        currency: data.currency,
+        currency: data.currency ?? DEFAULT_CURRENCY,
       });
     } catch (error) {
       if (isUniqueViolation(error)) {

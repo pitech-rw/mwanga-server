@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { DEFAULT_CURRENCY } from '../src/config/default-currency.js';
 import { asNumeric } from '../src/prisma/errors.js';
 import { db } from '../src/prisma/db.js';
 import { requireDevMode } from './require-dev-mode.js';
@@ -7,13 +8,13 @@ const DEFAULT_COMPANY_ACCOUNT = {
   name: 'Primary collections',
   bankName: 'Default bank',
   accountNumber: 'MWANGA-PRIMARY',
-  currency: 'CDF',
+  currency: DEFAULT_CURRENCY,
 } as const;
 
 const DEFAULT_REVENUE_ACCOUNT = {
   code: 'swap_fees',
   name: 'Swap fees',
-  currency: 'CDF',
+  currency: DEFAULT_CURRENCY,
 } as const;
 
 async function main() {

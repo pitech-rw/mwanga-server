@@ -7,6 +7,7 @@ import { cardIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { NfcCard } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
 import { CreateCardDto } from './create-card.dto.js';
 import { UpdateCardDto } from './update-card.dto.js';
 
@@ -76,6 +77,9 @@ export class CardsService {
   }
 
   async create(data: CreateCardDto): Promise<NfcCard> {
+    if (data.userId != null) {
+      await assertUserActiveForAssignment(this.prisma, data.userId);
+    }
     try {
       return await this.prisma.db.orm.public.NfcCard.include('user').create({
         token: data.token,
@@ -95,6 +99,10 @@ export class CardsService {
 
   async update(id: number, data: UpdateCardDto, ctx: ReadScopeContext): Promise<NfcCard> {
     await this.findOne(id, ctx);
+
+    if (data.userId != null) {
+      await assertUserActiveForAssignment(this.prisma, data.userId);
+    }
 
     try {
       const card = await this.prisma.db.orm.public.NfcCard.where({ id })

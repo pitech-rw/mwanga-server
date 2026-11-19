@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { ConflictException, HttpException } from '@nestjs/common';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { asNumeric } from '../prisma/errors.js';
 import { db } from '../prisma/db.js';
 import { LedgerService } from './ledger.service.js';
@@ -27,7 +28,7 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
       wallet = await db.orm.public.Wallet.create({
         ownerId: owner.id,
         balance: asNumeric(0),
-        currency: 'CDF',
+        currency: DEFAULT_CURRENCY,
       });
     }
     walletId = wallet.id;
@@ -37,7 +38,7 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
       (await db.orm.public.CompanyAccount.create({
         name: 'Test collections',
         accountNumber: `TEST-CO-${refPrefix}`,
-        currency: 'CDF',
+        currency: DEFAULT_CURRENCY,
         balance: asNumeric(0),
       }));
     companyAccountId = company.id;
@@ -171,7 +172,6 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
       email: `agent-${refPrefix}@example.com`,
       type: 'agent',
       roleId: role.id,
-      kycStatus: 'pending',
       isActive: true,
     });
 
@@ -184,7 +184,7 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
     const agentWallet = await db.orm.public.Wallet.create({
       agentId: agent.id,
       balance: asNumeric(0),
-      currency: 'CDF',
+      currency: DEFAULT_CURRENCY,
     });
 
     const amount = 40;

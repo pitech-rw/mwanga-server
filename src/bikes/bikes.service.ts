@@ -10,6 +10,7 @@ import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Bike } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { syncBikeInventory } from '../inventory/inventory-lifecycle.js';
+import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
 import { CreateBikeDto } from './create-bike.dto.js';
 import { UpdateBikeDto } from './update-bike.dto.js';
 
@@ -113,6 +114,9 @@ export class BikesService {
       }
     }
 
+    if (data.userId != null) {
+      await assertUserActiveForAssignment(this.prisma, data.userId);
+    }
     if (data.userId != null && data.ownerId != null) {
       await assertRiderBelongsToOwner(this.prisma, data.userId, data.ownerId);
     }
@@ -165,6 +169,9 @@ export class BikesService {
     const nextUserId = data.userId === undefined ? existing.userId : data.userId;
     if (nextUserId != null && nextOwnerId == null) {
       apiBadRequest(BikesCodes.assignOwnerBeforeRider);
+    }
+    if (nextUserId != null) {
+      await assertUserActiveForAssignment(this.prisma, nextUserId);
     }
     if (nextUserId != null && nextOwnerId != null) {
       await assertRiderBelongsToOwner(this.prisma, nextUserId, nextOwnerId);

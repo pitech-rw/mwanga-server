@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { apiBadRequest } from '../errors/api-error.js';
 import { AgentsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
@@ -8,6 +9,7 @@ import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors
 import type { Agent, LedgerTransaction, SafeUser } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import type { AgentTopUpDto } from './agent-top-up.dto.js';
+import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
 import { CreateAgentDto } from './create-agent.dto.js';
 import { UpdateAgentDto } from './update-agent.dto.js';
 
@@ -73,7 +75,7 @@ export class AgentsService {
         await tx.orm.public.Wallet.create({
           agentId: agent.id,
           balance: asNumeric(0),
-          currency: data.currency ?? 'CDF',
+          currency: data.currency ?? DEFAULT_CURRENCY,
         });
 
         const loaded = await tx.orm.public.Agent.include('portalUser').include('wallet').first({
@@ -296,6 +298,7 @@ export class AgentsService {
     if (user.ownerId != null) {
       apiBadRequest(AgentsCodes.portalNoOwnerId);
     }
+    await assertUserActiveForAssignment(this.prisma, userId);
     const existingAgent = await this.prisma.db.orm.public.Agent.first({ userId });
     if (existingAgent) {
       apiBadRequest(AgentsCodes.profileExists);

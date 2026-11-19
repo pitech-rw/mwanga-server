@@ -64,11 +64,6 @@ export class CreateUserDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(40)
-  kycStatus?: string;
-
   /** Station operator assignment; only valid when type is swapper */
   @IsOptional()
   @IsInt()

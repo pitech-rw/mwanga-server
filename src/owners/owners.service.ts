@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { apiBadRequest } from '../errors/api-error.js';
 import { OwnersCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
@@ -6,6 +7,7 @@ import { denyOrNotFoundForScopedRead, ownerReadScope } from '../auth/read-scope.
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Owner } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
 import { CreateOwnerDto } from './create-owner.dto.js';
 import { UpdateOwnerDto } from './update-owner.dto.js';
 
@@ -55,6 +57,7 @@ export class OwnersService {
       if (user.ownerId != null) {
         apiBadRequest(OwnersCodes.portalUserMustNotHaveOwnerId);
       }
+      await assertUserActiveForAssignment(this.prisma, data.userId);
     }
 
     try {
@@ -70,7 +73,7 @@ export class OwnersService {
         await tx.orm.public.Wallet.create({
           ownerId: owner.id,
           balance: asNumeric(0),
-          currency: data.currency ?? 'CDF',
+          currency: data.currency ?? DEFAULT_CURRENCY,
         });
 
         if (data.bikes?.length) {
@@ -118,6 +121,7 @@ export class OwnersService {
       if (user.type !== 'owner') {
         apiBadRequest(OwnersCodes.portalUserMustBeOwner);
       }
+      await assertUserActiveForAssignment(this.prisma, data.userId);
     }
 
     try {

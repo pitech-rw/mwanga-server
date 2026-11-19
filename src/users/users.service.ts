@@ -8,6 +8,7 @@ import {
   assertUserInFleet,
   resolveFleetOwnerId,
 } from '../fleet/resolve-fleet.js';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { asNumeric } from '../prisma/errors.js';
 import type { UserTypeName } from '../auth/permission-catalog.js';
 import { resolveRoleIdForType } from '../auth/user-type-alignment.js';
@@ -16,6 +17,7 @@ import { sanitizeUser } from '../auth/sanitize-user.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { SafeUser, UserType } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { assertUserActiveForAssignment } from './assert-user-active.js';
 import { CreateUserDto } from './create-user.dto.js';
 import { resolveSwapperStationId } from './swapper-station-assignment.js';
 import { UpdateUserDto } from './update-user.dto.js';
@@ -39,7 +41,7 @@ export class UsersService {
     const [riders, owners] = await Promise.all([
       this.prisma.db.orm.public.User.include('role')
         .include('riderWallet')
-        .where({ type: 'rider' })
+        .where({ type: 'rider', isActive: true })
         .orderBy((user) => user.createdAt.desc())
         .all(),
       this.prisma.db.orm.public.Owner.include('wallet')
@@ -78,19 +80,30 @@ export class UsersService {
     );
   }
 
-  async findAll(ctx: ReadScopeContext, filters?: { type?: UserType }): Promise<SafeUser[]> {
+  async findAll(
+    ctx: ReadScopeContext,
+    filters?: { type?: UserType; activeOnly?: boolean },
+  ): Promise<SafeUser[]> {
     if (ctx.user.type === 'owner' && !isUnrestrictedRead(ctx)) {
       const fleetOwnerId = await resolveFleetOwnerId(
         this.prisma,
         ctx.user.sub,
         'owner',
       );
+      const riderWhere: { ownerId: number; isActive?: boolean } = { ownerId: fleetOwnerId };
+      if (filters?.activeOnly) {
+        riderWhere.isActive = true;
+      }
       const users = await this.userQuery()
-        .where({ ownerId: fleetOwnerId })
+        .where(riderWhere)
         .orderBy((user) => user.createdAt.desc())
         .all();
       const proprietor = await this.userQuery().first({ id: ctx.user.sub });
-      const list = proprietor ? [sanitizeUser(proprietor), ...users.map((u) => sanitizeUser(u))] : users.map((u) => sanitizeUser(u));
+      const proprietorRow =
+        proprietor && (!filters?.activeOnly || proprietor.isActive)
+          ? [sanitizeUser(proprietor)]
+          : [];
+      const list = [...proprietorRow, ...users.map((u) => sanitizeUser(u))];
       return list;
     }
 
@@ -104,8 +117,15 @@ export class UsersService {
       return [sanitizeUser(self)];
     }
 
+    const where: { type?: UserType; isActive?: boolean } = {};
+    if (filters?.type !== undefined) {
+      where.type = filters.type;
+    }
+    if (filters?.activeOnly) {
+      where.isActive = true;
+    }
     const base =
-      filters?.type !== undefined ? this.userQuery().where({ type: filters.type }) : this.userQuery();
+      Object.keys(where).length > 0 ? this.userQuery().where(where) : this.userQuery();
     const users = await base.orderBy((user) => user.createdAt.desc()).all();
     return users.map((user) => sanitizeUser(user));
   }
@@ -153,6 +173,14 @@ export class UsersService {
       stationId: data.stationId ?? null,
     });
 
+    const creatingActive = data.isActive ?? true;
+    if (
+      !creatingActive &&
+      (stationId != null || (data.type === 'rider' && data.ownerId != null))
+    ) {
+      apiBadRequest(UsersCodes.inactiveCannotAssignOnCreate);
+    }
+
     try {
       if (data.type === 'owner') {
         const user = await this.prisma.db.transaction(async (tx) => {
@@ -170,7 +198,6 @@ export class UsersService {
               nationalId: data.nationalId,
               type: 'owner',
               roleId,
-              kycStatus: data.kycStatus ?? 'pending',
               isActive: data.isActive ?? true,
               passwordHash,
               stationId: stationId ?? null,
@@ -188,7 +215,7 @@ export class UsersService {
           await tx.orm.public.Wallet.create({
             ownerId: owner.id,
             balance: asNumeric(0),
-            currency: 'CDF',
+            currency: DEFAULT_CURRENCY,
           });
 
           return created;
@@ -214,7 +241,6 @@ export class UsersService {
               type: 'rider',
               roleId,
               ownerId: data.ownerId,
-              kycStatus: data.kycStatus ?? 'pending',
               isActive: data.isActive ?? true,
               passwordHash,
               stationId: stationId ?? null,
@@ -223,7 +249,7 @@ export class UsersService {
           await tx.orm.public.Wallet.create({
             userId: created.id,
             balance: asNumeric(0),
-            currency: 'CDF',
+            currency: DEFAULT_CURRENCY,
           });
 
           return created;
@@ -244,7 +270,6 @@ export class UsersService {
         type: data.type as UserType,
         roleId,
         ownerId: data.type === 'rider' ? data.ownerId : null,
-        kycStatus: data.kycStatus ?? 'pending',
         isActive: data.isActive ?? true,
         passwordHash,
         stationId: stationId ?? null,
@@ -283,6 +308,27 @@ export class UsersService {
       });
     }
 
+    const reactivating = data.isActive === true && !existing.isActive;
+
+    if (!existing.isActive && !reactivating) {
+      const touched =
+        data.username !== undefined ||
+        data.firstName !== undefined ||
+        data.lastName !== undefined ||
+        data.email !== undefined ||
+        data.phone !== undefined ||
+        data.address !== undefined ||
+        data.image !== undefined ||
+        data.nationalId !== undefined ||
+        data.type !== undefined ||
+        data.password !== undefined ||
+        data.stationId !== undefined ||
+        data.ownerId !== undefined;
+      if (touched) {
+        apiBadRequest(UsersCodes.inactiveMustReactivateFirst);
+      }
+    }
+
     const nextOwnerId =
       data.ownerId !== undefined ? data.ownerId : existing.ownerId;
     assertOwnerTypeInvariant(nextType as UserType, nextOwnerId);
@@ -304,9 +350,40 @@ export class UsersService {
               ? null
               : undefined;
 
+    const nextActive = data.isActive !== undefined ? data.isActive : existing.isActive;
+    if (nextActive && !existing.isActive && existing.passwordHash == null && data.password === undefined) {
+      apiBadRequest(UsersCodes.reactivationRequiresPassword);
+    }
+
+    if (data.stationId !== undefined && data.stationId != null && !reactivating) {
+      await assertUserActiveForAssignment(this.prisma, id);
+    }
+    if (
+      data.ownerId !== undefined &&
+      data.ownerId != null &&
+      nextType === 'rider' &&
+      !reactivating
+    ) {
+      await assertUserActiveForAssignment(this.prisma, id);
+    }
+
     let passwordHash: string | undefined;
     if (data.password !== undefined) {
       passwordHash = await hashPassword(data.password);
+    }
+
+    let stationIdPatch = stationId;
+    if (data.isActive === false) {
+      stationIdPatch = null;
+    }
+
+    if (stationIdPatch !== undefined && stationIdPatch != null) {
+      const incumbent = await this.prisma.db.orm.public.User.where({ stationId: stationIdPatch }).all();
+      for (const other of incumbent) {
+        if (other.id !== id) {
+          await this.prisma.db.orm.public.User.where({ id: other.id }).update({ stationId: null });
+        }
+      }
     }
 
     try {
@@ -324,10 +401,9 @@ export class UsersService {
             nationalId: data.nationalId,
             type: data.type as UserType | undefined,
             roleId,
-            kycStatus: data.kycStatus,
             isActive: data.isActive,
             passwordHash,
-            stationId,
+            stationId: stationIdPatch,
             ownerId: ownerIdPatch,
           }),
         );
@@ -356,6 +432,7 @@ export class UsersService {
     const user = await this.userQuery().where({ id }).update({
       isActive: false,
       passwordHash: null,
+      stationId: null,
     });
 
     if (!user) {

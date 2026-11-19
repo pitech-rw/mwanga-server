@@ -9,7 +9,11 @@ import { bikeIdsSeenAtStation } from '../auth/swapper-station-assets.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { Bike } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
-import { syncBikeInventory } from '../inventory/inventory-lifecycle.js';
+import {
+  assertBikeMayReturnToWarehouse,
+  bikeBelongsInInventory,
+  syncBikeInventory,
+} from '../inventory/inventory-lifecycle.js';
 import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
 import { CreateBikeDto } from './create-bike.dto.js';
 import { UpdateBikeDto } from './update-bike.dto.js';
@@ -121,8 +125,16 @@ export class BikesService {
       await assertRiderBelongsToOwner(this.prisma, data.userId, data.ownerId);
     }
 
+    if (data.userId != null && data.currentBatteryId == null) {
+      apiBadRequest(BikesCodes.riderRequiresBattery);
+    }
+
     if (data.currentBatteryId != null && data.ownerId == null) {
       apiBadRequest(BikesCodes.warehouseNoBatteryOnCreate);
+    }
+
+    if (data.currentBatteryId != null) {
+      apiBadRequest(BikesCodes.batteryViaSwapOnly);
     }
 
     try {
@@ -182,8 +194,29 @@ export class BikesService {
       apiBadRequest(BikesCodes.warehouseNoBattery);
     }
 
+    if (data.currentBatteryId !== undefined && data.currentBatteryId !== existing.currentBatteryId) {
+      apiBadRequest(BikesCodes.batteryViaSwapOnly);
+    }
+
+    if (nextUserId != null && nextBatteryId == null) {
+      apiBadRequest(BikesCodes.riderRequiresBattery);
+    }
+
+    const nextShape = {
+      id: existing.id,
+      ownerId: nextOwnerId,
+      userId: nextUserId,
+      currentBatteryId: nextBatteryId,
+    };
+    const returningToWarehouse =
+      bikeBelongsInInventory(nextShape) && !bikeBelongsInInventory(existing);
+
     try {
       const bike = await this.prisma.db.transaction(async (tx) => {
+        if (returningToWarehouse) {
+          await assertBikeMayReturnToWarehouse(tx, existing);
+        }
+
         const updated = await tx.orm.public.Bike.include('user')
           .include('owner')
           .include('currentBattery')

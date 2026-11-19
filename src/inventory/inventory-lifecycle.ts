@@ -42,6 +42,27 @@ export function assertBikeWarehouseEligible(bike: Pick<BikeInventoryShape, 'curr
   }
 }
 
+/** Bikes re-entering warehouse stock must be at a station (no rider, no pack, prior swap). */
+export async function assertBikeMayReturnToWarehouse(
+  tx: InventoryTx,
+  bike: BikeInventoryShape & { id: number },
+): Promise<void> {
+  if (bike.userId != null) {
+    apiBadRequest(InventoryCodes.bikeReturnRequiresStation);
+  }
+  if (bike.currentBatteryId != null) {
+    apiBadRequest(InventoryCodes.warehouseBikeNoBattery);
+  }
+
+  const swap = await tx.orm.public.SwapTransaction.where({ bikeId: bike.id })
+    .orderBy((row) => row.createdAt.desc())
+    .first();
+
+  if (!swap) {
+    apiBadRequest(InventoryCodes.bikeReturnRequiresStation);
+  }
+}
+
 export async function ensureInventoryItem(
   tx: InventoryTx,
   kind: 'bike' | 'battery',

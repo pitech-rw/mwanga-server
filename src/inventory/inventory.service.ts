@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { apiBadRequest } from '../errors/api-error.js';
-import { InventoryCodes } from '../errors/codes.js';
+import { BATTERY_STATUS_WAREHOUSE } from '../batteries/battery-status.js';
+import { BatteriesCodes, BikesCodes, InventoryCodes } from '../errors/codes.js';
 import { assertRiderBelongsToOwner } from '../fleet/fleet-rules.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { isUnrestrictedRead } from '../auth/read-scope.js';
@@ -14,7 +15,7 @@ import type {
   InventoryMovement,
 } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
-import { ensureInventoryItem } from './inventory-lifecycle.js';
+import { assertBikeMayReturnToWarehouse, ensureInventoryItem } from './inventory-lifecycle.js';
 import { IssueInventoryBatteryBikeDto } from './issue-inventory-battery-bike.dto.js';
 import { IssueInventoryBatteryStationDto } from './issue-inventory-battery-station.dto.js';
 import { IssueInventoryBikeDto } from './issue-inventory-bike.dto.js';
@@ -134,7 +135,6 @@ export class InventoryService {
     actorUserId: number,
   ): Promise<InventoryItemDetail> {
     const soc = data.soc ?? 100;
-  const defaultStatus = data.status ?? ('offline' as const);
 
     try {
       return await this.prisma.db.transaction(async (tx) => {
@@ -145,7 +145,7 @@ export class InventoryService {
           model: data.model,
           capacity: data.capacity,
           batteryType: data.batteryType ?? 'lithium',
-          status: defaultStatus,
+          status: BATTERY_STATUS_WAREHOUSE,
           soc,
           soh: data.soh ?? 100,
           cycleCount: data.cycleCount ?? 0,
@@ -196,6 +196,7 @@ export class InventoryService {
 
     if (data.userId != null) {
       await assertRiderBelongsToOwner(this.prisma, data.userId, data.ownerId);
+      apiBadRequest(BikesCodes.riderRequiresBattery);
     }
 
     return this.bikesService.update(
@@ -228,7 +229,7 @@ export class InventoryService {
 
   async issueBatteryToBike(
     id: number,
-    data: IssueInventoryBatteryBikeDto,
+    _data: IssueInventoryBatteryBikeDto,
     ctx: ReadScopeContext,
   ): Promise<Battery> {
     const item = await this.findOne(id, ctx);
@@ -236,10 +237,19 @@ export class InventoryService {
       apiBadRequest(InventoryCodes.notBattery);
     }
 
-    return this.batteriesService.update(item.batteryId, { bikeId: data.bikeId }, ctx);
+    apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
   }
 
   async returnBikeToStock(bikeId: number, ctx: ReadScopeContext): Promise<InventoryItemDetail> {
+    const bike = await this.prisma.db.orm.public.Bike.where({ id: bikeId }).first();
+    if (!bike) {
+      throw new NotFoundException(`Bike with id ${bikeId} not found`);
+    }
+
+    await this.prisma.db.transaction(async (tx) => {
+      await assertBikeMayReturnToWarehouse(tx, bike);
+    });
+
     await this.bikesService.update(
       bikeId,
       { ownerId: null, userId: null, currentBatteryId: null },

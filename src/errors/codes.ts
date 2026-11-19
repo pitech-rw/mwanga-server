@@ -24,6 +24,7 @@ export const UsersCodes = {
   inactiveAccount: 'users.inactiveAccount',
   reactivationRequiresPassword: 'users.reactivationRequiresPassword',
   inactiveCannotAssignOnCreate: 'users.inactiveCannotAssignOnCreate',
+  inactiveMustReactivateFirst: 'users.inactiveMustReactivateFirst',
 } as const;
 
 export const OwnersCodes = {

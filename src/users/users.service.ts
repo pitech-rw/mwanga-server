@@ -307,6 +307,27 @@ export class UsersService {
       });
     }
 
+    const reactivating = data.isActive === true && !existing.isActive;
+
+    if (!existing.isActive && !reactivating) {
+      const touched =
+        data.username !== undefined ||
+        data.firstName !== undefined ||
+        data.lastName !== undefined ||
+        data.email !== undefined ||
+        data.phone !== undefined ||
+        data.address !== undefined ||
+        data.image !== undefined ||
+        data.nationalId !== undefined ||
+        data.type !== undefined ||
+        data.password !== undefined ||
+        data.stationId !== undefined ||
+        data.ownerId !== undefined;
+      if (touched) {
+        apiBadRequest(UsersCodes.inactiveMustReactivateFirst);
+      }
+    }
+
     const nextOwnerId =
       data.ownerId !== undefined ? data.ownerId : existing.ownerId;
     assertOwnerTypeInvariant(nextType as UserType, nextOwnerId);
@@ -333,10 +354,15 @@ export class UsersService {
       apiBadRequest(UsersCodes.reactivationRequiresPassword);
     }
 
-    if (data.stationId !== undefined && data.stationId != null) {
+    if (data.stationId !== undefined && data.stationId != null && !reactivating) {
       await assertUserActiveForAssignment(this.prisma, id);
     }
-    if (data.ownerId !== undefined && data.ownerId != null && nextType === 'rider') {
+    if (
+      data.ownerId !== undefined &&
+      data.ownerId != null &&
+      nextType === 'rider' &&
+      !reactivating
+    ) {
       await assertUserActiveForAssignment(this.prisma, id);
     }
 

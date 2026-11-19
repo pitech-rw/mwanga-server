@@ -3769,13 +3769,6 @@
                   "kind": "scalar"
                 }
               },
-              "kycStatus": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
               "lastLoginAt": {
                 "nullable": true,
                 "type": {
@@ -4166,9 +4159,6 @@
                 },
                 "isActive": {
                   "column": "isActive"
-                },
-                "kycStatus": {
-                  "column": "kycStatus"
                 },
                 "lastLoginAt": {
                   "column": "lastLoginAt"
@@ -7461,15 +7451,6 @@
                   },
                   "nullable": false
                 },
-                "kycStatus": {
-                  "codecId": "pg/text@1",
-                  "dataType": "pg/text",
-                  "default": {
-                    "kind": "literal",
-                    "value": "pending"
-                  },
-                  "nullable": false
-                },
                 "lastLoginAt": {
                   "codecId": "pg/timestamptz-date@1",
                   "dataType": "pg/timestamptz",
@@ -8156,7 +8137,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "0f5451dd2a46d1997c07c95a46bc8b98e7fdb54b968f6ea65dccbbdbb8ae79be"
+    "storageHash": "cd327018516c3a7826e14e38511919c9be27c5561824cf32ab71b370e904247d"
   },
   "execution": {
     "executionHash": "30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0",

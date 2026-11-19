@@ -171,7 +171,6 @@ describe.sequential('LedgerService (integration)', { timeout: 60_000 }, () => {
       email: `agent-${refPrefix}@example.com`,
       type: 'agent',
       roleId: role.id,
-      kycStatus: 'pending',
       isActive: true,
     });
 

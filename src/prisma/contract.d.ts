@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0f5451dd2a46d1997c07c95a46bc8b98e7fdb54b968f6ea65dccbbdbb8ae79be'>;
+  StorageHashBase<'cd327018516c3a7826e14e38511919c9be27c5561824cf32ab71b370e904247d'>;
 export type ExecutionHash =
   ExecutionHashBase<'30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0'>;
 export type ProfileHash =
@@ -887,7 +887,6 @@ export namespace Models {
     id: FieldOutputTypes['public']['User']['id'];
     image: FieldOutputTypes['public']['User']['image'];
     isActive: FieldOutputTypes['public']['User']['isActive'];
-    kycStatus: FieldOutputTypes['public']['User']['kycStatus'];
     lastLoginAt: FieldOutputTypes['public']['User']['lastLoginAt'];
     lastName: FieldOutputTypes['public']['User']['lastName'];
     nationalId: FieldOutputTypes['public']['User']['nationalId'];
@@ -3242,16 +3241,6 @@ type ContractBase = Omit<
                   readonly default: {
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/bool@1', true>;
-                  };
-                  readonly many: false;
-                };
-                readonly kycStatus: {
-                  readonly dataType: 'pg/text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                  readonly default: {
-                    readonly kind: 'literal';
-                    readonly value: DefaultLiteralValue<'pg/text@1', 'pending'>;
                   };
                   readonly many: false;
                 };
@@ -5904,10 +5893,6 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
-              readonly kycStatus: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
               readonly lastLoginAt: {
                 readonly nullable: true;
                 readonly type: {
@@ -6172,7 +6157,6 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly image: { readonly column: 'image' };
                 readonly isActive: { readonly column: 'isActive' };
-                readonly kycStatus: { readonly column: 'kycStatus' };
                 readonly lastLoginAt: { readonly column: 'lastLoginAt' };
                 readonly lastName: { readonly column: 'lastName' };
                 readonly nationalId: { readonly column: 'nationalId' };

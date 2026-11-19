@@ -69,11 +69,6 @@ export class UpdateUserDto {
   @MaxLength(128)
   password?: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(40)
-  kycStatus?: string;
-
   /** Set or clear station operator assignment (swapper only); pass null to unassign */
   @IsOptional()
   @ValidateIf((_, value) => value !== null)

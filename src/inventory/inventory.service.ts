@@ -15,7 +15,11 @@ import type {
   InventoryMovement,
 } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
-import { assertBikeMayReturnToWarehouse, ensureInventoryItem } from './inventory-lifecycle.js';
+import {
+  assertBikeMayReturnToWarehouse,
+  batteryBelongsInInventory,
+  ensureInventoryItem,
+} from './inventory-lifecycle.js';
 import { IssueInventoryBatteryBikeDto } from './issue-inventory-battery-bike.dto.js';
 import { IssueInventoryBatteryStationDto } from './issue-inventory-battery-station.dto.js';
 import { IssueInventoryBikeDto } from './issue-inventory-bike.dto.js';
@@ -268,12 +272,19 @@ export class InventoryService {
   }
 
   async returnBatteryToStock(batteryId: number, ctx: ReadScopeContext): Promise<InventoryItemDetail> {
-    await this.batteriesService.update(
-      batteryId,
-      { bikeId: null, stationId: null },
-      ctx,
-    );
-    const item = await this.itemQuery().first({ batteryId });
+    await this.batteriesService.returnToInventory(batteryId, ctx);
+    let item = await this.itemQuery().first({ batteryId });
+    if (!item) {
+      await this.prisma.db.transaction(async (tx) => {
+        if (await batteryBelongsInInventory(tx, { id: batteryId })) {
+          await ensureInventoryItem(tx, 'battery', batteryId, {
+            actorUserId: ctx.user.sub,
+            details: 'return_to_warehouse',
+          });
+        }
+      });
+      item = await this.itemQuery().first({ batteryId });
+    }
     if (!item) {
       throw new NotFoundException(`No inventory record for battery ${batteryId} after return`);
     }

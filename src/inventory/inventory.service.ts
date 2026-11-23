@@ -229,7 +229,7 @@ export class InventoryService {
 
   async issueBatteryToBike(
     id: number,
-    _data: IssueInventoryBatteryBikeDto,
+    data: IssueInventoryBatteryBikeDto,
     ctx: ReadScopeContext,
   ): Promise<Battery> {
     const item = await this.findOne(id, ctx);
@@ -237,7 +237,12 @@ export class InventoryService {
       apiBadRequest(InventoryCodes.notBattery);
     }
 
-    apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
+    const bike = await this.prisma.db.orm.public.Bike.first({ id: data.bikeId });
+    if (!bike) {
+      throw new NotFoundException(`Bike with id ${data.bikeId} not found`);
+    }
+
+    return this.batteriesService.update(item.batteryId, { bikeId: data.bikeId }, ctx);
   }
 
   async returnBikeToStock(bikeId: number, ctx: ReadScopeContext): Promise<InventoryItemDetail> {

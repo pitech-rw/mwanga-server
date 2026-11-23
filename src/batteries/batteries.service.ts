@@ -342,12 +342,73 @@ export class BatteriesService {
   }
 
   private async applyAttachToBike(
-    _tx: Tx,
-    _batteryId: number,
-    _bikeId: number,
-    _scalarPatch: ReturnType<typeof withoutUndefined>,
+    tx: Tx,
+    batteryId: number,
+    bikeId: number,
+    scalarPatch: ReturnType<typeof withoutUndefined>,
   ): Promise<Battery> {
-    apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
+    const pack = await tx.orm.public.Battery.first({ id: batteryId });
+    if (!pack) {
+      throw new NotFoundException(`Battery with id ${batteryId} not found`);
+    }
+
+    const bike = await tx.orm.public.Bike.first({ id: bikeId });
+    if (!bike) {
+      throw new NotFoundException(`Bike with id ${bikeId} not found`);
+    }
+
+    if (bike.ownerId == null) {
+      apiBadRequest(BatteriesCodes.warehouseBikeInstall);
+    }
+
+    if (bike.currentBatteryId != null && bike.currentBatteryId !== batteryId) {
+      apiBadRequest(BatteriesCodes.bikeHasDifferentBattery);
+    }
+
+    const completedSwap = await tx.orm.public.SwapTransaction.where({
+      bikeId,
+      status: 'completed',
+    }).first();
+    if (completedSwap) {
+      apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
+    }
+
+    if (pack.stationId != null) {
+      apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
+    }
+
+    const mountedElsewhere = await tx.orm.public.Bike.where({
+      currentBatteryId: batteryId,
+    }).first();
+    if (mountedElsewhere && mountedElsewhere.id !== bikeId) {
+      apiBadRequest(BatteriesCodes.bikeHasDifferentBattery);
+    }
+
+    const alreadyOnBike = mountedElsewhere?.id === bikeId;
+    if (!alreadyOnBike) {
+      if (!(await batteryBelongsInInventory(tx, { id: batteryId, stationId: pack.stationId }))) {
+        apiBadRequest(BatteriesCodes.bikeViaSwapOnly);
+      }
+    }
+
+    await this.clearBatteryFromBikes(tx, batteryId);
+    await tx.orm.public.Bike.where({ id: bikeId }).update({ currentBatteryId: batteryId });
+
+    const battery = await tx.orm.public.Battery.where({ id: batteryId })
+      .include('station')
+      .include('bike')
+      .update({
+        ...scalarPatch,
+        stationId: null,
+        status: 'in_use',
+      });
+
+    if (!battery) {
+      throw new NotFoundException(`Battery with id ${batteryId} not found`);
+    }
+
+    await syncBatteryInventory(tx, battery);
+    return battery;
   }
 
   async remove(id: number, ctx: ReadScopeContext): Promise<Battery> {

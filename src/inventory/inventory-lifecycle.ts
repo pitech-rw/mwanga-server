@@ -27,9 +27,10 @@ export function bikeBelongsInInventory(bike: BikeInventoryShape): boolean {
 
 export async function batteryBelongsInInventory(
   tx: InventoryTx,
-  battery: BatteryInventoryShape,
+  battery: Pick<BatteryInventoryShape, 'id'>,
 ): Promise<boolean> {
-  if (battery.stationId != null) {
+  const pack = await tx.orm.public.Battery.first({ id: battery.id });
+  if (!pack || pack.stationId != null) {
     return false;
   }
   const mounted = await tx.orm.public.Bike.where({ currentBatteryId: battery.id }).first();

@@ -58,6 +58,9 @@ export const BatteriesCodes = {
   warehouseBikeInstall: 'batteries.warehouseBikeInstall',
   stationRequiresInventory: 'batteries.stationRequiresInventory',
   bikeViaSwapOnly: 'batteries.bikeViaSwapOnly',
+  offlineCannotAssign: 'batteries.offlineCannotAssign',
+  chargingRequiresStation: 'batteries.chargingRequiresStation',
+  inUseRequiresBike: 'batteries.inUseRequiresBike',
 } as const;
 
 export const StationsCodes = {

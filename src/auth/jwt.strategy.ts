@@ -27,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const user = await this.prisma.db.orm.public.User.first({ id: payload.sub });
 
-    if (!user?.isActive) {
+    if (!user?.isActive || user.erasedAt != null) {
       throw new UnauthorizedException();
     }
 

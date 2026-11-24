@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Patch, Post, Query } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -21,11 +21,17 @@ import { ForgotPasswordDto } from './forgot-password.dto.js';
 import { ResetPasswordDto } from './reset-password.dto.js';
 import { SignUpDto } from './sign-up.dto.js';
 import { UpdateMyProfileDto } from './update-my-profile.dto.js';
+import { ConfirmErasureDto } from '../erasure/confirm-erasure.dto.js';
+import { CreateErasureRequestDto } from '../erasure/create-erasure-request.dto.js';
+import { ErasureRequestService } from '../erasure/erasure-request.service.js';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly erasureRequests: ErasureRequestService,
+  ) {}
 
   @Public()
   @Post('login')
@@ -109,5 +115,47 @@ export class AuthController {
     @Body() dto: UpdateMyProfileDto,
   ): ReturnType<AuthService['updateMyProfile']> {
     return this.authService.updateMyProfile(user.sub, dto);
+  }
+
+  @Post('erasure-request')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Request GDPR-style account erasure',
+    description:
+      'Admin, office, office_manager, and swapper accounts enter pending_approval until an admin approves. Rider, owner, agent, and viewer accounts confirm with POST /auth/erasure-request/confirm (immediate erasure).',
+  })
+  @ApiOkResponse({ description: 'Created or updated erasure request' })
+  createErasureRequest(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateErasureRequestDto,
+  ) {
+    return this.erasureRequests.createRequest(user, dto.reason);
+  }
+
+  @Post('erasure-request/confirm')
+  @HttpCode(204)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Confirm account erasure (rider, owner, agent, viewer)',
+    description:
+      'Requires password verification. Scrubs PII while retaining swaps and ledger history under the same user id.',
+  })
+  @ApiOkResponse({ description: 'Account erased; session should be discarded client-side' })
+  confirmErasureRequest(@CurrentUser() user: AuthenticatedUser, @Body() dto: ConfirmErasureDto) {
+    return this.erasureRequests.confirmSelfService(user, dto.password, {
+      acknowledgeBalanceForfeiture: dto.acknowledgeBalanceForfeiture === true,
+    });
+  }
+
+  @Get('erasure-request')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Latest erasure request for the signed-in user' })
+  @ApiOkResponse({ description: 'Latest request or null' })
+  async latestErasureRequest(@CurrentUser() user: AuthenticatedUser) {
+    const row = await this.erasureRequests.getLatestForUser(user.sub);
+    if (!row) {
+      return null;
+    }
+    return row;
   }
 }

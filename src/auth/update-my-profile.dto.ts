@@ -1,4 +1,5 @@
-import { IsEmail, IsOptional, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEmail, IsNumber, IsOptional, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator';
 
 /** Body for PATCH /auth/me — self-service profile (not role, type, or isActive). */
 export class UpdateMyProfileDto {
@@ -33,6 +34,18 @@ export class UpdateMyProfileDto {
   @IsString()
   @MaxLength(200)
   address?: string;
+
+  @IsOptional()
+  @ValidateIf((_dto, value) => value !== null && value !== undefined)
+  @Type(() => Number)
+  @IsNumber()
+  latitude?: number | null;
+
+  @IsOptional()
+  @ValidateIf((_dto, value) => value !== null && value !== undefined)
+  @Type(() => Number)
+  @IsNumber()
+  longitude?: number | null;
 
   @IsOptional()
   @IsString()

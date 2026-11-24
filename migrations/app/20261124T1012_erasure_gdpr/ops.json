@@ -1,0 +1,311 @@
+[
+  {
+    "id": "table.ErasureRequest",
+    "label": "Create table \"ErasureRequest\"",
+    "summary": "Creates table \"ErasureRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ErasureRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ErasureRequest\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ErasureRequest\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"ErasureRequest\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ErasureRequest\"",
+        "sql": "CREATE TABLE \"public\".\"ErasureRequest\" (\n  \"approvedAt\" timestamptz(3),\n  \"approvedById\" int4,\n  \"completedAt\" timestamptz(3),\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"reason\" text,\n  \"requestedAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"status\" text DEFAULT 'pending' NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"ErasureRequest_status_check_d672ce09\" CHECK (\"status\" IN ('pending', 'pending_approval', 'approved', 'rejected', 'completed'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ErasureRequest\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"ErasureRequest\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"ErasureRequest\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "column.public.User.erasedAt",
+    "label": "Add column \"erasedAt\" to \"User\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "erasedAt",
+        "table": "User"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"erasedAt\" is missing",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "erasedAt"
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "column \"erasedAt\" on \"User\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add column \"erasedAt\"",
+        "sql": "ALTER TABLE \"public\".\"User\" ADD COLUMN \"erasedAt\" timestamptz(3)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"erasedAt\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "erasedAt"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "column \"erasedAt\" on \"User\""
+        }
+      },
+      {
+        "description": "verify column \"erasedAt\" has type \"timestamp(3) with time zone\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "User",
+          "erasedAt",
+          "timestamp(3) with time zone"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ErasureRequest.ErasureRequest_approvedById_idx_01ef8410",
+    "label": "Create index \"ErasureRequest_approvedById_idx_01ef8410\" on \"ErasureRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ErasureRequest_approvedById_idx_01ef8410",
+        "table": "ErasureRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ErasureRequest_approvedById_idx_01ef8410\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ErasureRequest_approvedById_idx_01ef8410\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"ErasureRequest_approvedById_idx_01ef8410\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ErasureRequest_approvedById_idx_01ef8410\"",
+        "sql": "CREATE INDEX \"ErasureRequest_approvedById_idx_01ef8410\" ON \"public\".\"ErasureRequest\" (\"approvedById\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ErasureRequest_approvedById_idx_01ef8410\" exists on \"ErasureRequest\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"ErasureRequest_approvedById_idx_01ef8410\"",
+          "i",
+          "I",
+          "\"public\".\"ErasureRequest\"",
+          "btree",
+          "[\"approvedById\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.ErasureRequest.ErasureRequest_userId_idx_a489d58a",
+    "label": "Create index \"ErasureRequest_userId_idx_a489d58a\" on \"ErasureRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "ErasureRequest_userId_idx_a489d58a",
+        "table": "ErasureRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"ErasureRequest_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ErasureRequest_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"ErasureRequest_userId_idx_a489d58a\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"ErasureRequest_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"ErasureRequest_userId_idx_a489d58a\" ON \"public\".\"ErasureRequest\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"ErasureRequest_userId_idx_a489d58a\" exists on \"ErasureRequest\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"ErasureRequest_userId_idx_a489d58a\"",
+          "i",
+          "I",
+          "\"public\".\"ErasureRequest\"",
+          "btree",
+          "[\"userId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ErasureRequest.ErasureRequest_userId_fkey",
+    "label": "Add foreign key \"ErasureRequest_userId_fkey\" on \"ErasureRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ErasureRequest_userId_fkey",
+        "table": "ErasureRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ErasureRequest_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ErasureRequest_userId_fkey",
+          "public",
+          "\"public\".\"ErasureRequest\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"ErasureRequest_userId_fkey\" on \"ErasureRequest\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ErasureRequest_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ErasureRequest\"\nADD CONSTRAINT \"ErasureRequest_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ErasureRequest_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "ErasureRequest_userId_fkey",
+          "public",
+          "\"public\".\"ErasureRequest\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.ErasureRequest.ErasureRequest_approvedById_fkey",
+    "label": "Add foreign key \"ErasureRequest_approvedById_fkey\" on \"ErasureRequest\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "ErasureRequest_approvedById_fkey",
+        "table": "ErasureRequest"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"ErasureRequest_approvedById_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "ErasureRequest_approvedById_fkey",
+          "public",
+          "\"public\".\"ErasureRequest\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"ErasureRequest_approvedById_fkey\" on \"ErasureRequest\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"ErasureRequest_approvedById_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"ErasureRequest\"\nADD CONSTRAINT \"ErasureRequest_approvedById_fkey\"\nFOREIGN KEY (\"approvedById\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"ErasureRequest_approvedById_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "ErasureRequest_approvedById_fkey",
+          "public",
+          "\"public\".\"ErasureRequest\"",
+          "f",
+          "[\"approvedById\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

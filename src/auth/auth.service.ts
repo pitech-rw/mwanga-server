@@ -68,7 +68,7 @@ export class AuthService {
   }> {
     const user = await this.findUserByLoginIdentifier(dto.identifier);
 
-    if (!user?.passwordHash || !user.isActive) {
+    if (!user?.passwordHash || !user.isActive || user.erasedAt != null) {
       apiError(AuthCodes.invalidCredentials, { status: HttpStatus.UNAUTHORIZED });
     }
 
@@ -133,7 +133,7 @@ export class AuthService {
     const normalizedEmail = dto.email.trim().toLowerCase();
     const user = await this.userQuery().first({ email: normalizedEmail });
 
-    if (!user?.passwordHash || !user.isActive) {
+    if (!user?.passwordHash || !user.isActive || user.erasedAt != null) {
       return { code: AuthCodes.passwordResetEmailSent };
     }
 
@@ -177,7 +177,7 @@ export class AuthService {
 
     const user = await this.userQuery().first({ id: payload.sub });
 
-    if (!user?.isActive) {
+    if (!user?.isActive || user.erasedAt != null) {
       apiBadRequest(AuthCodes.invalidResetToken);
     }
 
@@ -193,7 +193,7 @@ export class AuthService {
   async getProfile(userId: number, view: MeProfileView = 'persona') {
     const user = await this.userQuery().first({ id: userId });
 
-    if (!user?.isActive) {
+    if (!user?.isActive || user.erasedAt != null) {
       throw new UnauthorizedException();
     }
 
@@ -205,7 +205,7 @@ export class AuthService {
   async updateMyProfile(userId: number, dto: UpdateMyProfileDto) {
     const user = await this.userQuery().first({ id: userId });
 
-    if (!user?.isActive) {
+    if (!user?.isActive || user.erasedAt != null) {
       throw new UnauthorizedException();
     }
 
@@ -216,6 +216,8 @@ export class AuthService {
       dto.email !== undefined ||
       dto.phone !== undefined ||
       dto.address !== undefined ||
+      dto.latitude !== undefined ||
+      dto.longitude !== undefined ||
       dto.image !== undefined;
 
     if (!hasProfileChange && dto.password === undefined) {
@@ -252,6 +254,8 @@ export class AuthService {
             email: dto.email?.trim().toLowerCase(),
             phone: dto.phone,
             address: dto.address,
+            latitude: dto.latitude,
+            longitude: dto.longitude,
             image: dto.image,
             passwordHash,
           }),

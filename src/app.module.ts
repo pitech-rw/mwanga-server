@@ -23,6 +23,7 @@ import { WalletsModule } from './wallets/wallets.module.js';
 import { LedgerModule } from './ledger/ledger.module.js';
 import { CompanyAccountsModule } from './company-accounts/company-accounts.module.js';
 import { InventoryModule } from './inventory/inventory.module.js';
+import { ErasureModule } from './erasure/erasure.module.js';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { InventoryModule } from './inventory/inventory.module.js';
     ViolationsModule,
     IncidentsModule,
     UploadsModule,
+    ErasureModule,
   ],
   controllers: [AppController],
   providers: [

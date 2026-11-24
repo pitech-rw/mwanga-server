@@ -23,3 +23,6 @@ export const NON_TERMINAL_SWAP_STATUSES = [
   'collected',
   'installed',
 ] as const;
+
+/** Erased rows stay in the DB for FK integrity; directory APIs must not surface them. */
+export const VISIBLE_USER_WHERE = { erasedAt: null } as const;

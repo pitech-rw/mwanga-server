@@ -33,6 +33,8 @@ export function buildMeProfile(
       ...base,
       phone: user.phone,
       address: user.address,
+      latitude: user.latitude,
+      longitude: user.longitude,
       image: user.image,
       nationalId: user.nationalId,
       createdAt: user.createdAt,

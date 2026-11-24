@@ -11,6 +11,8 @@ export function erasedUserPlaceholders(userId: number) {
     email: `erased-${userId}@invalid.local`,
     phone: null as string | null,
     address: null as string | null,
+    latitude: null as number | null,
+    longitude: null as number | null,
     image: null as string | null,
     nationalId: null as string | null,
   };

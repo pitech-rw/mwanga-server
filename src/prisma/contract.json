@@ -3994,6 +3994,20 @@
                   "kind": "scalar"
                 }
               },
+              "latitude": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "longitude": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
               "nationalId": {
                 "nullable": true,
                 "type": {
@@ -4406,6 +4420,12 @@
                 },
                 "lastName": {
                   "column": "lastName"
+                },
+                "latitude": {
+                  "column": "latitude"
+                },
+                "longitude": {
+                  "column": "longitude"
                 },
                 "nationalId": {
                   "column": "nationalId"
@@ -7875,6 +7895,16 @@
                   "dataType": "pg/text",
                   "nullable": false
                 },
+                "latitude": {
+                  "codecId": "pg/float8@1",
+                  "dataType": "pg/float8",
+                  "nullable": true
+                },
+                "longitude": {
+                  "codecId": "pg/float8@1",
+                  "dataType": "pg/float8",
+                  "nullable": true
+                },
                 "nationalId": {
                   "codecId": "pg/text@1",
                   "dataType": "pg/text",
@@ -8559,7 +8589,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "816069f6a20078ad6b1fd7a256cb735ca8b816e4039b49fdb06f13488683c87b"
+    "storageHash": "1d5646ca0022a42c25dad5364bbe6d8cb982b80757309cfe5309b51c630373c2"
   },
   "execution": {
     "executionHash": "906c7fade3a782ddc21e105d9f6012bb261ba20b08eb32de8255103bce6a57f5",

@@ -19,6 +19,8 @@ model User {
   email        String    @unique
   phone        String?   @unique
   address      String?
+  latitude     Float?
+  longitude    Float?
   image        String?
   nationalId   String?   @unique
   passwordHash String?

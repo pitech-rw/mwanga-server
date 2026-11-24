@@ -23,7 +23,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'816069f6a20078ad6b1fd7a256cb735ca8b816e4039b49fdb06f13488683c87b'>;
+  StorageHashBase<'1d5646ca0022a42c25dad5364bbe6d8cb982b80757309cfe5309b51c630373c2'>;
 export type ExecutionHash =
   ExecutionHashBase<'906c7fade3a782ddc21e105d9f6012bb261ba20b08eb32de8255103bce6a57f5'>;
 export type ProfileHash =
@@ -917,6 +917,8 @@ export namespace Models {
     isActive: FieldOutputTypes['public']['User']['isActive'];
     lastLoginAt: FieldOutputTypes['public']['User']['lastLoginAt'];
     lastName: FieldOutputTypes['public']['User']['lastName'];
+    latitude: FieldOutputTypes['public']['User']['latitude'];
+    longitude: FieldOutputTypes['public']['User']['longitude'];
     nationalId: FieldOutputTypes['public']['User']['nationalId'];
     ownerId: FieldOutputTypes['public']['User']['ownerId'];
     passwordHash: FieldOutputTypes['public']['User']['passwordHash'];
@@ -3416,6 +3418,18 @@ type ContractBase = Omit<
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
+                  readonly many: false;
+                };
+                readonly latitude: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly longitude: {
+                  readonly dataType: 'pg/float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
                   readonly many: false;
                 };
                 readonly nationalId: {
@@ -6195,6 +6209,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly latitude: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly longitude: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
               readonly nationalId: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -6472,6 +6494,8 @@ type ContractBase = Omit<
                 readonly isActive: { readonly column: 'isActive' };
                 readonly lastLoginAt: { readonly column: 'lastLoginAt' };
                 readonly lastName: { readonly column: 'lastName' };
+                readonly latitude: { readonly column: 'latitude' };
+                readonly longitude: { readonly column: 'longitude' };
                 readonly nationalId: { readonly column: 'nationalId' };
                 readonly ownerId: { readonly column: 'ownerId' };
                 readonly passwordHash: { readonly column: 'passwordHash' };

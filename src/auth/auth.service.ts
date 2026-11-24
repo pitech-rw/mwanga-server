@@ -216,6 +216,8 @@ export class AuthService {
       dto.email !== undefined ||
       dto.phone !== undefined ||
       dto.address !== undefined ||
+      dto.latitude !== undefined ||
+      dto.longitude !== undefined ||
       dto.image !== undefined;
 
     if (!hasProfileChange && dto.password === undefined) {
@@ -252,6 +254,8 @@ export class AuthService {
             email: dto.email?.trim().toLowerCase(),
             phone: dto.phone,
             address: dto.address,
+            latitude: dto.latitude,
+            longitude: dto.longitude,
             image: dto.image,
             passwordHash,
           }),

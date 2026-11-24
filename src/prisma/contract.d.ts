@@ -23,9 +23,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'0ea8e8c990d74e01c68ad2dfa9543594c49243f40b13bf1f10a5bf6b6ceaa1f5'>;
+  StorageHashBase<'816069f6a20078ad6b1fd7a256cb735ca8b816e4039b49fdb06f13488683c87b'>;
 export type ExecutionHash =
-  ExecutionHashBase<'30456afebbfac8f85b0cc6527349fe9b606dd700bec39162fe6a29c2cac1eac0'>;
+  ExecutionHashBase<'906c7fade3a782ddc21e105d9f6012bb261ba20b08eb32de8255103bce6a57f5'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -287,6 +287,12 @@ type FieldTypeOverrides = {
       readonly BatteryReading: {
         readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
       };
+      readonly ErasureRequest: {
+        readonly status: {
+          readonly output: 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'completed';
+          readonly input: 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'completed';
+        };
+      };
       readonly Incident: {
         readonly status: {
           readonly output:
@@ -420,6 +426,12 @@ type ColumnTypeOverrides = {
     };
     readonly BatteryReading: {
       readonly direction: { readonly output: 'in' | 'out'; readonly input: 'in' | 'out' };
+    };
+    readonly ErasureRequest: {
+      readonly status: {
+        readonly output: 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'completed';
+        readonly input: 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'completed';
+      };
     };
     readonly Incident: {
       readonly status: {
@@ -645,6 +657,21 @@ export namespace Models {
     updatedAt: FieldOutputTypes['public']['CompanyAccount']['updatedAt'];
     ledgerLines: public_LedgerLine[];
     readonly [RelationKeys]?: 'ledgerLines';
+  };
+  export type public_ErasureRequest = {
+    approvedAt: FieldOutputTypes['public']['ErasureRequest']['approvedAt'];
+    approvedById: FieldOutputTypes['public']['ErasureRequest']['approvedById'];
+    completedAt: FieldOutputTypes['public']['ErasureRequest']['completedAt'];
+    createdAt: FieldOutputTypes['public']['ErasureRequest']['createdAt'];
+    id: FieldOutputTypes['public']['ErasureRequest']['id'];
+    reason: FieldOutputTypes['public']['ErasureRequest']['reason'];
+    requestedAt: FieldOutputTypes['public']['ErasureRequest']['requestedAt'];
+    status: FieldOutputTypes['public']['ErasureRequest']['status'];
+    updatedAt: FieldOutputTypes['public']['ErasureRequest']['updatedAt'];
+    userId: FieldOutputTypes['public']['ErasureRequest']['userId'];
+    approvedBy: public_User | null;
+    user: public_User;
+    readonly [RelationKeys]?: 'approvedBy' | 'user';
   };
   export type public_Incident = {
     batteryId: FieldOutputTypes['public']['Incident']['batteryId'];
@@ -883,6 +910,7 @@ export namespace Models {
     address: FieldOutputTypes['public']['User']['address'];
     createdAt: FieldOutputTypes['public']['User']['createdAt'];
     email: FieldOutputTypes['public']['User']['email'];
+    erasedAt: FieldOutputTypes['public']['User']['erasedAt'];
     firstName: FieldOutputTypes['public']['User']['firstName'];
     id: FieldOutputTypes['public']['User']['id'];
     image: FieldOutputTypes['public']['User']['image'];
@@ -902,6 +930,8 @@ export namespace Models {
     assignedStation: public_Station | null;
     damagedIncidents: public_Incident[];
     dismissedIncidents: public_Incident[];
+    erasureApprovals: public_ErasureRequest[];
+    erasureRequests: public_ErasureRequest[];
     fleetOwner: public_Owner | null;
     incidentMessages: public_IncidentMessage[];
     inventoryMovements: public_InventoryMovement[];
@@ -921,6 +951,8 @@ export namespace Models {
       | 'assignedStation'
       | 'damagedIncidents'
       | 'dismissedIncidents'
+      | 'erasureApprovals'
+      | 'erasureRequests'
       | 'fleetOwner'
       | 'incidentMessages'
       | 'inventoryMovements'
@@ -982,6 +1014,7 @@ export declare const models: {
     BatteryReading: Models.public_BatteryReading;
     Bike: Models.public_Bike;
     CompanyAccount: Models.public_CompanyAccount;
+    ErasureRequest: Models.public_ErasureRequest;
     Incident: Models.public_Incident;
     IncidentMessage: Models.public_IncidentMessage;
     InventoryItem: Models.public_InventoryItem;
@@ -1654,6 +1687,127 @@ type ContractBase = Omit<
               uniques: readonly [{ readonly columns: readonly ['accountNumber'] }];
               indexes: readonly [];
               foreignKeys: readonly [];
+            };
+            readonly ErasureRequest: {
+              columns: {
+                readonly approvedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly approvedById: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly completedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly createdAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly id: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'function';
+                    readonly expression: 'autoincrement()';
+                  };
+                  readonly many: false;
+                };
+                readonly reason: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                  readonly many: false;
+                };
+                readonly requestedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly status: {
+                  readonly dataType: 'pg/text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/text@1', 'pending'>;
+                  };
+                  readonly many: false;
+                };
+                readonly updatedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: false;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
+                readonly userId: {
+                  readonly dataType: 'pg/int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly many: false;
+                };
+              };
+              primaryKey: { readonly columns: readonly ['id'] };
+              uniques: readonly [];
+              indexes: readonly [
+                {
+                  readonly name: 'ErasureRequest_approvedById_idx_01ef8410';
+                  readonly prefix: 'ErasureRequest_approvedById_idx';
+                  readonly columns: readonly ['approvedById'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'ErasureRequest_userId_idx_a489d58a';
+                  readonly prefix: 'ErasureRequest_userId_idx';
+                  readonly columns: readonly ['userId'];
+                  readonly unique: false;
+                },
+              ];
+              foreignKeys: readonly [
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'ErasureRequest';
+                    readonly columns: readonly ['userId'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+                {
+                  readonly source: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'ErasureRequest';
+                    readonly columns: readonly ['approvedById'];
+                  };
+                  readonly target: {
+                    readonly namespaceId: 'public' & NamespaceId;
+                    readonly tableName: 'User';
+                    readonly columns: readonly ['id'];
+                  };
+                },
+              ];
             };
             readonly Incident: {
               columns: {
@@ -3212,6 +3366,13 @@ type ContractBase = Omit<
                   readonly nullable: false;
                   readonly many: false;
                 };
+                readonly erasedAt: {
+                  readonly dataType: 'pg/timestamptz';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly nullable: true;
+                  readonly typeParams: { readonly precision: 3 };
+                  readonly many: false;
+                };
                 readonly firstName: {
                   readonly dataType: 'pg/text';
                   readonly codecId: 'pg/text@1';
@@ -3663,6 +3824,16 @@ type ContractBase = Omit<
                 'faulty',
               ];
             };
+            readonly ErasureRequestStatus: {
+              readonly kind: 'valueSet';
+              readonly values: readonly [
+                'pending',
+                'pending_approval',
+                'approved',
+                'rejected',
+                'completed',
+              ];
+            };
             readonly IncidentMessageKind: {
               readonly kind: 'valueSet';
               readonly values: readonly ['initial', 'question', 'reply', 'resolution', 'note'];
@@ -3764,6 +3935,10 @@ type ContractBase = Omit<
     readonly CompanyAccount: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'CompanyAccount';
+    };
+    readonly ErasureRequest: {
+      readonly namespace: 'public' & NamespaceId;
+      readonly model: 'ErasureRequest';
     };
     readonly Incident: { readonly namespace: 'public' & NamespaceId; readonly model: 'Incident' };
     readonly IncidentMessage: {
@@ -4428,6 +4603,106 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly name: { readonly column: 'name' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
+              };
+            };
+          };
+          readonly ErasureRequest: {
+            readonly fields: {
+              readonly approvedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly approvedById: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly completedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly createdAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly id: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly reason: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly requestedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly status: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly updatedAt: {
+                readonly nullable: false;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
+              readonly userId: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+            };
+            readonly relations: {
+              readonly approvedBy: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: true;
+                readonly on: {
+                  readonly localFields: readonly ['approvedById'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+              readonly user: {
+                readonly to: { readonly namespace: 'public' & NamespaceId; readonly model: 'User' };
+                readonly cardinality: 'N:1';
+                readonly nullable: false;
+                readonly on: {
+                  readonly localFields: readonly ['userId'];
+                  readonly targetFields: readonly ['id'];
+                };
+              };
+            };
+            readonly storage: {
+              readonly table: 'ErasureRequest';
+              readonly namespaceId: 'public';
+              readonly fields: {
+                readonly approvedAt: { readonly column: 'approvedAt' };
+                readonly approvedById: { readonly column: 'approvedById' };
+                readonly completedAt: { readonly column: 'completedAt' };
+                readonly createdAt: { readonly column: 'createdAt' };
+                readonly id: { readonly column: 'id' };
+                readonly reason: { readonly column: 'reason' };
+                readonly requestedAt: { readonly column: 'requestedAt' };
+                readonly status: { readonly column: 'status' };
+                readonly updatedAt: { readonly column: 'updatedAt' };
+                readonly userId: { readonly column: 'userId' };
               };
             };
           };
@@ -5884,6 +6159,14 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly erasedAt: {
+                readonly nullable: true;
+                readonly type: {
+                  readonly kind: 'scalar';
+                  readonly codecId: 'pg/timestamptz-date@1';
+                  readonly typeParams: { readonly precision: 3 };
+                };
+              };
               readonly firstName: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -5994,6 +6277,28 @@ type ContractBase = Omit<
                 readonly on: {
                   readonly localFields: readonly ['id'];
                   readonly targetFields: readonly ['dismissedById'];
+                };
+              };
+              readonly erasureApprovals: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ErasureRequest';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['approvedById'];
+                };
+              };
+              readonly erasureRequests: {
+                readonly to: {
+                  readonly namespace: 'public' & NamespaceId;
+                  readonly model: 'ErasureRequest';
+                };
+                readonly cardinality: '1:N';
+                readonly on: {
+                  readonly localFields: readonly ['id'];
+                  readonly targetFields: readonly ['userId'];
                 };
               };
               readonly fleetOwner: {
@@ -6160,6 +6465,7 @@ type ContractBase = Omit<
                 readonly address: { readonly column: 'address' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly email: { readonly column: 'email' };
+                readonly erasedAt: { readonly column: 'erasedAt' };
                 readonly firstName: { readonly column: 'firstName' };
                 readonly id: { readonly column: 'id' };
                 readonly image: { readonly column: 'image' };
@@ -6429,6 +6735,16 @@ type ContractBase = Omit<
               { readonly name: 'faulty'; readonly value: 'faulty' },
             ];
           };
+          readonly ErasureRequestStatus: {
+            readonly codecId: 'pg/text@1';
+            readonly members: readonly [
+              { readonly name: 'pending'; readonly value: 'pending' },
+              { readonly name: 'pending_approval'; readonly value: 'pending_approval' },
+              { readonly name: 'approved'; readonly value: 'approved' },
+              { readonly name: 'rejected'; readonly value: 'rejected' },
+              { readonly name: 'completed'; readonly value: 'completed' },
+            ];
+          };
           readonly IncidentMessageKind: {
             readonly codecId: 'pg/text@1';
             readonly members: readonly [
@@ -6552,6 +6868,13 @@ type ContractBase = Omit<
             { readonly name: 'charging'; readonly value: 'charging' },
             { readonly name: 'in_use'; readonly value: 'in_use' },
             { readonly name: 'faulty'; readonly value: 'faulty' },
+          ];
+          readonly ErasureRequestStatus: readonly [
+            { readonly name: 'pending'; readonly value: 'pending' },
+            { readonly name: 'pending_approval'; readonly value: 'pending_approval' },
+            { readonly name: 'approved'; readonly value: 'approved' },
+            { readonly name: 'rejected'; readonly value: 'rejected' },
+            { readonly name: 'completed'; readonly value: 'completed' },
           ];
           readonly IncidentMessageKind: readonly [
             { readonly name: 'initial'; readonly value: 'initial' },
@@ -6731,6 +7054,23 @@ type ContractBase = Omit<
           };
           readonly ref: {
             readonly entry: 'CompanyAccount';
+            readonly field: 'updatedAt';
+            readonly namespace: 'public';
+          };
+        },
+        {
+          readonly onCreate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly onUpdate: {
+            readonly id: 'timestampNow';
+            readonly kind: 'generator';
+            readonly params: { readonly precision: 3 };
+          };
+          readonly ref: {
+            readonly entry: 'ErasureRequest';
             readonly field: 'updatedAt';
             readonly namespace: 'public';
           };

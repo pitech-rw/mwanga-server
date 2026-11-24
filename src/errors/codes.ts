@@ -13,6 +13,22 @@ export const AuthCodes = {
   roleNotProvisioned: 'auth.roleNotProvisioned',
 } as const;
 
+export const ErasureCodes = {
+  alreadyErased: 'erasure.alreadyErased',
+  requestNotFound: 'erasure.requestNotFound',
+  requestNotConfirmable: 'erasure.requestNotConfirmable',
+  staffRequiresApproval: 'erasure.staffRequiresApproval',
+  confirmPasswordRequired: 'erasure.confirmPasswordRequired',
+  confirmPasswordIncorrect: 'erasure.confirmPasswordIncorrect',
+  openSwapInProgress: 'erasure.openSwapInProgress',
+  walletBalanceRemaining: 'erasure.walletBalanceRemaining',
+  forfeitureRequired: 'erasure.forfeitureRequired',
+  cannotApproveOwnErasure: 'erasure.cannotApproveOwnErasure',
+  adminFourEyesRequired: 'erasure.adminFourEyesRequired',
+  activeRequestExists: 'erasure.activeRequestExists',
+  cannotDeactivateSelf: 'erasure.cannotDeactivateSelf',
+} as const;
+
 export const UsersCodes = {
   riderRequiresOwner: 'users.riderRequiresOwner',
   ownerNotFound: 'users.ownerNotFound',

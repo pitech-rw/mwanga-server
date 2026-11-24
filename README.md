@@ -42,6 +42,20 @@ Creating users: set **`type` only** (e.g. `swapper`, `office`); `roleId` is reso
 
 User passwords are stored as bcrypt hashes (`passwordHash`). New users must include a `password` on `POST /users`.
 
+### GDPR-style account erasure
+
+Self-service erasure scrubs direct PII on `User` (and linked `Owner` / `Agent` portal rows) while keeping `User.id` for swaps, violations, and ledger history.
+
+| Endpoint | Who |
+|----------|-----|
+| `POST /auth/erasure-request` | Signed-in user starts a request (`admin` / `office` / `office_manager` / `swapper` → `pending_approval`) |
+| `POST /auth/erasure-request/confirm` | `rider` / `owner` / `agent` / `viewer` confirm with password (immediate erasure; request row created if missing) |
+| `GET /auth/erasure-request` | Latest request for the signed-in user |
+| `GET /admin/erasure-requests` | `system:admin` — pending staff requests |
+| `POST /admin/erasure-requests/:id/approve` \| `reject` | `system:admin` |
+
+`DELETE /users/:id` remains operational **deactivation** (PII retained). Erasure is separate.
+
 ## Permissions
 
 Permission strings use `{resource}:{action}` and are stored on each `Role` in the `Permission` table. The canonical list lives in `src/auth/permission-catalog.ts`.

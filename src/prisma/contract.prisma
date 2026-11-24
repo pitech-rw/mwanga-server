@@ -27,6 +27,7 @@ model User {
   roleId       Int
   role         Role      @relation(fields: [roleId], references: [id])
   isActive     Boolean   @default(true)
+  erasedAt     DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @onCreate(now()) @onUpdate(now())
 
@@ -50,6 +51,32 @@ model User {
   ledgerTransactions  LedgerTransaction[] @relation("LedgerActor")
   portalAgent         Agent?            @relation("AgentPortalUser")
   inventoryMovements  InventoryMovement[] @relation("InventoryMovementActor")
+  erasureRequests     ErasureRequest[]    @relation("ErasureSubject")
+  erasureApprovals    ErasureRequest[]    @relation("ErasureApprover")
+}
+
+enum ErasureRequestStatus {
+  pending
+  pending_approval
+  approved
+  rejected
+  completed
+}
+
+model ErasureRequest {
+  id             Int                  @id @default(autoincrement())
+  userId         Int
+  status         ErasureRequestStatus @default(pending)
+  requestedAt    DateTime             @default(now())
+  approvedById   Int?
+  approvedAt     DateTime?
+  completedAt    DateTime?
+  reason         String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @onCreate(now()) @onUpdate(now())
+
+  user       User  @relation("ErasureSubject", fields: [userId], references: [id])
+  approvedBy User? @relation("ErasureApprover", fields: [approvedById], references: [id])
 }
 
 model Role {

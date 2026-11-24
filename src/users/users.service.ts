@@ -13,7 +13,7 @@ import { asNumeric } from '../prisma/errors.js';
 import type { UserTypeName } from '../auth/permission-catalog.js';
 import { resolveRoleIdForType } from '../auth/user-type-alignment.js';
 import { hashPassword } from '../auth/password.js';
-import { sanitizeUser } from '../auth/sanitize-user.js';
+import { presentSafeUser } from '../erasure/present-safe-user.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { SafeUser, UserType } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
@@ -50,7 +50,7 @@ export class UsersService {
     ]);
 
     const riderRows = riders.map((user) => ({
-      ...sanitizeUser(user),
+      ...presentSafeUser(user),
       directoryKind: 'rider' as const,
     }));
 
@@ -101,9 +101,9 @@ export class UsersService {
       const proprietor = await this.userQuery().first({ id: ctx.user.sub });
       const proprietorRow =
         proprietor && (!filters?.activeOnly || proprietor.isActive)
-          ? [sanitizeUser(proprietor)]
+          ? [presentSafeUser(proprietor)]
           : [];
-      const list = [...proprietorRow, ...users.map((u) => sanitizeUser(u))];
+      const list = [...proprietorRow, ...users.map((u) => presentSafeUser(u))];
       return list;
     }
 
@@ -114,7 +114,7 @@ export class UsersService {
         throw new NotFoundException(`User with id ${ctx.user.sub} not found`);
       }
 
-      return [sanitizeUser(self)];
+      return [presentSafeUser(self)];
     }
 
     const where: { type?: UserType; isActive?: boolean } = {};
@@ -127,7 +127,7 @@ export class UsersService {
     const base =
       Object.keys(where).length > 0 ? this.userQuery().where(where) : this.userQuery();
     const users = await base.orderBy((user) => user.createdAt.desc()).all();
-    return users.map((user) => sanitizeUser(user));
+    return users.map((user) => presentSafeUser(user));
   }
 
   async findOne(id: number, ctx: ReadScopeContext): Promise<SafeUser> {
@@ -150,7 +150,7 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    return sanitizeUser(user);
+    return presentSafeUser(user);
   }
 
   async create(data: CreateUserDto): Promise<SafeUser> {
@@ -221,7 +221,7 @@ export class UsersService {
           return created;
         });
 
-        return sanitizeUser(user);
+        return presentSafeUser(user);
       }
 
       if (data.type === 'rider') {
@@ -255,7 +255,7 @@ export class UsersService {
           return created;
         });
 
-        return sanitizeUser(user);
+        return presentSafeUser(user);
       }
 
       const user = await this.userQuery().create({
@@ -274,7 +274,7 @@ export class UsersService {
         passwordHash,
         stationId: stationId ?? null,
       });
-      return sanitizeUser(user);
+      return presentSafeUser(user);
     } catch (error) {
       if (isUniqueViolation(error)) {
         apiBadRequest(UsersCodes.duplicateIdentity);
@@ -309,6 +309,10 @@ export class UsersService {
     }
 
     const reactivating = data.isActive === true && !existing.isActive;
+
+    if (data.isActive === false && id === ctx.user.sub) {
+      apiBadRequest(UsersCodes.cannotDeactivateSelf);
+    }
 
     if (!existing.isActive && !reactivating) {
       const touched =
@@ -412,7 +416,7 @@ export class UsersService {
         throw new NotFoundException(`User with id ${id} not found`);
       }
 
-      return sanitizeUser(user);
+      return presentSafeUser(user);
     } catch (error) {
       if (isUniqueViolation(error)) {
         apiBadRequest(UsersCodes.duplicateIdentity);
@@ -439,6 +443,6 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    return sanitizeUser(user);
+    return presentSafeUser(user);
   }
 }

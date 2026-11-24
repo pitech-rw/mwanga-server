@@ -8,7 +8,7 @@ import {
 
 type Database = typeof db;
 
-export async function syncRolePermissions(database: Database, roleName: string, permissions: readonly PermissionName[]) {
+async function ensureRoleByName(database: Database, roleName: string) {
   let role = await database.orm.public.Role.first({ name: roleName });
 
   if (!role) {
@@ -27,7 +27,16 @@ export async function syncRolePermissions(database: Database, roleName: string, 
     }
   }
 
-  const existing = await database.orm.public.Permission.where({ roleId: role.id }).all();
+  return role;
+}
+
+/** Full replace of permission rows for a role (used by API and destructive reset). */
+export async function replaceRolePermissionsById(
+  database: Database,
+  roleId: number,
+  permissions: readonly PermissionName[],
+): Promise<void> {
+  const existing = await database.orm.public.Permission.where({ roleId }).all();
   const desired = new Set(permissions);
 
   for (const permission of existing) {
@@ -43,7 +52,7 @@ export async function syncRolePermissions(database: Database, roleName: string, 
       try {
         await database.orm.public.Permission.create({
           name,
-          roleId: role.id,
+          roleId,
         });
       } catch (error) {
         if (!isUniqueViolation(error)) {
@@ -52,14 +61,39 @@ export async function syncRolePermissions(database: Database, roleName: string, 
       }
     }
   }
+}
 
+export async function syncRolePermissions(database: Database, roleName: string, permissions: readonly PermissionName[]) {
+  const role = await ensureRoleByName(database, roleName);
+  await replaceRolePermissionsById(database, role.id, permissions);
   return role;
 }
 
-export async function syncAllDefaultRolePermissions(database: Database) {
+/**
+ * Ensures default role rows exist and applies catalog permissions only when a role has zero permission rows.
+ * Does not change roles that already have any permissions (DB / admin authoritative).
+ */
+export async function bootstrapDefaultRolePermissions(database: Database) {
+  for (const [roleName, permissions] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
+    const role = await ensureRoleByName(database, roleName);
+    const existing = await database.orm.public.Permission.where({ roleId: role.id }).all();
+
+    if (existing.length === 0) {
+      await replaceRolePermissionsById(database, role.id, permissions);
+    }
+  }
+}
+
+/** Destructive: force-replace built-in roles from DEFAULT_ROLE_PERMISSIONS. */
+export async function resetDefaultRolePermissions(database: Database) {
   for (const [roleName, permissions] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
     await syncRolePermissions(database, roleName, permissions);
   }
+}
+
+/** @deprecated Prefer bootstrapDefaultRolePermissions; kept for explicit reset CLI. */
+export async function syncAllDefaultRolePermissions(database: Database) {
+  await resetDefaultRolePermissions(database);
 }
 
 export function listUnknownPermissionNames(names: Iterable<string>): string[] {

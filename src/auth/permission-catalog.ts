@@ -241,6 +241,21 @@ export const ALL_KNOWN_PERMISSIONS: PermissionName[] = Object.values(PERMISSIONS
   (group) => Object.values(group),
 ) as PermissionName[];
 
+export type PermissionCatalogEntry = {
+  name: PermissionName;
+  group: string;
+};
+
+export function buildPermissionCatalog(): PermissionCatalogEntry[] {
+  return ALL_KNOWN_PERMISSIONS.map((name) => {
+    const colon = name.indexOf(':');
+    return {
+      name,
+      group: colon >= 0 ? name.slice(0, colon) : name,
+    };
+  });
+}
+
 /** User.type values — must match Role.name for default roles */
 export type UserTypeName = keyof typeof DEFAULT_ROLE_PERMISSIONS;
 

@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma.service.js';
-import { syncAllDefaultRolePermissions } from './sync-role-permissions.js';
+import { bootstrapDefaultRolePermissions } from './sync-role-permissions.js';
 
 @Injectable()
 export class DefaultRolePermissionsSeed implements OnModuleInit {
@@ -13,7 +13,7 @@ export class DefaultRolePermissionsSeed implements OnModuleInit {
       return;
     }
 
-    await syncAllDefaultRolePermissions(this.prisma.db);
-    this.logger.log('Synced default role permissions');
+    await bootstrapDefaultRolePermissions(this.prisma.db);
+    this.logger.log('Bootstrapped default role permissions where missing');
   }
 }

@@ -13,6 +13,7 @@ import { asNumeric } from '../prisma/errors.js';
 import type { UserTypeName } from '../auth/permission-catalog.js';
 import { resolveRoleIdForType } from '../auth/user-type-alignment.js';
 import { hashPassword } from '../auth/password.js';
+import { VISIBLE_USER_WHERE } from '../erasure/erasure.constants.js';
 import { presentSafeUser } from '../erasure/present-safe-user.js';
 import { isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
 import type { SafeUser, UserType } from '../prisma/types.js';
@@ -29,7 +30,8 @@ export class UsersService {
   private userQuery() {
     return this.prisma.db.orm.public.User.include('role')
       .include('assignedStation')
-      .include('fleetOwner');
+      .include('fleetOwner')
+      .where(VISIBLE_USER_WHERE);
   }
 
   /** Rider + fleet owner directory for field agents (`riders:read`). */
@@ -41,7 +43,7 @@ export class UsersService {
     const [riders, owners] = await Promise.all([
       this.prisma.db.orm.public.User.include('role')
         .include('riderWallet')
-        .where({ type: 'rider', isActive: true })
+        .where({ type: 'rider', isActive: true, ...VISIBLE_USER_WHERE })
         .orderBy((user) => user.createdAt.desc())
         .all(),
       this.prisma.db.orm.public.Owner.include('wallet')
@@ -90,7 +92,10 @@ export class UsersService {
         ctx.user.sub,
         'owner',
       );
-      const riderWhere: { ownerId: number; isActive?: boolean } = { ownerId: fleetOwnerId };
+      const riderWhere: { ownerId: number; isActive?: boolean; erasedAt: null } = {
+        ownerId: fleetOwnerId,
+        ...VISIBLE_USER_WHERE,
+      };
       if (filters?.activeOnly) {
         riderWhere.isActive = true;
       }
@@ -117,15 +122,16 @@ export class UsersService {
       return [presentSafeUser(self)];
     }
 
-    const where: { type?: UserType; isActive?: boolean } = {};
+    const where: { type?: UserType; isActive?: boolean; erasedAt: null } = {
+      ...VISIBLE_USER_WHERE,
+    };
     if (filters?.type !== undefined) {
       where.type = filters.type;
     }
     if (filters?.activeOnly) {
       where.isActive = true;
     }
-    const base =
-      Object.keys(where).length > 0 ? this.userQuery().where(where) : this.userQuery();
+    const base = this.userQuery().where(where);
     const users = await base.orderBy((user) => user.createdAt.desc()).all();
     return users.map((user) => presentSafeUser(user));
   }
@@ -382,7 +388,10 @@ export class UsersService {
     }
 
     if (stationIdPatch !== undefined && stationIdPatch != null) {
-      const incumbent = await this.prisma.db.orm.public.User.where({ stationId: stationIdPatch }).all();
+      const incumbent = await this.prisma.db.orm.public.User.where({
+        stationId: stationIdPatch,
+        ...VISIBLE_USER_WHERE,
+      }).all();
       for (const other of incumbent) {
         if (other.id !== id) {
           await this.prisma.db.orm.public.User.where({ id: other.id }).update({ stationId: null });

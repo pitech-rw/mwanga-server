@@ -203,6 +203,7 @@ export const CardsCodes = {
 
 export const RolesCodes = {
   duplicateRole: 'roles.duplicateRole',
+  unknownPermission: 'roles.unknownPermission',
 } as const;
 
 export const ValidationCodes = {

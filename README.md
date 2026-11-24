@@ -67,7 +67,7 @@ Permission strings use `{resource}:{action}` and are stored on each `Role` in th
 | swaps | `swaps:read`, `swaps:operate` (assign + complete), `swaps:write`, `swaps:delete`, `swaps:override` (manual assignment override) |
 | incidents | `incidents:read`, `incidents:write` (swapper: open + reply), `incidents:review` (office_manager: Q&A + mark damaged / dismiss) |
 
-Default roles (synced with `npm run seed:permissions`):
+Default roles (bootstrap on server start when a role has **zero** permissions):
 
 | Role | Intended use |
 |------|----------------|
@@ -80,7 +80,19 @@ Default roles (synced with `npm run seed:permissions`):
 | `rider` | Rider self-service: own swaps; personal wallet (read); own user record; stations directory (full list for discovery) |
 | `viewer` | Read-only across resources (same row visibility as `office` / back-office dashboards) |
 
-Assign users a **`type`** matching their job; permissions come from the role with the same name. After changing the permission matrix, run `npm run seed:permissions`. To fix legacy rows where `type` ≠ `Role.name`, run `npm run align:user-types -- --sync-role-name`.
+Assign users a **`type`** matching their job; permissions come from the role with the same name.
+
+**Role permission API** (for admin UI):
+
+| Method | Path | Permission |
+|--------|------|------------|
+| `GET` | `/roles/permission-catalog` | `roles:read` |
+| `GET` | `/roles`, `/roles/:id` | `roles:read` — includes `permissions: string[]` |
+| `PUT` | `/roles/:id/permissions` | `roles:write` — body `{ "permissions": ["bikes:read", ...] }` full replace |
+
+After changing a role’s permissions, users with that role must **re-login** so `/auth/me` and JWT reflect the new set.
+
+**Seeding:** `npm run seed:permissions-dev` bootstraps missing default permissions only (does not change roles that already have permission rows). **`npm run seed:permissions-dev -- --reset-defaults`** force-replaces built-in roles from `DEFAULT_ROLE_PERMISSIONS` (destructive). To fix legacy rows where `type` ≠ `Role.name`, run `npm run align:user-types -- --sync-role-name`.
 
 ### Read scoping (row-level)
 

@@ -22,7 +22,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
 RUN npm ci --omit=dev \
-  && npm install prisma@^8.0.0-rc.29 @prisma/cli-engine@^0.9.0 --no-save
+  && npm install prisma@^8.0.0-rc.25 @prisma/cli-engine@^0.9.0 --no-save
 COPY --from=builder --chown=app:app /app/dist ./dist
 COPY --from=builder --chown=app:app /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=app:app /app/migrations ./migrations

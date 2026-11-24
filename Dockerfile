@@ -21,8 +21,7 @@ RUN useradd -ms /bin/sh -u 1001 app
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm ci --omit=dev \
-  && npm install prisma@^8.0.0-rc.25 @prisma/cli-engine@^0.9.0 --no-save
+RUN npm ci --omit=dev
 COPY --from=builder --chown=app:app /app/dist ./dist
 COPY --from=builder --chown=app:app /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=app:app /app/migrations ./migrations

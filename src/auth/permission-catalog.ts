@@ -69,6 +69,7 @@ export const PERMISSIONS = {
   companyAccounts: {
     read: 'company-accounts:read',
     write: 'company-accounts:write',
+    credit: 'company-accounts:credit',
   },
   swaps: {
     read: 'swaps:read',
@@ -160,6 +161,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, readonly PermissionName[]>
     ...crmWritePermissions,
     PERMISSIONS.wallets.credit,
     PERMISSIONS.companyAccounts.write,
+    PERMISSIONS.companyAccounts.credit,
     PERMISSIONS.users.read,
     PERMISSIONS.users.write,
     PERMISSIONS.roles.read,

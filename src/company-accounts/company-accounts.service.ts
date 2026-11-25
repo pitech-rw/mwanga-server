@@ -6,6 +6,7 @@ import { LedgerService } from '../ledger/ledger.service.js';
 import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
 import type { CompanyAccount, LedgerTransaction } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import type { CompanyFloatCreditDto } from './company-float-credit.dto.js';
 import { CreateCompanyAccountDto } from './create-company-account.dto.js';
 
 @Injectable()
@@ -35,6 +36,24 @@ export class CompanyAccountsService {
   async listLedgerTransactions(id: number): Promise<LedgerTransaction[]> {
     await this.findOne(id);
     return this.ledger.listTransactionsForCompanyAccount(id);
+  }
+
+  async creditFloat(
+    id: number,
+    dto: CompanyFloatCreditDto,
+    actorUserId: number,
+  ): Promise<LedgerTransaction> {
+    await this.findOne(id);
+
+    return this.prisma.db.transaction(async (tx) =>
+      this.ledger.creditCompanyFloatInTx(tx, {
+        companyAccountId: id,
+        amount: dto.amount,
+        externalReference: dto.externalReference,
+        actorUserId,
+        description: dto.description,
+      }),
+    );
   }
 
   async create(data: CreateCompanyAccountDto): Promise<CompanyAccount> {

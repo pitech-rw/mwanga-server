@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { DEFAULT_CURRENCY } from '../config/default-currency.js';
 import { apiBadRequest } from '../errors/api-error.js';
 import { LedgerCodes } from '../errors/codes.js';
 import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
@@ -6,7 +7,10 @@ import type { LedgerTransaction, Wallet } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import { signedDeltaForLine } from './ledger-balance.js';
 import type { LedgerLineInput, PostTransactionInput } from './ledger.types.js';
-import { DEFAULT_REVENUE_ACCOUNT_CODE } from './ledger.types.js';
+import {
+  COMPANY_FLOAT_SOURCE_REVENUE_CODE,
+  DEFAULT_REVENUE_ACCOUNT_CODE,
+} from './ledger.types.js';
 
 export type LedgerTx = Parameters<Parameters<PrismaService['db']['transaction']>[0]>[0];
 
@@ -240,6 +244,78 @@ export class LedgerService {
           direction: 'credit',
           amount: params.amount,
           walletId: wallet.id,
+        },
+      ],
+    });
+  }
+
+  async resolveCompanyFloatSourceAccount(tx: LedgerTx) {
+    const code = COMPANY_FLOAT_SOURCE_REVENUE_CODE;
+    const existing = await tx.orm.public.RevenueAccount.where({ code }).first();
+    if (existing) {
+      return existing;
+    }
+
+    try {
+      return await tx.orm.public.RevenueAccount.create({
+        code,
+        name: 'Company Float Source',
+        currency: DEFAULT_CURRENCY,
+        balance: asNumeric(0),
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        const raced = await tx.orm.public.RevenueAccount.where({ code }).first();
+        if (raced) {
+          return raced;
+        }
+      }
+      throw error;
+    }
+  }
+
+  async creditCompanyFloatInTx(
+    tx: LedgerTx,
+    params: {
+      companyAccountId: number;
+      amount: number;
+      externalReference: string;
+      actorUserId?: number;
+      description?: string;
+    },
+  ): Promise<LedgerTransaction> {
+    if (!(params.amount > 0)) {
+      apiBadRequest(LedgerCodes.topUpPositive);
+    }
+    if (!params.externalReference?.trim()) {
+      apiBadRequest(LedgerCodes.companyFloatCreditReferenceRequired);
+    }
+
+    const company = await tx.orm.public.CompanyAccount.first({ id: params.companyAccountId });
+    if (!company) {
+      throw new NotFoundException(`Company account ${params.companyAccountId} not found`);
+    }
+
+    const source = await this.resolveCompanyFloatSourceAccount(tx);
+    if (company.currency !== source.currency) {
+      apiBadRequest(LedgerCodes.currencyMismatchCompanyRevenue);
+    }
+
+    return this.postTransaction(tx, {
+      kind: 'adjustment',
+      actorUserId: params.actorUserId,
+      externalReference: params.externalReference,
+      description: params.description,
+      lines: [
+        {
+          direction: 'debit',
+          amount: params.amount,
+          revenueAccountId: source.id,
+        },
+        {
+          direction: 'credit',
+          amount: params.amount,
+          companyAccountId: company.id,
         },
       ],
     });

@@ -20,3 +20,6 @@ export type PostTransactionInput = {
 };
 
 export const DEFAULT_REVENUE_ACCOUNT_CODE = 'swap_fees';
+
+/** Contra account for verified inbound bank transfers credited to company float. */
+export const COMPANY_FLOAT_SOURCE_REVENUE_CODE = 'company_float_source';

@@ -73,7 +73,7 @@ export class OwnersService {
         await tx.orm.public.Wallet.create({
           ownerId: owner.id,
           balance: asNumeric(0),
-          currency: data.currency ?? DEFAULT_CURRENCY,
+          currency: DEFAULT_CURRENCY,
         });
 
         if (data.bikes?.length) {

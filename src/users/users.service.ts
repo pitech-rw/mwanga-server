@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { apiBadRequest } from '../errors/api-error.js';
 import { UsersCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
@@ -34,15 +34,12 @@ export class UsersService {
       .where(VISIBLE_USER_WHERE);
   }
 
-  /** Rider + fleet owner directory for field agents (`riders:read`). */
+  /** Rider + fleet owner directory (`riders:read`). */
   async findRidersForAgent(ctx: ReadScopeContext): Promise<Record<string, unknown>[]> {
-    if (ctx.user.type !== 'agent' && !isUnrestrictedRead(ctx)) {
-      throw new ForbiddenException('Insufficient scope to list riders');
-    }
-
     const [riders, owners] = await Promise.all([
       this.prisma.db.orm.public.User.include('role')
         .include('riderWallet')
+        .include('fleetOwner')
         .where({ type: 'rider', isActive: true, ...VISIBLE_USER_WHERE })
         .orderBy((user) => user.createdAt.desc())
         .all(),

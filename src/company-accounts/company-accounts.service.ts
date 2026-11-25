@@ -15,8 +15,13 @@ export class CompanyAccountsService {
     private readonly ledger: LedgerService,
   ) {}
 
+  private presentCompanyAccount(account: CompanyAccount): CompanyAccount {
+    return { ...account, currency: DEFAULT_CURRENCY };
+  }
+
   async findAll(): Promise<CompanyAccount[]> {
-    return this.prisma.db.orm.public.CompanyAccount.orderBy((row) => row.name.asc()).all();
+    const rows = await this.prisma.db.orm.public.CompanyAccount.orderBy((row) => row.name.asc()).all();
+    return rows.map((row) => this.presentCompanyAccount(row));
   }
 
   async findOne(id: number): Promise<CompanyAccount> {
@@ -24,7 +29,7 @@ export class CompanyAccountsService {
     if (!account) {
       throw new NotFoundException(`Company account with id ${id} not found`);
     }
-    return account;
+    return this.presentCompanyAccount(account);
   }
 
   async listLedgerTransactions(id: number): Promise<LedgerTransaction[]> {
@@ -34,13 +39,14 @@ export class CompanyAccountsService {
 
   async create(data: CreateCompanyAccountDto): Promise<CompanyAccount> {
     try {
-      return await this.prisma.db.orm.public.CompanyAccount.create({
+      const created = await this.prisma.db.orm.public.CompanyAccount.create({
         name: data.name,
         bankName: data.bankName,
         accountNumber: data.accountNumber,
-        currency: data.currency ?? DEFAULT_CURRENCY,
+        currency: DEFAULT_CURRENCY,
         balance: asNumeric(0),
       });
+      return this.presentCompanyAccount(created);
     } catch (error) {
       if (isUniqueViolation(error)) {
         apiBadRequest(CompanyAccountsCodes.duplicateAccount);

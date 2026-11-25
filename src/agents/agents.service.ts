@@ -75,7 +75,7 @@ export class AgentsService {
         await tx.orm.public.Wallet.create({
           agentId: agent.id,
           balance: asNumeric(0),
-          currency: data.currency ?? DEFAULT_CURRENCY,
+          currency: DEFAULT_CURRENCY,
         });
 
         const loaded = await tx.orm.public.Agent.include('portalUser').include('wallet').first({

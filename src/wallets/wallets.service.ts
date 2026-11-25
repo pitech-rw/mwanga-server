@@ -9,6 +9,13 @@ import { LedgerService } from '../ledger/ledger.service.js';
 import { asNumeric, isUniqueViolation } from '../prisma/errors.js';
 import type { LedgerTransaction, Wallet } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
+import { VISIBLE_USER_WHERE } from '../erasure/erasure.constants.js';
+import {
+  presentSafeWallet,
+  walletHolderLinksErasedUser,
+  type WalletWithHolders,
+} from '../erasure/present-safe-wallet.js';
+import { loadVisibleUserIds } from '../erasure/visible-user-ids.js';
 import { CreateWalletDto } from './create-wallet.dto.js';
 import type { FloatCreditDto } from './float-credit.dto.js';
 
@@ -19,8 +26,46 @@ export class WalletsService {
     private readonly ledger: LedgerService,
   ) {}
 
+  /** Holder relations only — rider users are loaded separately with `VISIBLE_USER_WHERE`. */
   private walletQuery() {
-    return this.prisma.db.orm.public.Wallet.include('owner').include('riderUser').include('agent');
+    return this.prisma.db.orm.public.Wallet.include('owner').include('agent');
+  }
+
+  private async attachVisibleRiderUsers<T extends Wallet>(rows: T[]): Promise<WalletWithHolders[]> {
+    const riderIds = [
+      ...new Set(rows.map((row) => row.userId).filter((id): id is number => typeof id === 'number')),
+    ];
+    if (riderIds.length === 0) {
+      return rows;
+    }
+
+    const riderIdSet = new Set(riderIds);
+    const riders = (await this.prisma.db.orm.public.User.where(VISIBLE_USER_WHERE).all()).filter(
+      (user) => riderIdSet.has(user.id),
+    );
+
+    const byId = new Map(riders.map((user) => [user.id, user]));
+    return rows.map((row) => ({
+      ...row,
+      riderUser: row.userId != null ? byId.get(row.userId) : undefined,
+    }));
+  }
+
+  private async presentWalletRows(rows: Wallet[]): Promise<WalletWithHolders[]> {
+    const hydrated = await this.attachVisibleRiderUsers(rows);
+    const visibleUserIds = await loadVisibleUserIds(this.prisma);
+    return hydrated
+      .filter((row) => !walletHolderLinksErasedUser(row, visibleUserIds))
+      .map((row) => presentSafeWallet(row));
+  }
+
+  private async presentWalletRow(row: Wallet): Promise<WalletWithHolders> {
+    const [hydrated] = await this.attachVisibleRiderUsers([row]);
+    const visibleUserIds = await loadVisibleUserIds(this.prisma);
+    if (!hydrated || walletHolderLinksErasedUser(hydrated, visibleUserIds)) {
+      throw new NotFoundException(`Wallet with id ${row.id} not found`);
+    }
+    return presentSafeWallet(hydrated);
   }
 
   async findAll(ctx: ReadScopeContext) {
@@ -28,16 +73,16 @@ export class WalletsService {
     const ordered = this.walletQuery().orderBy((wallet) => wallet.createdAt.desc());
 
     if (scope.mode === 'unrestricted') {
-      return ordered.all();
+      return this.presentWalletRows(await ordered.all());
     }
 
     if (scope.mode === 'owner') {
       const ownerId = await resolveFleetOwnerId(this.prisma, scope.userId, 'owner');
-      return ordered.where({ ownerId }).all();
+      return this.presentWalletRows(await ordered.where({ ownerId }).all());
     }
 
     if (scope.mode === 'rider') {
-      return ordered.where({ userId: scope.userId }).all();
+      return this.presentWalletRows(await ordered.where({ userId: scope.userId }).all());
     }
 
     const agent = await this.prisma.db.orm.public.Agent.first({ userId: scope.userId });
@@ -45,7 +90,7 @@ export class WalletsService {
       throw new NotFoundException('Agent not found');
     }
 
-    return ordered.where({ agentId: agent.id }).all();
+    return this.presentWalletRows(await ordered.where({ agentId: agent.id }).all());
   }
 
   async findOne(id: number, ctx: ReadScopeContext) {
@@ -72,7 +117,7 @@ export class WalletsService {
       }
     }
 
-    return wallet;
+    return this.presentWalletRow(wallet as WalletWithHolders);
   }
 
   async create(data: CreateWalletDto): Promise<Wallet> {
@@ -87,11 +132,12 @@ export class WalletsService {
     }
 
     try {
-      return await this.walletQuery().create({
+      const created = await this.walletQuery().create({
         ownerId: data.ownerId,
         balance: asNumeric(0),
-        currency: data.currency ?? DEFAULT_CURRENCY,
+        currency: DEFAULT_CURRENCY,
       });
+      return this.presentWalletRow(created as WalletWithHolders);
     } catch (error) {
       if (isUniqueViolation(error)) {
         apiBadRequest(WalletsCodes.walletExists);

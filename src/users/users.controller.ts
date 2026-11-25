@@ -42,7 +42,7 @@ export class UsersController {
 
   @Get('riders')
   @RequirePermissions(PERMISSIONS.riders.read)
-  @ApiOperation({ summary: 'List riders and fleet owners (field agents)' })
+  @ApiOperation({ summary: 'List riders and fleet owners (directory)' })
   @ApiOkResponse({ description: 'Rider users and fleet Owner records for top-up lookup' })
   findRiders(@CurrentUser() user: AuthenticatedUser): Promise<Record<string, unknown>[]> {
     return this.usersService.findRidersForAgent(this.readCtx(user));

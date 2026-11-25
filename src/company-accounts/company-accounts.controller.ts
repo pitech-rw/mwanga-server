@@ -8,9 +8,12 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import type { AuthenticatedUser } from '../auth/auth.types.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
 import type { CompanyAccount, LedgerTransaction } from '../prisma/types.js';
+import { CompanyFloatCreditDto } from './company-float-credit.dto.js';
 import { CompanyAccountsService } from './company-accounts.service.js';
 import { CreateCompanyAccountDto } from './create-company-account.dto.js';
 
@@ -35,6 +38,19 @@ export class CompanyAccountsController {
   @ApiOkResponse({ description: 'Immutable ledger transactions' })
   listTransactions(@Param('id', ParseIntPipe) id: number): Promise<LedgerTransaction[]> {
     return this.companyAccountsService.listLedgerTransactions(id);
+  }
+
+  @Post(':id/float-credit')
+  @RequirePermissions(PERMISSIONS.companyAccounts.credit)
+  @ApiOperation({ summary: 'Credit company float from a verified bank transfer' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiCreatedResponse({ description: 'Ledger transaction (double-entry)' })
+  floatCredit(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CompanyFloatCreditDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<LedgerTransaction> {
+    return this.companyAccountsService.creditFloat(id, dto, user.sub);
   }
 
   @Get(':id')

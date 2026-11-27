@@ -1,0 +1,18 @@
+export const receiptEn = {
+  title: 'TOP-UP RECEIPT',
+  receiptNo: 'Receipt #',
+  date: 'Date',
+  agent: 'Agent',
+  rider: 'Customer',
+  phone: 'Phone',
+  cashCollected: 'Cash received',
+  discount: 'Discount',
+  tax: 'Tax',
+  walletCredit: 'Wallet credit',
+  balanceBefore: 'Balance before',
+  balanceAfter: 'Balance after',
+  ledgerRef: 'Ledger ref',
+  thankYou: 'Thank you',
+  duplicate: 'DUPLICATE',
+  currencyLine: (currency: string) => `Currency: ${currency}`,
+} as const;

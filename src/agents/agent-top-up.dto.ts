@@ -1,4 +1,13 @@
-import { IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class AgentTopUpDto {
   @IsInt()
@@ -9,15 +18,24 @@ export class AgentTopUpDto {
   @Min(0.01)
   amount: number;
 
+  @IsOptional()
   @IsString()
-  @MinLength(2)
-  @MaxLength(120)
-  externalReference: string;
+  @MaxLength(64)
+  idempotencyKey?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  discountCode?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(500)
-  description?: string;
+  note?: string;
+
+  @IsOptional()
+  @IsIn(['fr', 'en'])
+  locale?: 'fr' | 'en';
 }
 
 export class TopUpTargetQueryDto {

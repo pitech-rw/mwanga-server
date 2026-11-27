@@ -23,7 +23,8 @@ import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { PERMISSIONS } from '../auth/permission-catalog.js';
 import { RequirePermissions } from '../auth/require-permissions.decorator.js';
-import type { Agent, LedgerTransaction } from '../prisma/types.js';
+import type { Agent, AgentTopUpReceipt, LedgerTransaction } from '../prisma/types.js';
+import type { AgentTopUpReceiptDocument, AgentTopUpResponse } from '../receipts/top-up-receipt.types.js';
 import { AgentTopUpDto, TopUpTargetQueryDto } from './agent-top-up.dto.js';
 import { AgentsService, type TopUpTarget } from './agents.service.js';
 import { CreateAgentDto } from './create-agent.dto.js';
@@ -49,12 +50,30 @@ export class AgentsController {
   @Post('top-ups')
   @RequirePermissions(PERMISSIONS.wallets.agentTopup)
   @ApiOperation({ summary: 'Move agent float into a rider or owner wallet' })
-  @ApiCreatedResponse({ description: 'Ledger transaction (double-entry)' })
+  @ApiCreatedResponse({ description: 'Ledger transaction and optional rider receipt document' })
   topUp(
     @Body() dto: AgentTopUpDto,
     @CurrentUser() user: AuthenticatedUser,
-  ): Promise<LedgerTransaction> {
+  ): Promise<AgentTopUpResponse> {
     return this.agentsService.topUp(user.sub, dto);
+  }
+
+  @Get('receipts/:receiptNumber')
+  @RequirePermissions(PERMISSIONS.wallets.agentTopup)
+  @ApiOperation({ summary: 'Reprint an agent rider top-up receipt snapshot' })
+  @ApiParam({ name: 'receiptNumber', type: String })
+  getReceipt(
+    @Param('receiptNumber') receiptNumber: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AgentTopUpReceiptDocument> {
+    return this.agentsService.getReceipt(receiptNumber, user.sub, user.adminBypass);
+  }
+
+  @Get('me/receipts')
+  @RequirePermissions(PERMISSIONS.wallets.agentTopup)
+  @ApiOperation({ summary: 'List rider top-up receipts issued by the signed-in agent' })
+  listMyReceipts(@CurrentUser() user: AuthenticatedUser): Promise<AgentTopUpReceipt[]> {
+    return this.agentsService.listMyReceipts(user.sub);
   }
 
   @Get('me/transactions')

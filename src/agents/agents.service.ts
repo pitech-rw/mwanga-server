@@ -5,8 +5,10 @@ import { AgentsCodes } from '../errors/codes.js';
 import type { ReadScopeContext } from '../auth/read-scope.js';
 import { agentReadScope, denyOrNotFoundForScopedRead } from '../auth/read-scope.js';
 import { LedgerService } from '../ledger/ledger.service.js';
+import { ReceiptsService } from '../receipts/receipts.service.js';
+import type { AgentTopUpResponse } from '../receipts/top-up-receipt.types.js';
 import { asNumeric, isUniqueViolation, withoutUndefined } from '../prisma/errors.js';
-import type { Agent, LedgerTransaction, SafeUser } from '../prisma/types.js';
+import type { Agent, AgentTopUpReceipt, LedgerTransaction, SafeUser } from '../prisma/types.js';
 import { PrismaService } from '../prisma.service.js';
 import type { AgentTopUpDto } from './agent-top-up.dto.js';
 import { assertUserActiveForAssignment } from '../users/assert-user-active.js';
@@ -24,6 +26,7 @@ export class AgentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ledger: LedgerService,
+    private readonly receipts: ReceiptsService,
   ) {}
 
   private agentQuery() {
@@ -261,22 +264,32 @@ export class AgentsService {
     return this.ledger.listTransactionsForActor(actorUserId, { kind: 'agent_topup' });
   }
 
-  async topUp(actorUserId: number, dto: AgentTopUpDto): Promise<LedgerTransaction> {
+  async topUp(actorUserId: number, dto: AgentTopUpDto): Promise<AgentTopUpResponse> {
     const agent = await this.prisma.db.orm.public.Agent.include('wallet').first({ userId: actorUserId });
     if (!agent?.wallet) {
       apiBadRequest(AgentsCodes.floatWalletMissing);
     }
 
-    return this.prisma.db.transaction((tx) =>
-      this.ledger.transferAgentFloatInTx(tx, {
-        agentWalletId: agent.wallet!.id,
-        targetWalletId: dto.walletId,
-        amount: dto.amount,
-        externalReference: dto.externalReference,
-        actorUserId,
-        description: dto.description,
-      }),
-    );
+    return this.receipts.topUpWithReceipt({
+      actorUserId,
+      agentId: agent.id,
+      agentName: agent.name,
+      agentWalletId: agent.wallet.id,
+      targetWalletId: dto.walletId,
+      amount: dto.amount,
+      discountCode: dto.discountCode,
+      note: dto.note,
+      idempotencyKey: dto.idempotencyKey,
+      locale: dto.locale,
+    });
+  }
+
+  async getReceipt(receiptNumber: string, actorUserId: number, isAdminBypass: boolean) {
+    return this.receipts.getReceiptForReprint(receiptNumber, actorUserId, isAdminBypass);
+  }
+
+  async listMyReceipts(actorUserId: number): Promise<AgentTopUpReceipt[]> {
+    return this.receipts.listMyReceipts(actorUserId);
   }
 
   private async ownerTarget(ownerId: number, name: string): Promise<TopUpTarget> {

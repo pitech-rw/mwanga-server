@@ -1,0 +1,596 @@
+[
+  {
+    "id": "table.AgentTopUpReceipt",
+    "label": "Create table \"AgentTopUpReceipt\"",
+    "summary": "Creates table \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"AgentTopUpReceipt\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"AgentTopUpReceipt\"",
+        "sql": "CREATE TABLE \"public\".\"AgentTopUpReceipt\" (\n  \"actorUserId\" int4 NOT NULL,\n  \"agentId\" int4 NOT NULL,\n  \"balanceAfter\" numeric(10,2) NOT NULL,\n  \"balanceBefore\" numeric(10,2) NOT NULL,\n  \"cashCollected\" numeric(10,2) NOT NULL,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"currency\" text NOT NULL,\n  \"discountAmount\" numeric(10,2) DEFAULT '0.00'::numeric(10,2) NOT NULL,\n  \"discountCode\" text,\n  \"document\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"idempotencyKey\" text,\n  \"ledgerTransactionId\" int4 NOT NULL,\n  \"locale\" text DEFAULT 'fr' NOT NULL,\n  \"pricingVersion\" text NOT NULL,\n  \"receiptNumber\" text NOT NULL,\n  \"reprintCount\" int4 DEFAULT 0 NOT NULL,\n  \"riderUserId\" int4 NOT NULL,\n  \"taxAmount\" numeric(10,2) DEFAULT '0.00'::numeric(10,2) NOT NULL,\n  \"taxRateBps\" int4 DEFAULT 0 NOT NULL,\n  \"walletCredit\" numeric(10,2) NOT NULL,\n  \"walletId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"AgentTopUpReceipt\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"AgentTopUpReceipt\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.ReceiptSequence",
+    "label": "Create table \"ReceiptSequence\"",
+    "summary": "Creates table \"ReceiptSequence\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "ReceiptSequence"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"ReceiptSequence\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"ReceiptSequence\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"ReceiptSequence\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"ReceiptSequence\"",
+        "sql": "CREATE TABLE \"public\".\"ReceiptSequence\" (\n  \"id\" int4 DEFAULT 1 NOT NULL,\n  \"lastValue\" int4 DEFAULT 0 NOT NULL,\n  \"prefix\" text DEFAULT 'TU' NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"ReceiptSequence\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"ReceiptSequence\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"ReceiptSequence\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.AgentTopUpReceipt.AgentTopUpReceipt_receiptNumber_key",
+    "label": "Add unique constraint on \"AgentTopUpReceipt\" (receiptNumber)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "AgentTopUpReceipt_receiptNumber_key",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"AgentTopUpReceipt_receiptNumber_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_receiptNumber_key",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"AgentTopUpReceipt_receiptNumber_key\" on \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"AgentTopUpReceipt_receiptNumber_key\"",
+        "sql": "ALTER TABLE \"public\".\"AgentTopUpReceipt\" ADD CONSTRAINT \"AgentTopUpReceipt_receiptNumber_key\" UNIQUE (\"receiptNumber\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"AgentTopUpReceipt_receiptNumber_key\" exists on (receiptNumber)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_receiptNumber_key",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "u",
+          "[\"receiptNumber\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.AgentTopUpReceipt.AgentTopUpReceipt_ledgerTransactionId_key",
+    "label": "Add unique constraint on \"AgentTopUpReceipt\" (ledgerTransactionId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "AgentTopUpReceipt_ledgerTransactionId_key",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"AgentTopUpReceipt_ledgerTransactionId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_ledgerTransactionId_key",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"AgentTopUpReceipt_ledgerTransactionId_key\" on \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"AgentTopUpReceipt_ledgerTransactionId_key\"",
+        "sql": "ALTER TABLE \"public\".\"AgentTopUpReceipt\" ADD CONSTRAINT \"AgentTopUpReceipt_ledgerTransactionId_key\" UNIQUE (\"ledgerTransactionId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"AgentTopUpReceipt_ledgerTransactionId_key\" exists on (ledgerTransactionId)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_ledgerTransactionId_key",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "u",
+          "[\"ledgerTransactionId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.AgentTopUpReceipt.AgentTopUpReceipt_idempotencyKey_key",
+    "label": "Add unique constraint on \"AgentTopUpReceipt\" (idempotencyKey)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "AgentTopUpReceipt_idempotencyKey_key",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"AgentTopUpReceipt_idempotencyKey_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_idempotencyKey_key",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"AgentTopUpReceipt_idempotencyKey_key\" on \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"AgentTopUpReceipt_idempotencyKey_key\"",
+        "sql": "ALTER TABLE \"public\".\"AgentTopUpReceipt\" ADD CONSTRAINT \"AgentTopUpReceipt_idempotencyKey_key\" UNIQUE (\"idempotencyKey\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"AgentTopUpReceipt_idempotencyKey_key\" exists on (idempotencyKey)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_idempotencyKey_key",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "u",
+          "[\"idempotencyKey\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AgentTopUpReceipt.AgentTopUpReceipt_agentId_idx_8d0ba4f0",
+    "label": "Create index \"AgentTopUpReceipt_agentId_idx_8d0ba4f0\" on \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AgentTopUpReceipt_agentId_idx_8d0ba4f0",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AgentTopUpReceipt_agentId_idx_8d0ba4f0\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt_agentId_idx_8d0ba4f0\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"AgentTopUpReceipt_agentId_idx_8d0ba4f0\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AgentTopUpReceipt_agentId_idx_8d0ba4f0\"",
+        "sql": "CREATE INDEX \"AgentTopUpReceipt_agentId_idx_8d0ba4f0\" ON \"public\".\"AgentTopUpReceipt\" (\"agentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AgentTopUpReceipt_agentId_idx_8d0ba4f0\" exists on \"AgentTopUpReceipt\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt_agentId_idx_8d0ba4f0\"",
+          "i",
+          "I",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "btree",
+          "[\"agentId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AgentTopUpReceipt.AgentTopUpReceipt_riderUserId_idx_22e5177d",
+    "label": "Create index \"AgentTopUpReceipt_riderUserId_idx_22e5177d\" on \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AgentTopUpReceipt_riderUserId_idx_22e5177d",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AgentTopUpReceipt_riderUserId_idx_22e5177d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt_riderUserId_idx_22e5177d\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"AgentTopUpReceipt_riderUserId_idx_22e5177d\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AgentTopUpReceipt_riderUserId_idx_22e5177d\"",
+        "sql": "CREATE INDEX \"AgentTopUpReceipt_riderUserId_idx_22e5177d\" ON \"public\".\"AgentTopUpReceipt\" (\"riderUserId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AgentTopUpReceipt_riderUserId_idx_22e5177d\" exists on \"AgentTopUpReceipt\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt_riderUserId_idx_22e5177d\"",
+          "i",
+          "I",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "btree",
+          "[\"riderUserId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.AgentTopUpReceipt.AgentTopUpReceipt_walletId_idx_2e003173",
+    "label": "Create index \"AgentTopUpReceipt_walletId_idx_2e003173\" on \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "AgentTopUpReceipt_walletId_idx_2e003173",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"AgentTopUpReceipt_walletId_idx_2e003173\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt_walletId_idx_2e003173\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"AgentTopUpReceipt_walletId_idx_2e003173\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"AgentTopUpReceipt_walletId_idx_2e003173\"",
+        "sql": "CREATE INDEX \"AgentTopUpReceipt_walletId_idx_2e003173\" ON \"public\".\"AgentTopUpReceipt\" (\"walletId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"AgentTopUpReceipt_walletId_idx_2e003173\" exists on \"AgentTopUpReceipt\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"AgentTopUpReceipt_walletId_idx_2e003173\"",
+          "i",
+          "I",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "btree",
+          "[\"walletId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.AgentTopUpReceipt.AgentTopUpReceipt_ledgerTransactionId_fkey",
+    "label": "Add foreign key \"AgentTopUpReceipt_ledgerTransactionId_fkey\" on \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "AgentTopUpReceipt_ledgerTransactionId_fkey",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"AgentTopUpReceipt_ledgerTransactionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_ledgerTransactionId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"AgentTopUpReceipt_ledgerTransactionId_fkey\" on \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"AgentTopUpReceipt_ledgerTransactionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"AgentTopUpReceipt\"\nADD CONSTRAINT \"AgentTopUpReceipt_ledgerTransactionId_fkey\"\nFOREIGN KEY (\"ledgerTransactionId\")\nREFERENCES \"public\".\"LedgerTransaction\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"AgentTopUpReceipt_ledgerTransactionId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_ledgerTransactionId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "f",
+          "[\"ledgerTransactionId\"]",
+          "\"public\".\"LedgerTransaction\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.AgentTopUpReceipt.AgentTopUpReceipt_agentId_fkey",
+    "label": "Add foreign key \"AgentTopUpReceipt_agentId_fkey\" on \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "AgentTopUpReceipt_agentId_fkey",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"AgentTopUpReceipt_agentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_agentId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"AgentTopUpReceipt_agentId_fkey\" on \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"AgentTopUpReceipt_agentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"AgentTopUpReceipt\"\nADD CONSTRAINT \"AgentTopUpReceipt_agentId_fkey\"\nFOREIGN KEY (\"agentId\")\nREFERENCES \"public\".\"Agent\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"AgentTopUpReceipt_agentId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_agentId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "f",
+          "[\"agentId\"]",
+          "\"public\".\"Agent\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.AgentTopUpReceipt.AgentTopUpReceipt_riderUserId_fkey",
+    "label": "Add foreign key \"AgentTopUpReceipt_riderUserId_fkey\" on \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "AgentTopUpReceipt_riderUserId_fkey",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"AgentTopUpReceipt_riderUserId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_riderUserId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"AgentTopUpReceipt_riderUserId_fkey\" on \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"AgentTopUpReceipt_riderUserId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"AgentTopUpReceipt\"\nADD CONSTRAINT \"AgentTopUpReceipt_riderUserId_fkey\"\nFOREIGN KEY (\"riderUserId\")\nREFERENCES \"public\".\"User\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"AgentTopUpReceipt_riderUserId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_riderUserId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "f",
+          "[\"riderUserId\"]",
+          "\"public\".\"User\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.AgentTopUpReceipt.AgentTopUpReceipt_walletId_fkey",
+    "label": "Add foreign key \"AgentTopUpReceipt_walletId_fkey\" on \"AgentTopUpReceipt\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "AgentTopUpReceipt_walletId_fkey",
+        "table": "AgentTopUpReceipt"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"AgentTopUpReceipt_walletId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_walletId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"AgentTopUpReceipt_walletId_fkey\" on \"AgentTopUpReceipt\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"AgentTopUpReceipt_walletId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"AgentTopUpReceipt\"\nADD CONSTRAINT \"AgentTopUpReceipt_walletId_fkey\"\nFOREIGN KEY (\"walletId\")\nREFERENCES \"public\".\"Wallet\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"AgentTopUpReceipt_walletId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "AgentTopUpReceipt_walletId_fkey",
+          "public",
+          "\"public\".\"AgentTopUpReceipt\"",
+          "f",
+          "[\"walletId\"]",
+          "\"public\".\"Wallet\"",
+          "[\"id\"]",
+          "a",
+          "a"
+        ]
+      }
+    ]
+  }
+]

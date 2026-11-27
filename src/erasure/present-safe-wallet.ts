@@ -39,7 +39,11 @@ export function walletHolderLinksErasedUser(
 
 /** Omit erased rider users from includes; sanitize visible rider rows. */
 export function presentSafeWallet<T extends WalletWithHolders>(wallet: T): T {
-  const next = { ...wallet, currency: DEFAULT_CURRENCY };
+  const currency =
+    typeof wallet.currency === 'string' && wallet.currency.trim() !== ''
+      ? wallet.currency.trim()
+      : DEFAULT_CURRENCY;
+  const next = { ...wallet, currency };
 
   if (next.riderUser) {
     if (userIsErased(next.riderUser)) {

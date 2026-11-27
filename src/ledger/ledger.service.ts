@@ -328,6 +328,7 @@ export class LedgerService {
       targetWalletId: number;
       amount: number;
       externalReference: string;
+      idempotencyKey?: string;
       actorUserId: number;
       description?: string;
     },
@@ -371,6 +372,7 @@ export class LedgerService {
       walletId: target.id,
       actorUserId: params.actorUserId,
       externalReference: params.externalReference,
+      idempotencyKey: params.idempotencyKey,
       description: params.description,
       lines: [
         {

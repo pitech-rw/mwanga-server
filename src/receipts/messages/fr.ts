@@ -1,0 +1,18 @@
+export const receiptFr = {
+  title: 'RECU DE RECHARGE',
+  receiptNo: 'N° reçu',
+  date: 'Date',
+  agent: 'Agent',
+  rider: 'Client',
+  phone: 'Tél',
+  cashCollected: 'Montant reçu',
+  discount: 'Remise',
+  tax: 'TVA',
+  walletCredit: 'Crédit portefeuille',
+  balanceBefore: 'Solde avant',
+  balanceAfter: 'Solde après',
+  ledgerRef: 'Réf. ledger',
+  thankYou: 'Merci',
+  duplicate: 'DUPLICATA',
+  currencyLine: (currency: string) => `Devise : ${currency}`,
+} as const;

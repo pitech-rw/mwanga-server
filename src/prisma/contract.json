@@ -8,6 +8,10 @@
       "model": "Agent",
       "namespace": "public"
     },
+    "AgentTopUpReceipt": {
+      "model": "AgentTopUpReceipt",
+      "namespace": "public"
+    },
     "AuditLog": {
       "model": "AuditLog",
       "namespace": "public"
@@ -70,6 +74,10 @@
     },
     "Permission": {
       "model": "Permission",
+      "namespace": "public"
+    },
+    "ReceiptSequence": {
+      "model": "ReceiptSequence",
       "namespace": "public"
     },
     "RevenueAccount": {
@@ -519,6 +527,21 @@
                   "namespace": "public"
                 }
               },
+              "topUpReceipts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "agentId"
+                  ]
+                },
+                "to": {
+                  "model": "AgentTopUpReceipt",
+                  "namespace": "public"
+                }
+              },
               "wallet": {
                 "cardinality": "1:1",
                 "nullable": true,
@@ -565,6 +588,329 @@
               },
               "namespaceId": "public",
               "table": "Agent"
+            }
+          },
+          "AgentTopUpReceipt": {
+            "fields": {
+              "actorUserId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "agentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "balanceAfter": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "balanceBefore": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "cashCollected": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "currency": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "discountAmount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "discountCode": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "document": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "idempotencyKey": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "ledgerTransactionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "locale": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "pricingVersion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "receiptNumber": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "reprintCount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "riderUserId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "taxAmount": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "taxRateBps": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "walletCredit": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/numeric@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                }
+              },
+              "walletId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "agent": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "agentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Agent",
+                  "namespace": "public"
+                }
+              },
+              "ledgerTransaction": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "ledgerTransactionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "LedgerTransaction",
+                  "namespace": "public"
+                }
+              },
+              "riderUser": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "riderUserId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
+              "wallet": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "walletId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Wallet",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "actorUserId": {
+                  "column": "actorUserId"
+                },
+                "agentId": {
+                  "column": "agentId"
+                },
+                "balanceAfter": {
+                  "column": "balanceAfter"
+                },
+                "balanceBefore": {
+                  "column": "balanceBefore"
+                },
+                "cashCollected": {
+                  "column": "cashCollected"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "currency": {
+                  "column": "currency"
+                },
+                "discountAmount": {
+                  "column": "discountAmount"
+                },
+                "discountCode": {
+                  "column": "discountCode"
+                },
+                "document": {
+                  "column": "document"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "idempotencyKey": {
+                  "column": "idempotencyKey"
+                },
+                "ledgerTransactionId": {
+                  "column": "ledgerTransactionId"
+                },
+                "locale": {
+                  "column": "locale"
+                },
+                "pricingVersion": {
+                  "column": "pricingVersion"
+                },
+                "receiptNumber": {
+                  "column": "receiptNumber"
+                },
+                "reprintCount": {
+                  "column": "reprintCount"
+                },
+                "riderUserId": {
+                  "column": "riderUserId"
+                },
+                "taxAmount": {
+                  "column": "taxAmount"
+                },
+                "taxRateBps": {
+                  "column": "taxRateBps"
+                },
+                "walletCredit": {
+                  "column": "walletCredit"
+                },
+                "walletId": {
+                  "column": "walletId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "AgentTopUpReceipt"
             }
           },
           "AuditLog": {
@@ -2639,6 +2985,22 @@
                   "namespace": "public"
                 }
               },
+              "agentTopUpReceipt": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "ledgerTransactionId"
+                  ]
+                },
+                "to": {
+                  "model": "AgentTopUpReceipt",
+                  "namespace": "public"
+                }
+              },
               "lines": {
                 "cardinality": "1:N",
                 "on": {
@@ -3066,6 +3428,60 @@
               },
               "namespaceId": "public",
               "table": "Permission"
+            }
+          },
+          "ReceiptSequence": {
+            "fields": {
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "lastValue": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "prefix": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "updatedAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "kind": "scalar",
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "id": {
+                  "column": "id"
+                },
+                "lastValue": {
+                  "column": "lastValue"
+                },
+                "prefix": {
+                  "column": "prefix"
+                },
+                "updatedAt": {
+                  "column": "updatedAt"
+                }
+              },
+              "namespaceId": "public",
+              "table": "ReceiptSequence"
             }
           },
           "RevenueAccount": {
@@ -4341,6 +4757,21 @@
                   "namespace": "public"
                 }
               },
+              "riderTopUpReceipts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "riderUserId"
+                  ]
+                },
+                "to": {
+                  "model": "AgentTopUpReceipt",
+                  "namespace": "public"
+                }
+              },
               "riderWallet": {
                 "cardinality": "1:1",
                 "nullable": true,
@@ -4817,6 +5248,21 @@
                   "model": "User",
                   "namespace": "public"
                 }
+              },
+              "topUpReceipts": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "walletId"
+                  ]
+                },
+                "to": {
+                  "model": "AgentTopUpReceipt",
+                  "namespace": "public"
+                }
               }
             },
             "storage": {
@@ -4953,6 +5399,303 @@
                 {
                   "columns": [
                     "userId"
+                  ]
+                }
+              ]
+            },
+            "AgentTopUpReceipt": {
+              "columns": {
+                "actorUserId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "agentId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "balanceAfter": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "balanceBefore": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "cashCollected": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                },
+                "currency": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "discountAmount": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "discountCode": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "document": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nullable": false
+                },
+                "idempotencyKey": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": true
+                },
+                "ledgerTransactionId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "locale": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "fr"
+                  },
+                  "nullable": false
+                },
+                "pricingVersion": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "receiptNumber": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "nullable": false
+                },
+                "reprintCount": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
+                "riderUserId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                },
+                "taxAmount": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "default": {
+                    "kind": "literal",
+                    "value": "0.00"
+                  },
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "taxRateBps": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
+                "walletCredit": {
+                  "codecId": "pg/numeric@1",
+                  "dataType": "pg/numeric",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 10,
+                    "scale": 2
+                  }
+                },
+                "walletId": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "index": {
+                    "unique": [
+                      "ledgerTransactionId"
+                    ]
+                  },
+                  "source": {
+                    "columns": [
+                      "ledgerTransactionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "AgentTopUpReceipt"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "LedgerTransaction"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "AgentTopUpReceipt_agentId_idx_8d0ba4f0"
+                  },
+                  "source": {
+                    "columns": [
+                      "agentId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "AgentTopUpReceipt"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Agent"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "AgentTopUpReceipt_riderUserId_idx_22e5177d"
+                  },
+                  "source": {
+                    "columns": [
+                      "riderUserId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "AgentTopUpReceipt"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "User"
+                  }
+                },
+                {
+                  "index": {
+                    "name": "AgentTopUpReceipt_walletId_idx_2e003173"
+                  },
+                  "source": {
+                    "columns": [
+                      "walletId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "AgentTopUpReceipt"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "Wallet"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "agentId"
+                  ],
+                  "name": "AgentTopUpReceipt_agentId_idx_8d0ba4f0",
+                  "prefix": "AgentTopUpReceipt_agentId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "riderUserId"
+                  ],
+                  "name": "AgentTopUpReceipt_riderUserId_idx_22e5177d",
+                  "prefix": "AgentTopUpReceipt_riderUserId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "walletId"
+                  ],
+                  "name": "AgentTopUpReceipt_walletId_idx_2e003173",
+                  "prefix": "AgentTopUpReceipt_walletId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "receiptNumber"
+                  ]
+                },
+                {
+                  "columns": [
+                    "ledgerTransactionId"
+                  ]
+                },
+                {
+                  "columns": [
+                    "idempotencyKey"
                   ]
                 }
               ]
@@ -7211,6 +7954,53 @@
                 }
               ]
             },
+            "ReceiptSequence": {
+              "columns": {
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nullable": false
+                },
+                "lastValue": {
+                  "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
+                  "nullable": false
+                },
+                "prefix": {
+                  "codecId": "pg/text@1",
+                  "dataType": "pg/text",
+                  "default": {
+                    "kind": "literal",
+                    "value": "TU"
+                  },
+                  "nullable": false
+                },
+                "updatedAt": {
+                  "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
+                  "nullable": false,
+                  "typeParams": {
+                    "precision": 3
+                  }
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
             "RevenueAccount": {
               "columns": {
                 "balance": {
@@ -8589,10 +9379,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "1d5646ca0022a42c25dad5364bbe6d8cb982b80757309cfe5309b51c630373c2"
+    "storageHash": "687828f38c41b25f5f6b2a6ab34940aaa7a240978f4c4b5e9af0fd43a9cc3f4a"
   },
   "execution": {
-    "executionHash": "906c7fade3a782ddc21e105d9f6012bb261ba20b08eb32de8255103bce6a57f5",
+    "executionHash": "9239c308c12c5f3fc1311909d11af172bdc69990cfe831ab83eea6863386ad7b",
     "mutations": {
       "defaults": [
         {
@@ -8800,6 +9590,27 @@
             }
           },
           "ref": {
+            "entry": "ReceiptSequence",
+            "field": "updatedAt",
+            "namespace": "public"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "onUpdate": {
+            "id": "timestampNow",
+            "kind": "generator",
+            "params": {
+              "precision": 3
+            }
+          },
+          "ref": {
             "entry": "RevenueAccount",
             "field": "updatedAt",
             "namespace": "public"
@@ -8931,11 +9742,15 @@
       "forShare": true,
       "forUpdate": true,
       "insertOnConflictSkip": true,
+      "insertOnConflictTarget": true,
       "insertOnConflictWithoutTarget": true,
+      "jsonAgg": true,
+      "jsonAggWithoutTruncation": true,
       "lateral": true,
       "lockNowait": true,
       "lockOf": true,
       "lockSkipLocked": true,
+      "outerReferencesInDerivedTables": true,
       "returning": true,
       "scalarList": true
     }

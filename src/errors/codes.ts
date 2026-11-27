@@ -187,6 +187,19 @@ export const LedgerCodes = {
   currencyMismatchWalletRevenue: 'ledger.currencyMismatchWalletRevenue',
 } as const;
 
+export const ReceiptCodes = {
+  amountPositive: 'receipts.amountPositive',
+  amountBelowMin: 'receipts.amountBelowMin',
+  amountAboveMax: 'receipts.amountAboveMax',
+  amountStepInvalid: 'receipts.amountStepInvalid',
+  discountInvalid: 'receipts.discountInvalid',
+  walletCreditZero: 'receipts.walletCreditZero',
+  riderWalletRequired: 'receipts.riderWalletRequired',
+  invalidLocale: 'receipts.invalidLocale',
+  receiptNotFound: 'receipts.receiptNotFound',
+  receiptAccessDenied: 'receipts.receiptAccessDenied',
+} as const;
+
 export const AgentsCodes = {
   duplicateAgent: 'agents.duplicateAgent',
   duplicatePortalUser: 'agents.duplicatePortalUser',

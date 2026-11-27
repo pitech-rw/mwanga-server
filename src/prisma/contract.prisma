@@ -50,6 +50,7 @@ model User {
   stationId           Int?
   assignedStation     Station?          @relation("StationOperators", fields: [stationId], references: [id])
   riderWallet         Wallet?           @relation("RiderWallet")
+  riderTopUpReceipts  AgentTopUpReceipt[] @relation("RiderTopUpReceipt")
   ledgerTransactions  LedgerTransaction[] @relation("LedgerActor")
   portalAgent         Agent?            @relation("AgentPortalUser")
   inventoryMovements  InventoryMovement[] @relation("InventoryMovementActor")
@@ -213,6 +214,7 @@ model Agent {
 
   portalUser User?   @relation("AgentPortalUser", fields: [userId], references: [id])
   wallet     Wallet?
+  topUpReceipts AgentTopUpReceipt[]
 }
 
 model Bike {
@@ -342,6 +344,7 @@ model Wallet {
   agent            Agent?             @relation(fields: [agentId], references: [id])
   ledgerLines      LedgerLine[]
   ledgerTransactions LedgerTransaction[] @relation("WalletLedger")
+  topUpReceipts    AgentTopUpReceipt[]
 }
 
 model CompanyAccount {
@@ -384,6 +387,7 @@ model LedgerTransaction {
   wallet           Wallet?            @relation("WalletLedger", fields: [walletId], references: [id])
   swapTransaction  SwapTransaction?   @relation(fields: [swapTransactionId], references: [id])
   lines            LedgerLine[]
+  agentTopUpReceipt AgentTopUpReceipt?
 }
 
 model LedgerLine {
@@ -536,4 +540,46 @@ model IncidentMessage {
 
   incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
   author   User     @relation("IncidentMessageAuthor", fields: [authorId], references: [id])
+}
+
+model ReceiptSequence {
+  id        Int      @id @default(1)
+  prefix    String   @default("TU")
+  lastValue Int      @default(0)
+  updatedAt DateTime @onCreate(now()) @onUpdate(now())
+}
+
+model AgentTopUpReceipt {
+  id                  Int      @id @default(autoincrement())
+  receiptNumber       String   @unique
+  ledgerTransactionId Int      @unique
+  idempotencyKey      String?  @unique
+
+  agentId     Int
+  actorUserId Int
+  riderUserId Int
+  walletId    Int
+
+  currency       String
+  cashCollected  Numeric(10, 2)
+  discountAmount Numeric(10, 2) @default(0)
+  taxAmount      Numeric(10, 2) @default(0)
+  walletCredit   Numeric(10, 2)
+  balanceBefore  Numeric(10, 2)
+  balanceAfter   Numeric(10, 2)
+
+  taxRateBps     Int      @default(0)
+  discountCode   String?
+  pricingVersion String
+  locale         String   @default("fr")
+
+  /// Serialized AgentTopUpReceiptDocument JSON at issue time.
+  document      String
+  reprintCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  ledgerTransaction LedgerTransaction @relation(fields: [ledgerTransactionId], references: [id])
+  agent             Agent             @relation(fields: [agentId], references: [id])
+  riderUser         User              @relation("RiderTopUpReceipt", fields: [riderUserId], references: [id])
+  wallet            Wallet            @relation(fields: [walletId], references: [id])
 }

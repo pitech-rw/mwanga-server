@@ -19,6 +19,7 @@ export type TopUpTarget = {
   kind: 'rider' | 'owner';
   name: string;
   walletId: number;
+  currency: string;
 };
 
 @Injectable()
@@ -182,7 +183,12 @@ export class AgentsService {
       if (!wallet) {
         throw new NotFoundException('Rider wallet not found');
       }
-      return { kind: 'rider', name: this.riderDisplayName(user), walletId: wallet.id };
+      return {
+        kind: 'rider',
+        name: this.riderDisplayName(user),
+        walletId: wallet.id,
+        currency: wallet.currency,
+      };
     }
 
     if (user?.type === 'owner') {
@@ -209,7 +215,13 @@ export class AgentsService {
       this.prisma.db.orm.public.Owner.include('wallet').all(),
     ]);
 
-    type Candidate = { kind: 'rider' | 'owner'; name: string; walletId: number; exact: boolean };
+    type Candidate = {
+      kind: 'rider' | 'owner';
+      name: string;
+      walletId: number;
+      currency: string;
+      exact: boolean;
+    };
     const candidates: Candidate[] = [];
 
     for (const user of riders) {
@@ -222,7 +234,13 @@ export class AgentsService {
       const exact = normalized === needle;
       const partial = !exact && normalized.includes(needle);
       if (exact || partial) {
-        candidates.push({ kind: 'rider', name, walletId: wallet.id, exact });
+        candidates.push({
+          kind: 'rider',
+          name,
+          walletId: wallet.id,
+          currency: wallet.currency,
+          exact,
+        });
       }
     }
 
@@ -235,14 +253,25 @@ export class AgentsService {
       const exact = normalized === needle;
       const partial = !exact && normalized.includes(needle);
       if (exact || partial) {
-        candidates.push({ kind: 'owner', name: owner.name, walletId: wallet.id, exact });
+        candidates.push({
+          kind: 'owner',
+          name: owner.name,
+          walletId: wallet.id,
+          currency: wallet.currency,
+          exact,
+        });
       }
     }
 
     const exactMatches = candidates.filter((candidate) => candidate.exact);
     if (exactMatches.length === 1) {
       const match = exactMatches[0]!;
-      return { kind: match.kind, name: match.name, walletId: match.walletId };
+      return {
+        kind: match.kind,
+        name: match.name,
+        walletId: match.walletId,
+        currency: match.currency,
+      };
     }
     if (exactMatches.length > 1) {
       apiBadRequest(AgentsCodes.multipleNameMatches);
@@ -251,7 +280,12 @@ export class AgentsService {
     const partialMatches = candidates.filter((candidate) => !candidate.exact);
     if (partialMatches.length === 1) {
       const match = partialMatches[0]!;
-      return { kind: match.kind, name: match.name, walletId: match.walletId };
+      return {
+        kind: match.kind,
+        name: match.name,
+        walletId: match.walletId,
+        currency: match.currency,
+      };
     }
     if (partialMatches.length > 1) {
       apiBadRequest(AgentsCodes.multipleNameMatchesNarrow);
@@ -297,7 +331,7 @@ export class AgentsService {
     if (!wallet) {
       throw new NotFoundException('Owner wallet not found');
     }
-    return { kind: 'owner', name, walletId: wallet.id };
+    return { kind: 'owner', name, walletId: wallet.id, currency: wallet.currency };
   }
 
   private async assertPortalUser(userId: number): Promise<SafeUser> {
